@@ -17,29 +17,41 @@ limitations under the License.
 package v1alpha1
 
 import (
+	nbv1 "github.com/noobaa/noobaa-operator/v2/pkg/apis/noobaa/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // MultiCloudGatewaySpec defines the desired state of MultiCloudGateway
 type MultiCloudGatewaySpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of MultiCloudGateway. Edit multicloudgateway_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// ReconcileStrategy specifies whether to reconcile NooBaa CRs. Valid
+	// values are "manage", "standalone", "ignore" (same as "standalone"),
+	// and "" (same as "manage").
+	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
+
+	// Endpoints (optional) sets configuration info for the noobaa endpoint
+	// deployment.
+	// +optional
+	Endpoints *nbv1.EndpointsSpec `json:"endpoints,omitempty"`
 }
 
 // MultiCloudGatewayStatus defines the observed state of MultiCloudGateway
 type MultiCloudGatewayStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Phase describes the Phase of MultiCloudGateway
+	// This is used by OLM UI to provide status information
+	// to the user
+	Phase string `json:"phase,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:shortName=mcg
 
 // MultiCloudGateway is the Schema for the multicloudgateways API
 type MultiCloudGateway struct {
