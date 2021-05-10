@@ -20,22 +20,50 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+
+//+kubebuilder:validation:Enum=FlashSystemCluster;StorageCluster
+
+// StorageVendor captures the type of storage vendor
+type StorageKind string
+
+const (
+	// FlashSystemCluster represents the ibm flashsystem
+	FlashSystemCluster StorageKind = "FlashSystemCluster"
+
+	// StorageCluster represents the openshift container storage
+	StorageCluster StorageKind = "StorageCluster"
+)
 
 // StorageSystemSpec defines the desired state of StorageSystem
 type StorageSystemSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of StorageSystem. Edit storagesystem_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	//+kubebuilder:validation:Required
+
+	// Name describes the name of managed storage vendor CR
+	Name string `json:"name,omitempty"`
+
+	//+kubebuilder:validation:Optional
+
+	// NameSpace describes the namespace of managed storage vendor CR
+	NameSpace string `json:"nameSpace,omitempty"`
+
+	//+kubebuilder:validation:Optional
+
+	// Kind describes the kind of storage vendor
+	Kind StorageKind `json:"kind,omitempty"`
 }
 
 // StorageSystemStatus defines the observed state of StorageSystem
 type StorageSystemStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Phase describes the Phase of StorageSystem
+	// This is used by OLM UI to provide status information
+	// to the user
+	Phase string `json:"phase,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -51,6 +79,7 @@ type StorageSystem struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:resource:shortName=storsys
 
 // StorageSystemList contains a list of StorageSystem
 type StorageSystemList struct {
