@@ -1,0 +1,7 @@
+apiVersion: odf.openshift.io/v1alpha1
+kind: StorageSystem
+metadata:
+  name: storagesystem-sample
+spec:
+  # Add fields here
+  foo: bar
