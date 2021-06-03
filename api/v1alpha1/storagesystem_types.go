@@ -68,6 +68,7 @@ type StorageSystemStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:shortName=storsys
 
 // StorageSystem is the Schema for the storagesystems API
 type StorageSystem struct {
@@ -79,7 +80,6 @@ type StorageSystem struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:resource:shortName=storsys
 
 // StorageSystemList contains a list of StorageSystem
 type StorageSystemList struct {
