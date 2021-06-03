@@ -1,0 +1,20 @@
+# permissions for end users to view multicloudgateways.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: multicloudgateway-viewer-role
+rules:
+- apiGroups:
+  - odf.openshift.io
+  resources:
+  - multicloudgateways
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - odf.openshift.io
+  resources:
+  - multicloudgateways/status
+  verbs:
+  - get

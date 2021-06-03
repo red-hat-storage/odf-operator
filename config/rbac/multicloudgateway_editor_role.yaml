@@ -1,0 +1,24 @@
+# permissions for end users to edit multicloudgateways.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: multicloudgateway-editor-role
+rules:
+- apiGroups:
+  - odf.openshift.io
+  resources:
+  - multicloudgateways
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - odf.openshift.io
+  resources:
+  - multicloudgateways/status
+  verbs:
+  - get

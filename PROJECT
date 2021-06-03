@@ -16,4 +16,13 @@ resources:
   kind: StorageSystem
   path: github.com/red-hat-data-services/odf-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: openshift.io
+  group: odf
+  kind: MultiCloudGateway
+  path: github.com/red-hat-data-services/odf-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

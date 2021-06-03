@@ -1,0 +1,7 @@
+apiVersion: odf.openshift.io/v1alpha1
+kind: MultiCloudGateway
+metadata:
+  name: multicloudgateway-sample
+spec:
+  # Add fields here
+  foo: bar
