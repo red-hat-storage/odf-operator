@@ -69,6 +69,9 @@ type StorageSystemStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:shortName=storsys
+//+kubebuilder:printcolumn:JSONPath=".spec.kind",name=storage-system-kind,type=string
+//+kubebuilder:printcolumn:JSONPath=".spec.name",name=storage-system-name,type=string
+//+kubebuilder:printcolumn:JSONPath=".status.phase",name=phase,type=string
 
 // StorageSystem is the Schema for the storagesystems API
 type StorageSystem struct {
