@@ -18,6 +18,8 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -33,6 +35,11 @@ const (
 
 	// StorageCluster represents the openshift container storage
 	StorageCluster StorageKind = "StorageCluster"
+)
+
+const (
+	// ConditionResourcePresent communicates the status of underlying resource
+	ConditionResourcePresent conditionsv1.ConditionType = "ResourcePresent"
 )
 
 // StorageSystemSpec defines the desired state of StorageSystem
@@ -57,18 +64,24 @@ type StorageSystemSpec struct {
 
 // StorageSystemStatus defines the observed state of StorageSystem
 type StorageSystemStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Phase describes the Phase of StorageSystem
 	// This is used by OLM UI to provide status information
 	// to the user
 	Phase string `json:"phase,omitempty"`
+
+	// Conditions describes the state of the StorageCluster resource.
+	// +optional
+	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:shortName=storsys
+//+kubebuilder:printcolumn:JSONPath=".spec.kind",name=storage-system-kind,type=string
+//+kubebuilder:printcolumn:JSONPath=".spec.name",name=storage-system-name,type=string
+//+kubebuilder:printcolumn:JSONPath=".status.phase",name=phase,type=string
 
 // StorageSystem is the Schema for the storagesystems API
 type StorageSystem struct {
