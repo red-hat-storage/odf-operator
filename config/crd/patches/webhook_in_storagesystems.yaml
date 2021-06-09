@@ -4,9 +4,11 @@ kind: CustomResourceDefinition
 metadata:
   name: storagesystems.odf.openshift.io
 spec:
+  preserveUnknownFields: false
   conversion:
     strategy: Webhook
     webhook:
+      conversionReviewVersions: ["v1", "v1beta1"]
       clientConfig:
         service:
           namespace: system
