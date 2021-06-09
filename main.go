@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/red-hat-data-services/odf-operator/controllers"
 	subscriptionwebhook "github.com/red-hat-data-services/odf-operator/webhook/subscription"
@@ -46,6 +47,8 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(odfv1alpha1.AddToScheme(scheme))
+
+	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
