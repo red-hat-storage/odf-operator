@@ -24,17 +24,17 @@ import (
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-//+kubebuilder:validation:Enum=FlashSystemCluster;StorageCluster
+//+kubebuilder:validation:Enum=flashsystemcluster.odf.ibm.com/v1alpha1;storagecluster.ocs.openshift.io/v1
 
 // StorageVendor captures the type of storage vendor
 type StorageKind string
 
 const (
 	// FlashSystemCluster represents the ibm flashsystem
-	FlashSystemCluster StorageKind = "FlashSystemCluster"
+	FlashSystemCluster StorageKind = "flashsystemcluster.odf.ibm.com/v1alpha1"
 
 	// StorageCluster represents the openshift container storage
-	StorageCluster StorageKind = "StorageCluster"
+	StorageCluster StorageKind = "storagecluster.ocs.openshift.io/v1"
 )
 
 const (
@@ -47,17 +47,15 @@ type StorageSystemSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Required
-
 	// Name describes the name of managed storage vendor CR
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 
-	//+kubebuilder:validation:Optional
-
+	//+kubebuilder:validation:Required
 	// NameSpace describes the namespace of managed storage vendor CR
-	NameSpace string `json:"nameSpace,omitempty"`
+	NameSpace string `json:"nameSpace"`
 
 	//+kubebuilder:validation:Optional
-
+	//+kubebuilder:default:=storagecluster.ocs.openshift.io/v1
 	// Kind describes the kind of storage vendor
 	Kind StorageKind `json:"kind,omitempty"`
 }
