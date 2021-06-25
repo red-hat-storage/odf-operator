@@ -3,6 +3,7 @@ module github.com/red-hat-data-services/odf-operator
 go 1.15
 
 require (
+	github.com/Azure/go-autorest/autorest v0.11.19 // indirect
 	github.com/go-logr/logr v0.3.0
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
