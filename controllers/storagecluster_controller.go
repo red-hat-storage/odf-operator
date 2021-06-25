@@ -19,10 +19,22 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	ocsv1 "github.com/openshift/ocs-operator/api/v1"
+	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+)
+
+const (
+	HasStorageSystemAnnotation = "storagesystem.odf.openshift.io/watched-by"
 )
 
 // StorageClusterReconciler reconciles a StorageCluster object
@@ -34,6 +46,7 @@ type StorageClusterReconciler struct {
 //+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters/finalizers,verbs=update
+//+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems,verbs=get;list;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -45,17 +58,111 @@ type StorageClusterReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
-	// your logic here
+	instance := &ocsv1.StorageCluster{}
+	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			logger.Info("StorageCluster instance not found.")
+			return ctrl.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+
+	logger.Info("StorageCluster instance found.")
+
+	// get list of StorageSystems
+	storageSystemList := &odfv1alpha1.StorageSystemList{}
+	err = r.Client.List(context.TODO(), storageSystemList, &client.ListOptions{Namespace: instance.Namespace})
+	if err != nil {
+		logger.Error(err, "Failed to list the StorageSystem.")
+		return ctrl.Result{}, err
+	}
+
+	storageSystem := filterStorageSystem(storageSystemList, instance.Name)
+	if storageSystem == nil {
+		logger.Info("StorageSystem not found for the StorageCluster, will create one.")
+
+		storageSystem = &odfv1alpha1.StorageSystem{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      instance.Name,
+				Namespace: instance.Namespace,
+			},
+			Spec: odfv1alpha1.StorageSystemSpec{
+				Name:      instance.Name,
+				NameSpace: instance.Namespace,
+				Kind:      odfv1alpha1.StorageCluster,
+			},
+		}
+
+		// create StorageSystem for storageCluster
+		err = r.Client.Create(context.TODO(), storageSystem)
+		if err != nil {
+			logger.Error(err, "Failed to create StorageSystem.", "StorageSystem", storageSystem.Name)
+			return ctrl.Result{}, err
+		}
+		logger.Info("StorageSystem created for the StorageCluster.")
+	} else {
+		logger.Info("StorageSystem is already present for the StorageCluster.", "StorageSystem", storageSystem.Name)
+	}
+
+	// update Annotation for the storageCluster
+	metav1.SetMetaDataAnnotation(&instance.ObjectMeta, string(HasStorageSystemAnnotation), storageSystem.Name)
+	err = r.Client.Update(context.TODO(), instance)
+	if err != nil {
+		logger.Error(err, "Failed to update the StorageCluster Annotation.")
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }
 
+func filterStorageSystem(storageSystemList *odfv1alpha1.StorageSystemList, storageClusterName string) *odfv1alpha1.StorageSystem {
+
+	for _, ss := range storageSystemList.Items {
+		if ss.Spec.Name == storageClusterName && ss.Spec.Kind == odfv1alpha1.StorageCluster {
+			return &ss
+		}
+	}
+
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *StorageClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	predicateFunc := func(obj runtime.Object) bool {
+		instance, ok := obj.(*ocsv1.StorageCluster)
+		if !ok {
+			return false
+		}
+
+		// ignore if Annotation is present
+		if _, ok = instance.ObjectMeta.Annotations[HasStorageSystemAnnotation]; ok {
+			return false
+		}
+
+		return true
+	}
+
+	storageClusterPredicate := predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return predicateFunc(e.Object)
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return predicateFunc(e.ObjectNew)
+		},
+		GenericFunc: func(e event.GenericEvent) bool {
+			return predicateFunc(e.Object)
+		},
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
-		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		// For().
+		For(&ocsv1.StorageCluster{}, builder.WithPredicates(storageClusterPredicate)).
 		Complete(r)
 }
