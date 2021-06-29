@@ -52,6 +52,8 @@ type StorageSystemReconciler struct {
 //+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=*
+//+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;create;update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -129,6 +131,11 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		}
 		logger.Info("storagesystem object is terminated, skipping reconciliation")
 		return ctrl.Result{}, nil
+	}
+
+	err = r.ensureQuickStarts(logger)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	err = r.ensureSubscription(instance, logger)
