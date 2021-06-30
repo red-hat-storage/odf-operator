@@ -17,17 +17,18 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
+	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
 func TestSetConditionResourcePresent(t *testing.T) {
-
-	t.Skip("Skipping test because TODO is left")
 
 	testCases := []struct {
 		label             string
@@ -54,10 +55,18 @@ func TestSetConditionResourcePresent(t *testing.T) {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
 		fakeReconciler, fakeStorageSystem := GetFakeStorageSystemReconciler()
+		err := ocsv1.AddToScheme(fakeReconciler.Scheme)
+		assert.NoError(t, err)
 
 		if tc.hasBackEndStorage {
-			fakeReconciler.Log.Info("HACK IGNORE 'SA9003: empty branch' via adding this log line")
-			// TODO: create storageCluster
+			storageCluster := &ocsv1.StorageCluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fakeStorageSystem.Spec.Name,
+					Namespace: fakeStorageSystem.Spec.NameSpace,
+				},
+			}
+			err := fakeReconciler.Client.Create(context.TODO(), storageCluster)
+			assert.NoError(t, err)
 		}
 
 		requeue, err := fakeReconciler.setConditionResourcePresent(fakeStorageSystem, fakeReconciler.Log)

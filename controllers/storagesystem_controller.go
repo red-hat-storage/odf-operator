@@ -50,6 +50,8 @@ type StorageSystemReconciler struct {
 //+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems/finalizers,verbs=update
+//+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=odf.ibm.com,resources=flashsystemclusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=*
