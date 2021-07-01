@@ -56,15 +56,15 @@ func (r *StorageSystemReconciler) setConditionResourcePresent(instance *odfv1alp
 	}
 
 	if err == nil {
-		logger.Info("set condition", odfv1alpha1.ConditionResourcePresent, corev1.ConditionTrue)
+		logger.Info("set condition", string(odfv1alpha1.ConditionResourcePresent), corev1.ConditionTrue)
 		conditionsv1.SetStatusCondition(&instance.Status.Conditions, GetConditionResourcePresent(corev1.ConditionTrue, "Found", ""))
 		requeue = false
 	} else if errors.IsNotFound(err) {
-		logger.Error(err, "set condition", odfv1alpha1.ConditionResourcePresent, corev1.ConditionFalse)
+		logger.Error(err, "set condition", string(odfv1alpha1.ConditionResourcePresent), corev1.ConditionFalse)
 		conditionsv1.SetStatusCondition(&instance.Status.Conditions, GetConditionResourcePresent(corev1.ConditionFalse, "NotFound", err.Error()))
 		requeue = true
 	} else {
-		logger.Error(err, "set condition", odfv1alpha1.ConditionResourcePresent, corev1.ConditionUnknown)
+		logger.Error(err, "set condition", string(odfv1alpha1.ConditionResourcePresent), corev1.ConditionUnknown)
 		conditionsv1.SetStatusCondition(&instance.Status.Conditions, GetConditionResourcePresent(corev1.ConditionUnknown, "", err.Error()))
 		requeue = true
 	}
