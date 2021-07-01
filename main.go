@@ -35,7 +35,10 @@ import (
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/red-hat-data-services/odf-operator/controllers"
 	subscriptionwebhook "github.com/red-hat-data-services/odf-operator/webhook/subscription"
+
 	//+kubebuilder:scaffold:imports
+	consolev1 "github.com/openshift/api/console/v1"
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 var (
@@ -50,6 +53,10 @@ func init() {
 
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+
+	utilruntime.Must(consolev1.AddToScheme(scheme))
+	utilruntime.Must(extv1.AddToScheme(scheme))
+
 }
 
 func main() {

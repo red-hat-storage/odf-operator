@@ -22,7 +22,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	consolev1 "github.com/openshift/api/console/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 func GetFakeStorageSystem() *odfv1alpha1.StorageSystem {
@@ -45,6 +47,10 @@ func GetFakeStorageSystemReconciler() (*StorageSystemReconciler, *odfv1alpha1.St
 
 	scheme := runtime.NewScheme()
 	_ = odfv1alpha1.AddToScheme(scheme)
+
+	_ = consolev1.AddToScheme(scheme)
+
+	_ = extv1.AddToScheme(scheme)
 
 	fakeStorageSystemReconciler := &StorageSystemReconciler{
 		Client: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(fakeStorageSystem).Build(),
