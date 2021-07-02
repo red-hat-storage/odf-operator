@@ -31,16 +31,18 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # openshift.io/odf-operator-bundle:$VERSION and openshift.io/odf-operator-catalog:$VERSION.
 IMAGE_TAG_BASE ?= openshift.io/odf-operator
 
-# BUNDLE_IMG defines the image:tag used for the bundle.
-# You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
-BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
-
 # Image URL to use all building/pushing image targets
 IMAGE_REGISTRY ?= "quay.io"
 REGISTRY_NAMESPACE ?= "ocs-dev"
 IMAGE_NAME ?= "odf-operator"
+BUNDLE_IMAGE_NAME ?= $(IMAGE_NAME)-bundle
 IMAGE_TAG ?= "latest"
 IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+# BUNDLE_IMG defines the image:tag used for the bundle.
+# You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
+BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(BUNDLE_IMAGE_NAME):$(IMAGE_TAG)
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
