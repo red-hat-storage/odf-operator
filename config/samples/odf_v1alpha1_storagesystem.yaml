@@ -3,5 +3,6 @@ kind: StorageSystem
 metadata:
   name: storagesystem-sample
 spec:
-  # Add fields here
-  foo: bar
+  kind: storagecluster.ocs.openshift.io/v1
+  name: storagecluster-sample
+  namespace: odf-operator-system
