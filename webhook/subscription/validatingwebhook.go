@@ -29,7 +29,7 @@ import (
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
-//+kubebuilder:webhook:path=/validate-operators-coreos-com-v1alpha1-subscription,mutating=false,failurePolicy=fail,sideEffects=None,groups=operators.coreos.com,resources=subscriptions,verbs=create;update,versions=v1alpha1,name=msubscription.kb.io,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/validate-operators-coreos-com-v1alpha1-subscription,mutating=false,failurePolicy=fail,sideEffects=None,groups=operators.coreos.com,resources=subscriptions,verbs=create;update,versions=v1alpha1,name=vsubscription.kb.io,admissionReviewVersions={v1,v1beta1}
 
 type SubscriptionValidator struct {
 	decoder *admission.Decoder
