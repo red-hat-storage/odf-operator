@@ -78,7 +78,9 @@
                 "controllers",
                 "docs",
                 "godeps",
-                "test"
+                "makefile",
+                "test",
+                "wehook"
             ]
         ]
     }
