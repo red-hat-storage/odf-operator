@@ -49,18 +49,22 @@ spec:
             description: StorageSystemSpec defines the desired state of StorageSystem
             properties:
               kind:
+                default: storagecluster.ocs.openshift.io/v1
                 description: Kind describes the kind of storage vendor
                 enum:
-                - FlashSystemCluster
-                - StorageCluster
+                - flashsystemcluster.odf.ibm.com/v1alpha1
+                - storagecluster.ocs.openshift.io/v1
                 type: string
               name:
                 description: Name describes the name of managed storage vendor CR
                 type: string
-              nameSpace:
+              namespace:
                 description: NameSpace describes the namespace of managed storage
                   vendor CR
                 type: string
+            required:
+            - name
+            - namespace
             type: object
           status:
             description: StorageSystemStatus defines the observed state of StorageSystem

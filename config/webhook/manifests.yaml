@@ -44,7 +44,7 @@ webhooks:
       namespace: system
       path: /validate-operators-coreos-com-v1alpha1-subscription
   failurePolicy: Fail
-  name: msubscription.kb.io
+  name: vsubscription.kb.io
   rules:
   - apiGroups:
     - operators.coreos.com
