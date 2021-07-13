@@ -40,12 +40,14 @@ Signed-off-by: First_Name Last_Name <email address>
 ```yaml
 action
 api
+bundle
 ci
 controllers
 docs
 godeps
 makefile
 test
+webhook
 ```
 
 Note: sometimes you will feel like there is not so much to say, for instance if you are fixing a typo in a text. In that case, it is acceptable to shorten the commit message.
