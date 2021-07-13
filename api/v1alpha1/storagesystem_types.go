@@ -52,7 +52,7 @@ type StorageSystemSpec struct {
 
 	//+kubebuilder:validation:Required
 	// NameSpace describes the namespace of managed storage vendor CR
-	NameSpace string `json:"nameSpace"`
+	NameSpace string `json:"namespace"`
 
 	//+kubebuilder:validation:Optional
 	//+kubebuilder:default:=storagecluster.ocs.openshift.io/v1
