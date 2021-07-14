@@ -2,22 +2,10 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: odf-operator-system/odf-operator-serving-cert
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
   name: storagesystems.odf.openshift.io
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: odf-operator-webhook-service
-          namespace: odf-operator-system
-          path: /convert
-      conversionReviewVersions:
-      - v1
-      - v1beta1
   group: odf.openshift.io
   names:
     kind: StorageSystem
