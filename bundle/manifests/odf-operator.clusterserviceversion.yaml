@@ -158,10 +158,6 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
-                ports:
-                - containerPort: 9443
-                  name: webhook-server
-                  protocol: TCP
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -177,19 +173,10 @@ spec:
                     memory: 20Mi
                 securityContext:
                   allowPrivilegeEscalation: false
-                volumeMounts:
-                - mountPath: /tmp/k8s-webhook-server/serving-certs
-                  name: cert
-                  readOnly: true
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: odf-operator-controller-manager
               terminationGracePeriodSeconds: 10
-              volumes:
-              - name: cert
-                secret:
-                  defaultMode: 420
-                  secretName: webhook-server-cert
       permissions:
       - rules:
         - apiGroups:
@@ -244,58 +231,3 @@ spec:
   provider:
     name: Red Hat
   version: 0.0.1
-  webhookdefinitions:
-  - admissionReviewVersions:
-    - v1
-    - v1beta1
-    containerPort: 443
-    deploymentName: odf-operator-controller-manager
-    failurePolicy: Fail
-    generateName: vsubscription.kb.io
-    rules:
-    - apiGroups:
-      - operators.coreos.com
-      apiVersions:
-      - v1alpha1
-      operations:
-      - CREATE
-      - UPDATE
-      resources:
-      - subscriptions
-    sideEffects: None
-    targetPort: 9443
-    type: ValidatingAdmissionWebhook
-    webhookPath: /validate-operators-coreos-com-v1alpha1-subscription
-  - admissionReviewVersions:
-    - v1
-    - v1beta1
-    containerPort: 443
-    deploymentName: odf-operator-controller-manager
-    failurePolicy: Fail
-    generateName: msubscription.kb.io
-    rules:
-    - apiGroups:
-      - operators.coreos.com
-      apiVersions:
-      - v1alpha1
-      operations:
-      - CREATE
-      - UPDATE
-      resources:
-      - subscriptions
-    sideEffects: None
-    targetPort: 9443
-    type: MutatingAdmissionWebhook
-    webhookPath: /mutate-operators-coreos-com-v1alpha1-subscription
-  - admissionReviewVersions:
-    - v1
-    - v1beta1
-    containerPort: 443
-    conversionCRDs:
-    - storagesystems.odf.openshift.io
-    deploymentName: odf-operator-controller-manager
-    generateName: cstoragesystems.kb.io
-    sideEffects: None
-    targetPort: 9443
-    type: ConversionWebhook
-    webhookPath: /convert

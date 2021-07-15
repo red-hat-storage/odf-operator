@@ -34,7 +34,6 @@ import (
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/red-hat-data-services/odf-operator/controllers"
-	subscriptionwebhook "github.com/red-hat-data-services/odf-operator/webhook/subscription"
 
 	//+kubebuilder:scaffold:imports
 	consolev1 "github.com/openshift/api/console/v1"
@@ -95,14 +94,6 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageSystem")
-		os.Exit(1)
-	}
-	if err = (&subscriptionwebhook.SubscriptionDefaulter{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Subscription")
-		os.Exit(1)
-	}
-	if err = (&subscriptionwebhook.SubscriptionValidator{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Subscription")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
