@@ -48,8 +48,10 @@ test: manifests generate fmt vet ## Run tests.
 
 ##@ Build
 
-build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
+build: generate fmt vet go-build ## Build manager binary.
+
+go-build: ## Run go build against code.
+	@GOBIN=${GOBIN} ./hack/go-build.sh
 
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
