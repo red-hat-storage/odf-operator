@@ -23,15 +23,5 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: copy odf-operator repo in go src
-      run: |
-        mkdir -p /home/runner/go/src/github.com/iamniting
-        cp -r /home/runner/work/odf-operator/odf-operator /home/runner/go/src/github.com/iamniting
-
-    - name: run tests and build docker image
-      working-directory: "/home/runner/go/src/github.com/iamniting/odf-operator"
-      env:
-        GOPATH: /home/runner/go
-      run: |
-        export PATH=$PATH:$GOPATH/bin
-        make docker-build
+    - name: Build docker image
+      run: make docker-build
