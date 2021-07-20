@@ -1,2 +1,5 @@
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+PROJECT_DIR := $(PWD)
+BIN_DIR := $(PROJECT_DIR)/bin
+ENVTEST_ASSETS_DIR := $(PROJECT_DIR)/testbin
+
+GOBIN ?= $(BIN_DIR)
