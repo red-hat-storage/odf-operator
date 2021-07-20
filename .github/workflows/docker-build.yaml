@@ -20,18 +20,22 @@ jobs:
         go-version: ${{ matrix.go }}
 
     - uses: actions/checkout@v2
+
+    - name: Build docker image
+      run: make docker-build
+  bundle-build:
+    name: bundle-build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.15"]
+    steps:
+    - uses: actions/setup-go@v2
       with:
-        fetch-depth: 0
+        go-version: ${{ matrix.go }}
 
-    - name: copy odf-operator repo in go src
-      run: |
-        mkdir -p /home/runner/go/src/github.com/iamniting
-        cp -r /home/runner/work/odf-operator/odf-operator /home/runner/go/src/github.com/iamniting
+    - uses: actions/checkout@v2
 
-    - name: run tests and build docker image
-      working-directory: "/home/runner/go/src/github.com/iamniting/odf-operator"
-      env:
-        GOPATH: /home/runner/go
-      run: |
-        export PATH=$PATH:$GOPATH/bin
-        make docker-build
+    - name: Build bundle docker image
+      run: make bundle-build
