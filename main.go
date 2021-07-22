@@ -33,6 +33,7 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	console "github.com/red-hat-data-services/odf-operator/console"
 	"github.com/red-hat-data-services/odf-operator/controllers"
 
 	//+kubebuilder:scaffold:imports
@@ -112,4 +113,5 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+	console.Runner()
 }
