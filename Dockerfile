@@ -19,7 +19,7 @@ COPY pkg/ pkg/
 COPY webhook/ webhook/
 
 # Build
-RUN make go-build
+RUN CGO_ENABLED=0 make go-build
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
