@@ -18,6 +18,9 @@ COPY controllers/ controllers/
 COPY pkg/ pkg/
 COPY webhook/ webhook/
 
+# Run tests and linting
+RUN make test
+
 # Build
 RUN make go-build
 

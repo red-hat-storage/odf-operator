@@ -1,9 +1,9 @@
 #!/bin/bash
 
-CGO_ENABLED=${CGO_ENABLED:-0}
-GOOS=${GOOS:-linux}
-GOARCH=${GOARCH:-amd64}
-GO111MODULE=${GO111MODULE:-on}
+export CGO_ENABLED=${CGO_ENABLED:-0}
+export GOOS=${GOOS:-linux}
+export GOARCH=${GOARCH:-amd64}
+export GO111MODULE=${GO111MODULE:-on}
 
 set -x
 
