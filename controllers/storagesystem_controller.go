@@ -124,6 +124,12 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		// deletion phase
 		if util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
 			// TODO: delete objects
+
+			err = r.deleteResources(instance, logger)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+
 			logger.Info("storagesystem is in deletion phase remove finalizer", "Finalizer", storageSystemFinalizer)
 			instance.ObjectMeta.Finalizers = util.RemoveFromSlice(instance.ObjectMeta.Finalizers, storageSystemFinalizer)
 			if err := r.Client.Update(context.TODO(), instance); err != nil {

@@ -22,6 +22,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	consolev1 "github.com/openshift/api/console/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -59,4 +60,14 @@ func GetFakeStorageSystemReconciler() (*StorageSystemReconciler, *odfv1alpha1.St
 	}
 
 	return fakeStorageSystemReconciler, fakeStorageSystem
+}
+
+func GetFakeFlashSystemCluster() *ibmv1alpha1.FlashSystemCluster {
+	return &ibmv1alpha1.FlashSystemCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "fake-flash-system-cluster",
+			Namespace: "fake-namespace",
+		},
+		Spec: ibmv1alpha1.FlashSystemClusterSpec{},
+	}
 }
