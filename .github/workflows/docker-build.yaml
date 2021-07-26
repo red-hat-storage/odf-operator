@@ -40,3 +40,20 @@ jobs:
 
     - name: Build operator bundle docker image
       run: make bundle-build
+
+  catalog-build:
+    name: catalog-build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.15", "1.16"]
+    steps:
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - uses: actions/checkout@v2
+
+    - name: Build catalog docker image
+      run: make catalog-build
