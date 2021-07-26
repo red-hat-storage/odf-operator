@@ -1,4 +1,4 @@
-name: docker-build
+name: image-builder
 
 on:
   push:
@@ -21,8 +21,9 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - name: Build docker image
+    - name: Build operator docker image
       run: make docker-build
+
   bundle-build:
     name: bundle-build
     runs-on: ubuntu-latest
@@ -37,5 +38,5 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - name: Build bundle docker image
+    - name: Build operator bundle docker image
       run: make bundle-build
