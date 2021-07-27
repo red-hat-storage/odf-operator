@@ -45,6 +45,7 @@ ci
 controllers
 docs
 godeps
+hack
 makefile
 test
 webhook
