@@ -44,11 +44,16 @@ CATALOG_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CATALOG_IMAGE_NAME):$(I
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
+OCS_BUNDLE_IMG_NAME ?= quay.io/ocs-dev/ocs-operator-bundle
+OCS_BUNDLE_IMG_TAG ?= latest
+OCS_BUNDLE_IMG ?= $(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE_IMG_TAG)
+
+IBM_BUNDLE_IMG_NAME ?= docker.io/ibmcom/ibm-storage-odf-operator-bundle
+IBM_BUNDLE_IMG_TAG ?= 0.2.0
+IBM_BUNDLE_IMG ?= $(IBM_BUNDLE_IMG_NAME):$(IBM_BUNDLE_IMG_TAG)
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
-OCS_BUNDLE_IMG ?= quay.io/ocs-dev/ocs-operator-bundle:latest
-IBM_BUNDLE_IMG ?= docker.io/ibmcom/ibm-storage-odf-operator-bundle:0.2.0
 BUNDLE_IMGS ?= $(shell echo $(BUNDLE_IMG) $(OCS_BUNDLE_IMG) $(IBM_BUNDLE_IMG) | sed "s/ /,/g")
 
 # Set CATALOG_BASE_IMG to an existing catalog image tag to add $BUNDLE_IMGS to that image.
