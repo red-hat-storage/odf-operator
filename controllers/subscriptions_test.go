@@ -82,9 +82,8 @@ func TestEnsureSubscription(t *testing.T) {
 			assert.Equal(t, 0, len(existingSubscriptions.Items))
 		} else {
 			assert.Equal(t, 1, len(existingSubscriptions.Items))
-			// TODO: Parameterize below string values
-			assert.Equal(t, "ibm-operator", existingSubscriptions.Items[0].Spec.Package)
-			assert.Equal(t, "alpha", existingSubscriptions.Items[0].Spec.Channel)
+			assert.Equal(t, IbmSubscriptionPackage, existingSubscriptions.Items[0].Spec.Package)
+			assert.Equal(t, IbmSubscriptionChannel, existingSubscriptions.Items[0].Spec.Channel)
 		}
 	}
 }
