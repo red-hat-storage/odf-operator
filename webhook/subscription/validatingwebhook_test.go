@@ -30,7 +30,7 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
-	odfcontroller "github.com/red-hat-data-services/odf-operator/controllers"
+	odfcontrollers "github.com/red-hat-data-services/odf-operator/controllers"
 )
 
 func TestHandleValidator(t *testing.T) {
@@ -90,9 +90,9 @@ func TestHandleValidator(t *testing.T) {
 
 		r := &SubscriptionValidator{decoder: decoder}
 
-		storageSystem := odfcontroller.GetFakeStorageSystem()
+		storageSystem := odfcontrollers.GetFakeStorageSystem()
 		storageSystem.Spec.Kind = odfv1alpha1.FlashSystemCluster
-		subscription := odfcontroller.GetFlashSystemClusterSubscription(storageSystem)
+		subscription := odfcontrollers.GetFlashSystemClusterSubscription(storageSystem)
 		subscription.Spec.Channel = tc.channel
 		rawSubscription, err := json.Marshal(subscription)
 		assert.NoError(t, err)
