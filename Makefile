@@ -77,6 +77,12 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
+deploy-with-olm: kustomize ## Deploy controller to the K8s cluster via OLM
+	cd config/install && $(KUSTOMIZE) edit set image catalog-img=${CATALOG_IMG}
+	$(KUSTOMIZE) build config/install | sed "s/odf-operator.v.*/odf-operator.v${VERSION}/g" | kubectl create -f -
+
+undeploy-with-olm: ## Undeploy controller from the K8s cluster
+	$(KUSTOMIZE) build config/install | kubectl delete -f -
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.

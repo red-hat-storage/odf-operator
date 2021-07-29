@@ -1,0 +1,10 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: odf-catalogsource
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: catalog-img
+  displayName: OpenShift Data Foundation
+  publisher: Red Hat
