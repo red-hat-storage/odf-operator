@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	odfcontrollers "github.com/red-hat-data-services/odf-operator/controllers"
 )
 
 // log is for logging in this package.
@@ -63,8 +64,8 @@ func (r *SubscriptionDefaulter) Default(instance *operatorv1alpha1.Subscription)
 
 	subscriptionlog.Info("default", "name", instance.Name)
 
-	if instance.Spec.Package == "ibm-operator" && instance.Spec.Channel != "alpha" {
-		instance.Spec.Channel = "alpha"
+	if instance.Spec.Package == odfcontrollers.IbmSubscriptionPackage && instance.Spec.Channel != odfcontrollers.IbmSubscriptionChannel {
+		instance.Spec.Channel = odfcontrollers.IbmSubscriptionChannel
 	}
 }
 
