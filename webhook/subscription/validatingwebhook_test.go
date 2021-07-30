@@ -30,7 +30,7 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
-	odfcontroller "github.com/red-hat-data-services/odf-operator/controllers"
+	odfcontrollers "github.com/red-hat-data-services/odf-operator/controllers"
 )
 
 func TestHandleValidator(t *testing.T) {
@@ -42,38 +42,38 @@ func TestHandleValidator(t *testing.T) {
 		Response  bool
 	}{
 		{
-			label:     "make sure it accept the create request if channel is alpha",
-			channel:   "alpha",
+			label:     "make sure it accept the create request if channel is as expected",
+			channel:   odfcontrollers.IbmSubscriptionChannel,
 			Operation: admissionv1.Create,
 			Response:  true,
 		},
 		{
-			label:     "make sure it accept the update request if channel is alpha",
-			channel:   "alpha",
+			label:     "make sure it accept the update request if channel is as expected",
+			channel:   odfcontrollers.IbmSubscriptionChannel,
 			Operation: admissionv1.Update,
 			Response:  true,
 		},
 		{
-			label:     "make sure it accept the delete request if channel is alpha",
-			channel:   "alpha",
+			label:     "make sure it accept the delete request if channel is as expected",
+			channel:   odfcontrollers.IbmSubscriptionChannel,
 			Operation: admissionv1.Delete,
 			Response:  true,
 		},
 		{
-			label:     "make sure it decline the create request if channel is beta",
-			channel:   "beta",
+			label:     "make sure it decline the create request if channel is not as expected",
+			channel:   "fake-channel",
 			Operation: admissionv1.Create,
 			Response:  false,
 		},
 		{
-			label:     "make sure it decline the update request if channel is beta",
-			channel:   "beta",
+			label:     "make sure it decline the update request if channel is not as expected",
+			channel:   "fake-channel",
 			Operation: admissionv1.Update,
 			Response:  false,
 		},
 		{
-			label:     "make sure it accept the delete request if channel is beta",
-			channel:   "beta",
+			label:     "make sure it accept the delete request if channel is not as expected",
+			channel:   "fake-channel",
 			Operation: admissionv1.Delete,
 			Response:  true,
 		},
@@ -90,9 +90,9 @@ func TestHandleValidator(t *testing.T) {
 
 		r := &SubscriptionValidator{decoder: decoder}
 
-		storageSystem := odfcontroller.GetFakeStorageSystem()
+		storageSystem := odfcontrollers.GetFakeStorageSystem()
 		storageSystem.Spec.Kind = odfv1alpha1.FlashSystemCluster
-		subscription := odfcontroller.GetFlashSystemClusterSubscription(storageSystem)
+		subscription := odfcontrollers.GetFlashSystemClusterSubscription(storageSystem)
 		subscription.Spec.Channel = tc.channel
 		rawSubscription, err := json.Marshal(subscription)
 		assert.NoError(t, err)

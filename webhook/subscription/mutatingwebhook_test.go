@@ -29,7 +29,7 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
-	odfcontroller "github.com/red-hat-data-services/odf-operator/controllers"
+	odfcontrollers "github.com/red-hat-data-services/odf-operator/controllers"
 )
 
 func TestHandleDefaulter(t *testing.T) {
@@ -40,13 +40,13 @@ func TestHandleDefaulter(t *testing.T) {
 		expectedChange bool
 	}{
 		{
-			label:          "ensure it does not change channel if it is already alpha",
-			channel:        "alpha",
+			label:          "ensure it does not change channel if it is already as expected",
+			channel:        odfcontrollers.IbmSubscriptionChannel,
 			expectedChange: false,
 		},
 		{
-			label:          "ensure it change the channel to alpha if it is not alpha",
-			channel:        "beta",
+			label:          "ensure it change the channel if it is not as expected",
+			channel:        "fake-channel",
 			expectedChange: true,
 		},
 	}
@@ -62,9 +62,9 @@ func TestHandleDefaulter(t *testing.T) {
 
 		r := &SubscriptionDefaulter{decoder: decoder}
 
-		storageSystem := odfcontroller.GetFakeStorageSystem()
+		storageSystem := odfcontrollers.GetFakeStorageSystem()
 		storageSystem.Spec.Kind = odfv1alpha1.FlashSystemCluster
-		subscription := odfcontroller.GetFlashSystemClusterSubscription(storageSystem)
+		subscription := odfcontrollers.GetFlashSystemClusterSubscription(storageSystem)
 		subscription.Spec.Channel = tc.channel
 		rawSubscription, err := json.Marshal(subscription)
 		assert.NoError(t, err)
@@ -84,8 +84,7 @@ func TestHandleDefaulter(t *testing.T) {
 			for _, p := range response.Patches {
 				assert.Equal(t, "replace", p.Operation)
 				assert.Equal(t, "/spec/channel", p.Path)
-				// TODO: Parameterize below string values
-				assert.Equal(t, "alpha", p.Value)
+				assert.Equal(t, odfcontrollers.IbmSubscriptionChannel, p.Value)
 			}
 		} else {
 			assert.Equal(t, 0, len(response.Patches))

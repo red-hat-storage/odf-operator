@@ -23,12 +23,21 @@ import (
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
+const (
+	IbmSubscriptionName                   = "ibm-storage-odf-operator"
+	IbmSubscriptionPackage                = "ibm-storage-odf-operator"
+	IbmSubscriptionChannel                = "stable-v1"
+	IbmSubscriptionStartingCSV            = "ibm-storage-odf-operator.v0.2.0"
+	IbmSubscriptionCatalogSource          = "odf-catalogsource"
+	IbmSubscriptionCatalogSourceNamespace = "openshift-marketplace"
+)
+
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
 func GetFlashSystemClusterSubscription(instance *odfv1alpha1.StorageSystem) *operatorv1alpha1.Subscription {
 
 	return &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name,
+			Name:      IbmSubscriptionName,
 			Namespace: instance.Namespace,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: instance.APIVersion,
@@ -39,10 +48,12 @@ func GetFlashSystemClusterSubscription(instance *odfv1alpha1.StorageSystem) *ope
 			}},
 		},
 		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          "ibm-catalogsource",
-			CatalogSourceNamespace: "openshift-marketplace",
-			Package:                "ibm-operator",
-			Channel:                "alpha",
+			CatalogSource:          IbmSubscriptionCatalogSource,
+			CatalogSourceNamespace: IbmSubscriptionCatalogSourceNamespace,
+			Package:                IbmSubscriptionPackage,
+			Channel:                IbmSubscriptionChannel,
+			StartingCSV:            IbmSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
 		},
 	}
 }
