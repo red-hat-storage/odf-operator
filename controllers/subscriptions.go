@@ -18,12 +18,18 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+)
+
+const (
+	OcsCsvName = "ocs-operator.v4.9.0"
 )
 
 func FilterSubscriptionWithPackage(subs *operatorv1alpha1.SubscriptionList, pkg string) *operatorv1alpha1.Subscription {
@@ -82,4 +88,30 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 	}
 
 	return nil
+}
+
+func (r *StorageSystemReconciler) isCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+
+	var csvName string
+
+	if instance.Spec.Kind == VendorFlashSystemCluster() {
+		csvName = IbmSubscriptionStartingCSV
+	} else if instance.Spec.Kind == VendorStorageCluster() {
+		csvName = OcsCsvName
+	}
+
+	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
+	err := r.Client.Get(context.TODO(), types.NamespacedName{
+		Name: csvName, Namespace: instance.Spec.NameSpace}, csvObj)
+	if err != nil {
+		return err
+	}
+
+	if csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
+		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful {
+
+		return nil
+	} else {
+		return fmt.Errorf("CSV %s is not ready", csvName)
+	}
 }

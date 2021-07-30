@@ -53,6 +53,7 @@ type StorageSystemReconciler struct {
 //+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=odf.ibm.com,resources=flashsystemclusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=*
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;create;update
@@ -110,6 +111,8 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 
 	var err error
 
+	instance.Status.Phase = odfv1alpha1.PhaseProgressing
+
 	// add/remove finalizer
 	if instance.GetDeletionTimestamp().IsZero() {
 		if !util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
@@ -122,6 +125,8 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		}
 	} else {
 		// deletion phase
+		instance.Status.Phase = odfv1alpha1.PhaseDeleting
+
 		if util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
 			// TODO: delete objects
 
@@ -151,10 +156,17 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		return ctrl.Result{}, err
 	}
 
+	err = r.isCsvReady(instance, logger)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	requeue, err := r.setConditionResourcePresent(instance, logger)
 	if requeue {
 		return ctrl.Result{Requeue: true}, err
 	}
+
+	instance.Status.Phase = odfv1alpha1.PhaseReady
 
 	return ctrl.Result{}, nil
 }
