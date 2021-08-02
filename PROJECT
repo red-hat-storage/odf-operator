@@ -16,4 +16,9 @@ resources:
   kind: StorageSystem
   path: github.com/red-hat-data-services/odf-operator/api/v1alpha1
   version: v1alpha1
+- controller: true
+  domain: openshift.io
+  group: ocs
+  kind: StorageCluster
+  version: v1
 version: "3"

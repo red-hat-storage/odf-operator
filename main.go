@@ -32,6 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+
+	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/red-hat-data-services/odf-operator/controllers"
 
@@ -49,6 +51,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(odfv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(ocsv1.AddToScheme(scheme))
 
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
@@ -94,6 +97,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageSystem")
+		os.Exit(1)
+	}
+	if err = (&controllers.StorageClusterReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "StorageCluster")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
