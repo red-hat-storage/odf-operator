@@ -35,19 +35,19 @@ func TestEnsureSubscription(t *testing.T) {
 	}{
 		{
 			label:                    "do not create subscription for StorageCluster",
-			kind:                     odfv1alpha1.StorageCluster,
+			kind:                     VendorStorageCluster(),
 			subscriptionAlreadyExist: false,
 			expectedSubscription:     false,
 		},
 		{
 			label:                    "create subscription for FlashSystemCluster if does not exist one",
-			kind:                     odfv1alpha1.FlashSystemCluster,
+			kind:                     VendorFlashSystemCluster(),
 			subscriptionAlreadyExist: false,
 			expectedSubscription:     true,
 		},
 		{
 			label:                    "do not create subscription for FlashSystemCluster if it does exist",
-			kind:                     odfv1alpha1.FlashSystemCluster,
+			kind:                     VendorFlashSystemCluster(),
 			subscriptionAlreadyExist: true,
 			expectedSubscription:     true,
 		},
@@ -60,8 +60,8 @@ func TestEnsureSubscription(t *testing.T) {
 		err := operatorv1alpha1.AddToScheme(fakeReconciler.Scheme)
 		assert.NoError(t, err)
 
-		if tc.kind == odfv1alpha1.FlashSystemCluster {
-			fakeStorageSystem.Spec.Kind = odfv1alpha1.FlashSystemCluster
+		if tc.kind == VendorFlashSystemCluster() {
+			fakeStorageSystem.Spec.Kind = tc.kind
 		}
 
 		if tc.subscriptionAlreadyExist {
