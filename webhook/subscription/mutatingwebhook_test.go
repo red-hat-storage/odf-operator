@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	odfcontrollers "github.com/red-hat-data-services/odf-operator/controllers"
 )
 
@@ -63,7 +62,7 @@ func TestHandleDefaulter(t *testing.T) {
 		r := &SubscriptionDefaulter{decoder: decoder}
 
 		storageSystem := odfcontrollers.GetFakeStorageSystem()
-		storageSystem.Spec.Kind = odfv1alpha1.FlashSystemCluster
+		storageSystem.Spec.Kind = odfcontrollers.VendorFlashSystemCluster()
 		subscription := odfcontrollers.GetFlashSystemClusterSubscription(storageSystem)
 		subscription.Spec.Channel = tc.channel
 		rawSubscription, err := json.Marshal(subscription)
