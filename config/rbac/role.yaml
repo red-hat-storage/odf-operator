@@ -49,6 +49,18 @@ rules:
   - patch
   - update
 - apiGroups:
+  - odf.ibm.com
+  resources:
+  - flashsystemclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - odf.openshift.io
   resources:
   - storagesystems

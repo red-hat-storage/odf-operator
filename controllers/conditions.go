@@ -17,11 +17,16 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
+	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
+	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
@@ -45,14 +50,12 @@ func (r *StorageSystemReconciler) setConditionResourcePresent(instance *odfv1alp
 
 	if instance.Spec.Kind == odfv1alpha1.StorageCluster {
 		logger.Info("get storageCluster")
-		// TODO add types for ocs
-		//storageCluster := &ocsv1.StorageCluster{}
-		//err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.NameSpace}, storageCluster)
+		storageCluster := &ocsv1.StorageCluster{}
+		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.NameSpace}, storageCluster)
 	} else if instance.Spec.Kind == odfv1alpha1.FlashSystemCluster {
 		logger.Info("get flashSystemCluster")
-		// TODO add types for ibm
-		//flashSystemCluster := &ibmv1.FlashSystemCluster{}
-		//err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.NameSpace}, flashSystemCluster)
+		flashSystemCluster := &ibmv1alpha1.FlashSystemCluster{}
+		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.NameSpace}, flashSystemCluster)
 	}
 
 	if err == nil {
