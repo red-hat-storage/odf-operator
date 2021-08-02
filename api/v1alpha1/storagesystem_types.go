@@ -34,6 +34,17 @@ const (
 	ConditionResourcePresent conditionsv1.ConditionType = "ResourcePresent"
 )
 
+const (
+	// PhaseReady represents the Deleting state of storagesystem
+	PhaseDeleting = "Deleting"
+
+	// PhaseReady represents the Progressing state of storagesystem
+	PhaseProgressing = "Progressing"
+
+	// PhaseReady represents the Ready state of storagesystem
+	PhaseReady = "Ready"
+)
+
 // StorageSystemSpec defines the desired state of StorageSystem
 type StorageSystemSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file

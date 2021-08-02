@@ -135,6 +135,18 @@ spec:
         - apiGroups:
           - operators.coreos.com
           resources:
+          - clusterserviceversions
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - operators.coreos.com
+          resources:
           - subscriptions
           verbs:
           - create
