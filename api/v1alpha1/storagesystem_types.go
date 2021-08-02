@@ -30,14 +30,6 @@ import (
 type StorageKind string
 
 const (
-	// FlashSystemCluster represents the ibm flashsystem
-	FlashSystemCluster StorageKind = "flashsystemcluster.odf.ibm.com/v1alpha1"
-
-	// StorageCluster represents the openshift container storage
-	StorageCluster StorageKind = "storagecluster.ocs.openshift.io/v1"
-)
-
-const (
 	// ConditionResourcePresent communicates the status of underlying resource
 	ConditionResourcePresent conditionsv1.ConditionType = "ResourcePresent"
 )
