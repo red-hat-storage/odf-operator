@@ -161,7 +161,7 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 
 func (r *StorageSystemReconciler) validateStorageSystemSpec(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
-	if instance.Spec.Kind != odfv1alpha1.StorageCluster && instance.Spec.Kind != odfv1alpha1.FlashSystemCluster {
+	if instance.Spec.Kind != VendorStorageCluster() && instance.Spec.Kind != VendorFlashSystemCluster() {
 		return fmt.Errorf("unsupported kind %s", instance.Spec.Kind)
 	}
 

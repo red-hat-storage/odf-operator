@@ -34,9 +34,9 @@ func (r *StorageSystemReconciler) deleteResources(instance *odfv1alpha1.StorageS
 
 	var backendStorage client.Object
 
-	if instance.Spec.Kind == odfv1alpha1.StorageCluster {
+	if instance.Spec.Kind == VendorStorageCluster() {
 		backendStorage = &ocsv1.StorageCluster{}
-	} else if instance.Spec.Kind == odfv1alpha1.FlashSystemCluster {
+	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
 		backendStorage = &ibmv1alpha1.FlashSystemCluster{}
 	}
 

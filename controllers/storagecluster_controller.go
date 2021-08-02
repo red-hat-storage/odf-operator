@@ -93,7 +93,7 @@ func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			Spec: odfv1alpha1.StorageSystemSpec{
 				Name:      instance.Name,
 				NameSpace: instance.Namespace,
-				Kind:      odfv1alpha1.StorageCluster,
+				Kind:      VendorStorageCluster(),
 			},
 		}
 
@@ -122,7 +122,7 @@ func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func filterStorageSystem(storageSystemList *odfv1alpha1.StorageSystemList, storageClusterName string) *odfv1alpha1.StorageSystem {
 
 	for _, ss := range storageSystemList.Items {
-		if ss.Spec.Name == storageClusterName && ss.Spec.Kind == odfv1alpha1.StorageCluster {
+		if ss.Spec.Name == storageClusterName && ss.Spec.Kind == VendorStorageCluster() {
 			return &ss
 		}
 	}

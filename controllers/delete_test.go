@@ -39,25 +39,25 @@ func TestDeleteResources(t *testing.T) {
 	}{
 		{
 			label:         "delete StorageCluster",
-			kind:          odfv1alpha1.StorageCluster,
+			kind:          VendorStorageCluster(),
 			resourceExist: true,
 			expectedError: true,
 		},
 		{
 			label:         "delete FlashSystemCluster",
-			kind:          odfv1alpha1.FlashSystemCluster,
+			kind:          VendorFlashSystemCluster(),
 			resourceExist: true,
 			expectedError: true,
 		},
 		{
 			label:         "StorageCluster does not exist",
-			kind:          odfv1alpha1.StorageCluster,
+			kind:          VendorStorageCluster(),
 			resourceExist: false,
 			expectedError: false,
 		},
 		{
 			label:         "FlashSystemCluster does not exist",
-			kind:          odfv1alpha1.FlashSystemCluster,
+			kind:          VendorFlashSystemCluster(),
 			resourceExist: false,
 			expectedError: false,
 		},
@@ -74,17 +74,17 @@ func TestDeleteResources(t *testing.T) {
 		err = ibmv1alpha1.AddToScheme(fakeReconciler.Scheme)
 		assert.NoError(t, err)
 
-		if tc.kind == odfv1alpha1.FlashSystemCluster {
+		if tc.kind == VendorFlashSystemCluster() {
 			fakeStorageSystem.Spec.Kind = tc.kind
 			fakeStorageSystem.Spec.Name = "fake-flash-system-cluster"
 		}
 
 		if tc.resourceExist {
 			// create resource
-			if tc.kind == odfv1alpha1.StorageCluster {
+			if tc.kind == VendorStorageCluster() {
 				err = fakeReconciler.Client.Create(context.TODO(), GetFakeStorageCluster())
 				assert.NoError(t, err)
-			} else if tc.kind == odfv1alpha1.FlashSystemCluster {
+			} else if tc.kind == VendorFlashSystemCluster() {
 				err = fakeReconciler.Client.Create(context.TODO(), GetFakeFlashSystemCluster())
 				assert.NoError(t, err)
 			}
@@ -99,14 +99,14 @@ func TestDeleteResources(t *testing.T) {
 		}
 
 		// verify resource does not exist
-		if tc.kind == odfv1alpha1.StorageCluster {
+		if tc.kind == VendorStorageCluster() {
 			storageCluster := &ocsv1.StorageCluster{}
 			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
 				Name: fakeStorageSystem.Spec.Name, Namespace: fakeStorageSystem.Namespace},
 				storageCluster)
 			assert.True(t, errors.IsNotFound(err))
 
-		} else if tc.kind == odfv1alpha1.FlashSystemCluster {
+		} else if tc.kind == VendorFlashSystemCluster() {
 			flashSystemCluster := &ibmv1alpha1.FlashSystemCluster{}
 			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
 				Name: fakeStorageSystem.Spec.Name, Namespace: fakeStorageSystem.Namespace},

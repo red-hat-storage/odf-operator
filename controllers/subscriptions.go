@@ -41,10 +41,10 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 
 	var desiredSubscription *operatorv1alpha1.Subscription
 
-	if instance.Spec.Kind == odfv1alpha1.StorageCluster {
+	if instance.Spec.Kind == VendorStorageCluster() {
 		// No need to create subscription
 		return nil
-	} else if instance.Spec.Kind == odfv1alpha1.FlashSystemCluster {
+	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
 		desiredSubscription = GetFlashSystemClusterSubscription(instance)
 	}
 
