@@ -92,7 +92,7 @@ func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			},
 			Spec: odfv1alpha1.StorageSystemSpec{
 				Name:      instance.Name,
-				NameSpace: instance.Namespace,
+				Namespace: instance.Namespace,
 				Kind:      VendorStorageCluster(),
 			},
 		}

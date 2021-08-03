@@ -98,7 +98,7 @@ func (r *StorageSystemReconciler) isCsvReady(instance *odfv1alpha1.StorageSystem
 
 	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
-		Name: csvName, Namespace: instance.Spec.NameSpace}, csvObj)
+		Name: csvName, Namespace: instance.Spec.Namespace}, csvObj)
 	if err != nil {
 		return err
 	}

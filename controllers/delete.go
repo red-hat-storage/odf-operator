@@ -41,7 +41,7 @@ func (r *StorageSystemReconciler) deleteResources(instance *odfv1alpha1.StorageS
 	}
 
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
-		Name: instance.Spec.Name, Namespace: instance.Spec.NameSpace},
+		Name: instance.Spec.Name, Namespace: instance.Spec.Namespace},
 		backendStorage)
 
 	if errors.IsNotFound(err) {

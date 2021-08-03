@@ -37,7 +37,7 @@ func GetFakeStorageSystem() *odfv1alpha1.StorageSystem {
 		Spec: odfv1alpha1.StorageSystemSpec{
 			Kind:      VendorStorageCluster(),
 			Name:      "fake-storage-cluster",
-			NameSpace: "fake-namespace",
+			Namespace: "fake-namespace",
 		},
 	}
 }
