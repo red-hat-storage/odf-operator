@@ -58,13 +58,6 @@ type StorageSystemReconciler struct {
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=*
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;create;update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the StorageSystem object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -128,7 +121,6 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		instance.Status.Phase = odfv1alpha1.PhaseDeleting
 
 		if util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
-			// TODO: delete objects
 
 			err = r.deleteResources(instance, logger)
 			if err != nil {
