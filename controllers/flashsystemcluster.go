@@ -23,15 +23,6 @@ import (
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
-const (
-	IbmSubscriptionName                   = "ibm-storage-odf-operator"
-	IbmSubscriptionPackage                = "ibm-storage-odf-operator"
-	IbmSubscriptionChannel                = "stable-v1"
-	IbmSubscriptionStartingCSV            = "ibm-storage-odf-operator.v0.2.0"
-	IbmSubscriptionCatalogSource          = "odf-catalogsource"
-	IbmSubscriptionCatalogSourceNamespace = "openshift-marketplace"
-)
-
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
 func GetFlashSystemClusterSubscription(instance *odfv1alpha1.StorageSystem) *operatorv1alpha1.Subscription {
 
