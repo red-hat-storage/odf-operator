@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -25,7 +26,6 @@ import (
 	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	consolev1 "github.com/openshift/api/console/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
-	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 func GetFakeStorageSystem() *odfv1alpha1.StorageSystem {

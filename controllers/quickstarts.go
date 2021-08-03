@@ -5,10 +5,11 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
-	consolev1 "github.com/openshift/api/console/v1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+
+	consolev1 "github.com/openshift/api/console/v1"
 )
 
 func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {

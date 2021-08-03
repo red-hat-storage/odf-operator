@@ -20,9 +20,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestEnsureSubscription(t *testing.T) {

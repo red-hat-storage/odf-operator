@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
-	consolev1 "github.com/openshift/api/console/v1"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	consolev1 "github.com/openshift/api/console/v1"
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 var (
