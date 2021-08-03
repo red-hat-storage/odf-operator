@@ -57,7 +57,7 @@ spec:
                 description: Name describes the name of managed storage vendor CR
                 type: string
               namespace:
-                description: NameSpace describes the namespace of managed storage
+                description: Namespace describes the namespace of managed storage
                   vendor CR
                 type: string
             required:
