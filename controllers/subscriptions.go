@@ -28,10 +28,6 @@ import (
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
-const (
-	OcsCsvName = "ocs-operator.v4.9.0"
-)
-
 func FilterSubscriptionWithPackage(subs *operatorv1alpha1.SubscriptionList, pkg string) *operatorv1alpha1.Subscription {
 
 	for _, s := range subs.Items {
