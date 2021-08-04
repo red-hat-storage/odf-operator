@@ -20,12 +20,12 @@ import (
 	"context"
 	"testing"
 
-	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
 	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
+	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 

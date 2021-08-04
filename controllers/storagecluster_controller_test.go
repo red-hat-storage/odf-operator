@@ -20,10 +20,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
 func TestReconcile(t *testing.T) {
@@ -48,7 +49,7 @@ func TestReconcile(t *testing.T) {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
 		fakeReconciler, fakeStorageCluster := GetFakeStorageClusterReconciler()
-		_ = v1alpha1.AddToScheme(fakeReconciler.Scheme)
+		_ = odfv1alpha1.AddToScheme(fakeReconciler.Scheme)
 
 		fakeStorageSystem := GetFakeStorageSystem()
 

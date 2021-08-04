@@ -62,7 +62,7 @@ func TestSetConditionResourcePresent(t *testing.T) {
 			storageCluster := &ocsv1.StorageCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      fakeStorageSystem.Spec.Name,
-					Namespace: fakeStorageSystem.Spec.NameSpace,
+					Namespace: fakeStorageSystem.Spec.Namespace,
 				},
 			}
 			err := fakeReconciler.Client.Create(context.TODO(), storageCluster)

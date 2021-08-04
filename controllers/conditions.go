@@ -51,11 +51,11 @@ func (r *StorageSystemReconciler) setConditionResourcePresent(instance *odfv1alp
 	if instance.Spec.Kind == VendorStorageCluster() {
 		logger.Info("get storageCluster")
 		storageCluster := &ocsv1.StorageCluster{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.NameSpace}, storageCluster)
+		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.Namespace}, storageCluster)
 	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
 		logger.Info("get flashSystemCluster")
 		flashSystemCluster := &ibmv1alpha1.FlashSystemCluster{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.NameSpace}, flashSystemCluster)
+		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.Namespace}, flashSystemCluster)
 	}
 
 	if err == nil {
