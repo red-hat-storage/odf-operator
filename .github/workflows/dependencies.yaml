@@ -1,0 +1,12 @@
+name: github
+
+on:
+  pull_request_target:
+    types:
+      - opened
+
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: z0al/dependent-issues@v1
