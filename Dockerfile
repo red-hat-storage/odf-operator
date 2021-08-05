@@ -17,6 +17,7 @@ COPY api/ api/
 COPY controllers/ controllers/
 COPY pkg/ pkg/
 COPY webhook/ webhook/
+COPY config/ config/
 
 # Run tests and linting
 RUN make test
