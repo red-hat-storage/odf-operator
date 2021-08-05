@@ -46,6 +46,15 @@ test: manifests generate fmt vet ## Run tests.
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
 
+update-mgr-env: ## Feed env variables to the manager configmap
+	@echo -e "OCS_CSV_NAME=$(OCS_CSV_NAME)\n\
+	IBM_SUBSCRIPTION_NAME=$(IBM_SUBSCRIPTION_NAME)\n\
+	IBM_SUBSCRIPTION_PACKAGE=$(IBM_SUBSCRIPTION_PACKAGE)\n\
+	IBM_SUBSCRIPTION_CHANNEL=$(IBM_SUBSCRIPTION_CHANNEL)\n\
+	IBM_SUBSCRIPTION_STARTINGCSV=$(IBM_SUBSCRIPTION_STARTINGCSV)\n\
+	IBM_SUBSCRIPTION_CATALOGSOURCE=$(IBM_SUBSCRIPTION_CATALOGSOURCE)\n\
+	IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE=$(IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE)" > config/manager/manager.env
+
 ##@ Build
 
 build: generate fmt vet go-build ## Build manager binary.
