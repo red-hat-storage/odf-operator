@@ -44,13 +44,15 @@ CATALOG_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CATALOG_IMAGE_NAME):$(I
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
-OCS_BUNDLE_IMG_NAME ?= quay.io/ocs-dev/ocs-operator-bundle
-OCS_BUNDLE_IMG_TAG ?= latest
-OCS_BUNDLE_IMG ?= $(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE_IMG_TAG)
+OCS_BUNDLE_NAME ?= ocs-operator
+OCS_BUNDLE_IMG_NAME ?= $(OCS_BUNDLE_NAME)-bundle
+OCS_BUNDLE_IMG_TAG ?= v4.9.0
+OCS_BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE_IMG_TAG)
 
-IBM_BUNDLE_IMG_NAME ?= docker.io/ibmcom/ibm-storage-odf-operator-bundle
+IBM_BUNDLE_NAME ?= ibm-storage-odf-operator
+IBM_BUNDLE_IMG_NAME ?= $(IBM_BUNDLE_NAME)-bundle
 IBM_BUNDLE_IMG_TAG ?= 0.2.0
-IBM_BUNDLE_IMG ?= $(IBM_BUNDLE_IMG_NAME):$(IBM_BUNDLE_IMG_TAG)
+IBM_BUNDLE_IMG ?= docker.io/ibmcom/$(IBM_BUNDLE_IMG_NAME):$(IBM_BUNDLE_IMG_TAG)
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
@@ -60,3 +62,12 @@ BUNDLE_IMGS ?= $(shell echo $(BUNDLE_IMG) $(OCS_BUNDLE_IMG) $(IBM_BUNDLE_IMG) | 
 ifneq ($(origin CATALOG_BASE_IMG), undefined)
 FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMG)
 endif
+
+# manager env variables
+OCS_CSV_NAME ?= $(OCS_BUNDLE_NAME).$(OCS_BUNDLE_IMG_TAG)
+IBM_SUBSCRIPTION_NAME ?= $(IBM_BUNDLE_NAME)
+IBM_SUBSCRIPTION_PACKAGE ?= $(IBM_BUNDLE_NAME)
+IBM_SUBSCRIPTION_CHANNEL ?= stable-v1
+IBM_SUBSCRIPTION_STARTINGCSV ?= $(IBM_BUNDLE_NAME).v$(IBM_BUNDLE_IMG_TAG)
+IBM_SUBSCRIPTION_CATALOGSOURCE ?= odf-catalogsource
+IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE ?= openshift-marketplace

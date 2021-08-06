@@ -200,6 +200,42 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
+                env:
+                - name: OCS_CSV_NAME
+                  valueFrom:
+                    configMapKeyRef:
+                      key: OCS_CSV_NAME
+                      name: odf-operator-manager-config
+                - name: IBM_SUBSCRIPTION_NAME
+                  valueFrom:
+                    configMapKeyRef:
+                      key: IBM_SUBSCRIPTION_NAME
+                      name: odf-operator-manager-config
+                - name: IBM_SUBSCRIPTION_PACKAGE
+                  valueFrom:
+                    configMapKeyRef:
+                      key: IBM_SUBSCRIPTION_PACKAGE
+                      name: odf-operator-manager-config
+                - name: IBM_SUBSCRIPTION_CHANNEL
+                  valueFrom:
+                    configMapKeyRef:
+                      key: IBM_SUBSCRIPTION_CHANNEL
+                      name: odf-operator-manager-config
+                - name: IBM_SUBSCRIPTION_STARTINGCSV
+                  valueFrom:
+                    configMapKeyRef:
+                      key: IBM_SUBSCRIPTION_STARTINGCSV
+                      name: odf-operator-manager-config
+                - name: IBM_SUBSCRIPTION_CATALOGSOURCE
+                  valueFrom:
+                    configMapKeyRef:
+                      key: IBM_SUBSCRIPTION_CATALOGSOURCE
+                      name: odf-operator-manager-config
+                - name: IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE
+                  valueFrom:
+                    configMapKeyRef:
+                      key: IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE
+                      name: odf-operator-manager-config
                 image: quay.io/ocs-dev/odf-operator:latest
                 livenessProbe:
                   httpGet:
