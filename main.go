@@ -33,6 +33,7 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 
+	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/red-hat-data-services/odf-operator/controllers"
@@ -52,6 +53,7 @@ func init() {
 
 	utilruntime.Must(odfv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(ocsv1.AddToScheme(scheme))
+	utilruntime.Must(ibmv1alpha1.AddToScheme(scheme))
 
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
