@@ -38,6 +38,9 @@ const (
 	// PhaseReady represents the Deleting state of storagesystem
 	PhaseDeleting = "Deleting"
 
+	// PhaseError represents the Error state of storagesystem
+	PhaseError = "Error"
+
 	// PhaseReady represents the Progressing state of storagesystem
 	PhaseProgressing = "Progressing"
 
