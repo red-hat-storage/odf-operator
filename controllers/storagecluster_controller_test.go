@@ -70,9 +70,11 @@ func TestReconcile(t *testing.T) {
 		assert.NoError(t, err)
 
 		if tc.AlreadyHasStorageSystem {
-			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{Name: "fake-storage-system", Namespace: "fake-namespace"}, fakeStorageSystem)
+			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
+				Name: "fake-storage-system", Namespace: "fake-namespace"}, fakeStorageSystem)
 		} else {
-			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{Name: fakeStorageCluster.Name, Namespace: fakeStorageCluster.Namespace}, fakeStorageSystem)
+			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
+				Name: fakeStorageCluster.Name + "-storagesystem", Namespace: fakeStorageCluster.Namespace}, fakeStorageSystem)
 		}
 		assert.NoError(t, err)
 
