@@ -33,6 +33,7 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	"github.com/red-hat-data-services/odf-operator/metrics"
 	"github.com/red-hat-data-services/odf-operator/pkg/util"
 )
 
@@ -75,6 +76,8 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	logger.Info("storagesystem instance found")
+
+	metrics.ReportODFSystemMapMetrics(instance.Name, instance.Spec.Name, instance.Spec.Namespace, string(instance.Spec.Kind))
 
 	if err := r.validateStorageSystemSpec(instance, logger); err != nil {
 		logger.Error(err, "failed to validate storagesystem")

@@ -12,6 +12,7 @@ require (
 	github.com/openshift/custom-resource-status v1.1.0
 	github.com/openshift/ocs-operator v0.0.1-alpha1.0.20210624174129-a8164b1085f6
 	github.com/operator-framework/api v0.9.2
+	github.com/prometheus/client_golang v1.8.0
 	github.com/stretchr/testify v1.6.1
 	k8s.io/api v0.20.2
 	k8s.io/apiextensions-apiserver v0.20.2
