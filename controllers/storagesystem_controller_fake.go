@@ -20,6 +20,7 @@ import (
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -54,9 +55,10 @@ func GetFakeStorageSystemReconciler() (*StorageSystemReconciler, *odfv1alpha1.St
 	_ = extv1.AddToScheme(scheme)
 
 	fakeStorageSystemReconciler := &StorageSystemReconciler{
-		Client: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(fakeStorageSystem).Build(),
-		Log:    ctrl.Log.WithName("controllers").WithName("StorageSystem"),
-		Scheme: scheme,
+		Client:   fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(fakeStorageSystem).Build(),
+		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
+		Scheme:   scheme,
+		Recorder: NewEventReporter(record.NewFakeRecorder(1024)),
 	}
 
 	return fakeStorageSystemReconciler, fakeStorageSystem

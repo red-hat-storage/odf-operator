@@ -94,16 +94,18 @@ func main() {
 	}
 
 	if err = (&controllers.StorageSystemReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("StorageSystem"),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
+		Scheme:   mgr.GetScheme(),
+		Recorder: controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageSystem controller")),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageSystem")
 		os.Exit(1)
 	}
 	if err = (&controllers.StorageClusterReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageCluster controller")),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageCluster")
 		os.Exit(1)

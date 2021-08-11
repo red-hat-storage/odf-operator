@@ -19,6 +19,7 @@ package controllers
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	ocsv1 "github.com/openshift/ocs-operator/api/v1"
@@ -41,8 +42,9 @@ func GetFakeStorageClusterReconciler() (*StorageClusterReconciler, *ocsv1.Storag
 	_ = ocsv1.AddToScheme(scheme)
 
 	fakeStorageClusterReconciler := &StorageClusterReconciler{
-		Client: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(fakeStorageCluster).Build(),
-		Scheme: scheme,
+		Client:   fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(fakeStorageCluster).Build(),
+		Scheme:   scheme,
+		Recorder: NewEventReporter(record.NewFakeRecorder(1024)),
 	}
 
 	return fakeStorageClusterReconciler, fakeStorageCluster

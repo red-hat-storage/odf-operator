@@ -18,7 +18,9 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,7 +42,8 @@ const (
 // StorageClusterReconciler reconciles a StorageCluster object
 type StorageClusterReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
+	Recorder *EventReporter
 }
 
 //+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters,verbs=get;list;watch;create;update;patch;delete
@@ -97,6 +100,8 @@ func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return ctrl.Result{}, err
 		}
 		logger.Info("StorageSystem created for the StorageCluster.")
+		r.Recorder.ReportIfNotPresent(instance, corev1.EventTypeNormal, EventReasonCreationSucceeded,
+			fmt.Sprintf("StorageSystem %s created for the StorageCluster %s.", storageSystem.Name, instance.Name))
 	} else {
 		logger.Info("StorageSystem is already present for the StorageCluster.", "StorageSystem", storageSystem.Name)
 	}
