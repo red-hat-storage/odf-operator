@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -30,6 +31,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -40,6 +42,8 @@ import (
 
 	//+kubebuilder:scaffold:imports
 	consolev1 "github.com/openshift/api/console/v1"
+	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
+	console "github.com/red-hat-data-services/odf-operator/console"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
@@ -59,6 +63,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 
 	utilruntime.Must(consolev1.AddToScheme(scheme))
+	utilruntime.Must(consolev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(extv1.AddToScheme(scheme))
 
 }
@@ -67,11 +72,15 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	var odfConsolePort int
+	var ibmConsolePort int
+	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8085", "The address the metric endpoint binds to.")
+	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.IntVar(&odfConsolePort, "odf-console-port", 9001, "The port where the ODF console server will be serving it's payload")
+	flag.IntVar(&ibmConsolePort, "ibm-console-port", 9003, "The port where the IBM console server will be serving it's payload")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -90,6 +99,19 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	setupLog.Info("starting console")
+	if err := mgr.Add(manager.RunnableFunc(func(context.Context) error {
+		err = console.InitConsole(mgr.GetClient(), odfConsolePort, ibmConsolePort)
+		if err != nil {
+			setupLog.Error(err, "unable to Initialize ODF Console")
+			os.Exit(1)
+		}
+		return nil
+	})); err != nil {
+		setupLog.Error(err, "unable to Initialize ODF Console")
 		os.Exit(1)
 	}
 
