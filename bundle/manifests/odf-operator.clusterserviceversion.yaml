@@ -170,6 +170,55 @@ spec:
           - create
         serviceAccountName: odf-operator-controller-manager
       deployments:
+      - name: odf-console
+        spec:
+          selector:
+            matchLabels:
+              app: odf-console
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                app: odf-console
+            spec:
+              containers:
+              - args:
+                - --ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key
+                image: badhikar/odf-console:latest
+                name: odf-console
+                ports:
+                - containerPort: 9001
+                  protocol: TCP
+                resources:
+                  limits:
+                    cpu: 100m
+                    memory: 512Mi
+                volumeMounts:
+                - mountPath: /var/serving-cert
+                  name: odf-console-serving-cert
+                  readOnly: true
+              - args:
+                - --ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key
+                image: ibmcom/ibm-storage-odf-plugin:0.2.0
+                name: ibm-console
+                ports:
+                - containerPort: 9002
+                  protocol: TCP
+                resources:
+                  limits:
+                    cpu: 100m
+                    memory: 512Mi
+                volumeMounts:
+                - mountPath: /var/serving-cert
+                  name: ibm-console-serving-cert
+                  readOnly: true
+              volumes:
+              - name: odf-console-serving-cert
+                secret:
+                  secretName: odf-console-serving-cert
+              - name: ibm-console-serving-cert
+                secret:
+                  secretName: ibm-console-serving-cert
       - name: odf-operator-controller-manager
         spec:
           replicas: 1
@@ -198,6 +247,8 @@ spec:
                 - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
+                - --odf-console-port=9001
+                - --odf-console-port=9002
                 command:
                 - /manager
                 env:
