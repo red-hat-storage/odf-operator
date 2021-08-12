@@ -19,6 +19,7 @@ COPY pkg/ pkg/
 COPY webhook/ webhook/
 COPY config/ config/
 COPY metrics/ metrics/
+COPY console/ console/
 
 # Run tests and linting
 RUN make test
