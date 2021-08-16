@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -44,8 +45,9 @@ const (
 // StorageSystemReconciler reconciles a StorageSystem object
 type StorageSystemReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Recorder *EventReporter
 }
 
 //+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems,verbs=get;list;watch;create;update;patch;delete
@@ -80,6 +82,7 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	metrics.ReportODFSystemMapMetrics(instance.Name, instance.Spec.Name, instance.Spec.Namespace, string(instance.Spec.Kind))
 
 	if err := r.validateStorageSystemSpec(instance, logger); err != nil {
+		r.Recorder.ReportIfNotPresent(instance, corev1.EventTypeWarning, EventReasonValidationFailed, err.Error())
 		logger.Error(err, "failed to validate storagesystem")
 		return reconcile.Result{}, err
 	}
@@ -95,6 +98,7 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	// Reconcile errors have higher priority than status update errors
 	if reconcileError != nil {
+		r.Recorder.ReportIfNotPresent(instance, corev1.EventTypeWarning, EventReasonReconcileFailed, reconcileError.Error())
 		return result, reconcileError
 	} else if statusError != nil {
 		return result, statusError
