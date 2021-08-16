@@ -71,3 +71,14 @@ IBM_SUBSCRIPTION_CHANNEL ?= stable-v1
 IBM_SUBSCRIPTION_STARTINGCSV ?= $(IBM_BUNDLE_NAME).v$(IBM_BUNDLE_IMG_TAG)
 IBM_SUBSCRIPTION_CATALOGSOURCE ?= odf-catalogsource
 IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE ?= openshift-marketplace
+
+# kube rbac proxy image variables
+CLUSTER_ENV ?= openshift
+KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+OSE_KUBE_RBAC_PROXY_IMG ?= registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.7.0
+
+ifeq ($(CLUSTER_ENV), openshift)
+	RBAC_PROXY_IMG ?= $(OSE_KUBE_RBAC_PROXY_IMG)
+else ifeq ($(CLUSTER_ENV), kubernetes)
+	RBAC_PROXY_IMG ?= $(KUBE_RBAC_PROXY_IMG)
+endif
