@@ -80,7 +80,7 @@ func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 		storageSystem = &odfv1alpha1.StorageSystem{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      instance.Name,
+				Name:      instance.Name + "-storagesystem",
 				Namespace: instance.Namespace,
 			},
 			Spec: odfv1alpha1.StorageSystemSpec{
