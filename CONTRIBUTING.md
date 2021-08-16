@@ -42,11 +42,13 @@ action
 api
 bundle
 ci
+console
 controllers
 docs
 godeps
 hack
 makefile
+metrics
 test
 webhook
 ```
