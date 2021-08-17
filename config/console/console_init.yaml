@@ -34,7 +34,7 @@ spec:
               cpu: "100m"
               memory: "512Mi"
           ports:
-            - containerPort: 9002
+            - containerPort: 9003
               protocol: TCP
           args:
             - "--ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key"
