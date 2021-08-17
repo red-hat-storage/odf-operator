@@ -4,6 +4,7 @@ metadata:
   annotations:
     alm-examples: '[]'
     capabilities: Basic Install
+    operatorframework.io/suggested-namespace: openshift-storage
   name: odf-operator.v0.0.0
   namespace: placeholder
 spec:
