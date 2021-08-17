@@ -67,10 +67,10 @@ func GetService(serviceName string, port int, owner metav1.ObjectMeta) apiv1.Ser
 	}
 }
 
-func GetConsolePluginCR(displayName string, consolePort int, serviceName string, owner metav1.ObjectMeta) consolev1alpha1.ConsolePlugin {
+func GetConsolePluginCR(pluginName string, displayName string, consolePort int, serviceName string, owner metav1.ObjectMeta) consolev1alpha1.ConsolePlugin {
 	return consolev1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "odf-console",
+			Name: pluginName,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion: "apps/v1",
@@ -91,6 +91,10 @@ func GetConsolePluginCR(displayName string, consolePort int, serviceName string,
 	}
 }
 
+//+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=*
+
 func InitConsole(client client.Client, odfPort int, ibmPort int) error {
 	deployment := appsv1.Deployment{}
 	if err := client.Get(context.TODO(), types.NamespacedName{
@@ -105,7 +109,7 @@ func InitConsole(client client.Client, odfPort int, ibmPort int) error {
 		return err
 	}
 	// Create core ODF Plugin
-	odfConsolePlugin := GetConsolePluginCR("ODF Plugin", odfPort, odfService.ObjectMeta.Name, deployment.ObjectMeta)
+	odfConsolePlugin := GetConsolePluginCR("odf-console", "ODF Plugin", odfPort, odfService.ObjectMeta.Name, deployment.ObjectMeta)
 	if err := client.Create(context.TODO(), &odfConsolePlugin); err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
@@ -115,7 +119,7 @@ func InitConsole(client client.Client, odfPort int, ibmPort int) error {
 		return err
 	}
 	// Create IBM Console Plugin
-	ibmConsolePlugin := GetConsolePluginCR("IBM Plugin", ibmPort, ibmService.ObjectMeta.Name, deployment.ObjectMeta)
+	ibmConsolePlugin := GetConsolePluginCR("ibm-console", "IBM Plugin", ibmPort, ibmService.ObjectMeta.Name, deployment.ObjectMeta)
 	if err := client.Create(context.TODO(), &ibmConsolePlugin); err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
