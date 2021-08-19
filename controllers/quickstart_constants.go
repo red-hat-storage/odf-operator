@@ -59,7 +59,7 @@ spec:
 
            3. Open the action menu &*⋮&* and select **Add Storage**.
 
-           4. To create a claim, select **Create new claim**. To restore an existing PV to a redeployed application, select &*Use existing claim&*.
+           4. To create a claim, select **Create new claim**. To restore an existing PV to a redeployed application, select **Use existing claim**.
 
            5. Select the appropriate storage type for your application:
 
@@ -135,14 +135,14 @@ spec:
 
             - The **Object overview** tab shows the state of the Multicloud Object Gateway, RADOS Object Gateway, and any Object Claims.
 
-  conclusion: Now you're ready to add storage to your applications and moniter your storage resources.
+  conclusion: Now you're ready to add storage to your applications and monitor your storage resources.
 
 
   nextQuickStart:
   - "odf-configuration"
 `, "&*", "`")
 
-const odfConfigAndManagementQS = `
+var odfConfigAndManagementQS = strings.ReplaceAll(`
 apiVersion: console.openshift.io/v1
 kind: ConsoleQuickStart
 metadata:
@@ -154,54 +154,79 @@ spec:
   description: Learn how to configure OpenShift Data Foundation to meet your deployment
     needs.
   prerequisites: ["Getting Started with OpenShift Data Foundation", "Install the Openshift Data Foundation" ]
-  introduction: In this tour, you will learn about the various configurations available
-    to customize your OpenShift® Data Foundation deployment.
+  introduction: In this tour, you will learn how to customize your **Red Hat OpenShift® Data Foundation** StorageSystems.
   tasks:
-    - title: Expand the ODF Storage System
+    - title: Expand your StorageSystem
       description: |-
-        When we install the ODF operator we created a storage cluster, chose
-        the cluster size, provisioned the underlying storage subsystem, deployed necessary
-        drivers, and created the storage classes to allow the OpenShift users to easily
-        provision and consume storage services that have just been deployed
+        When you installed the OpenShift Data Foundation operator, you:
+        
+        - Created a StorageSystem.
+        
+        - Set a cluster size. 
+        
+        - Provisioned a storage subsystem.
+        
+        - Deployed necessary drivers. 
+        
+        - Created StorageClasses 
+        
 
-        When the capacity of the cluster is about to runout we will notify you.
+        These installation actions enable you to easily provision and consume your deployed storage services.
 
-        **To expand the OCS storage cluster follow these steps:**
-        1. Go to installed operators page and click on **OpenShift Data Foundation**
-        2. Go to storage cluster tab
-        3. Click on the **3 dots icon**
-        4. Click on add capacity
-        5. Use the expand cluster modal if your capacity is about to runout.
+
+        Monitor your storage regularly so that you don't run out of storage space.
+
+
+        As you consume storage, you'll receive cluster capacity alerts at 75% capacity (near-full) and 85% (full) capacity. Always address capacity warnings promptly.
+
+
+        **To expand your StorageSystem:**
+
+        1. In the navigation menu, select **Storage > OpenShift Data Foundation**.
+
+        2. Navigate to the **Storage Systems** tab.
+
+        3. Open the action menu &*⋮&*.
+
+        4. Select **Add Capacity**.
+
       review:
         instructions: |-
-          ####  To verify that you have expanded your storage cluster.
-          Did you expand your cluster?
+          ####  To verify that you have expanded your StorageSystem.
+          Did you expand your StorageSystem?
         failedTaskHelp: This task isn’t verified yet. Try the task again.
       summary:
-        success: You have expanded the Storage Cluster for the ODF operator!
+        success: You have expanded the StorageSystem for the ODF operator!
         failed: Try the steps again.
-    - title: Bucket Class Configuration
+    - title: Configure BucketClass
       description: |-
 
-          Bucket class policy determines the bucket's data location. Its set of policies which apply to all buckets (OBCs) created with the specific bucket class. These policies include: placement, namespace, caching
+          BucketClass determines a bucket's data location and provides a set of policies (placement, namespace, caching) that apply to all buckets created with the same class.
 
-          There are two types of Bucket Classes:
-           - **Standard:** Data will be ingested by Multi Cloud Object Gateway, deduped, compressed and encrypted.
-           - **Namespace:** Data will be stored as is (no dedup, compression, encryption) on the namespace stores.
 
-          **Create a new Bucket class**
+          BucketClasses occur in two types:
 
-          1. Go to installed operators page and click on OpenShift Data Foundation,
-          2. Go to bucket class tab.
-          3. Click on **Create Bucket Class**
-          4. Follow the wizard steps to  finish creation process.
+           - &*Standard:&* Data is ingested by Multicloud Object Gateway, deduped, compressed and encrypted.
+           - &*Namespace:&* Data is stored as-is on the NamespaceStores without being deduped, compressed or encrypted.
+
+
+          **To create a BucketClass:**
+
+          1. in the navigation menu, select **Installed Operators > OpenShift Data Foundation**.
+
+          2. Select **Bucket Class** tab.
+
+          3. Select **Create Bucket Class**
+
+          4. In the wizard, follow each step to create your BucketClass.
       review:
         instructions: |-
-          ####  To verify that you have created bucket class and backing store.
-          Is the Bucket Class in ready state?
+          ####  To verify that you have created BucketClass and BackingStore.
+          Is the BucketClass in ready state?
         failedTaskHelp: This task isn’t verified yet. Try the task again.
       summary:
-        success: You have successfully created bucket class
+        success: You have successfully created BucketClass
         failed: Try the steps again.
-  conclusion: Congrats, the OpenShift Data Foundation operator is ready to use.
-`
+
+  conclusion: You're ready to go! Now you can customize your StorageSystems in OpenShift Data Foundation.
+`, "&*", "`")
