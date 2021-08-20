@@ -323,7 +323,7 @@ spec:
               containers:
               - args:
                 - --ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key
-                image: badhikar/odf-console:latest
+                image: quay.io/ocs-dev/odf-console:latest
                 name: odf-console
                 ports:
                 - containerPort: 9001
