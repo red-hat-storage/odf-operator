@@ -27,56 +27,52 @@ metadata:
   name: "getting-started-odf"
 spec:
   displayName: Getting started with OpenShift Data Foundation
-  durationMinutes: 10
+  durationMinutes: 5
   icon: data:image/svg+xml;base64,PHN2ZyBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCAxMDAgMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIHdpZHRoPSIxMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0ibTY2LjcgNTUuOGM2LjYgMCAxNi4xLTEuNCAxNi4xLTkuMiAwLS42IDAtMS4yLS4yLTEuOGwtMy45LTE3Yy0uOS0zLjctMS43LTUuNC04LjMtOC43LTUuMS0yLjYtMTYuMi02LjktMTkuNS02LjktMy4xIDAtNCA0LTcuNiA0LTMuNSAwLTYuMS0yLjktOS40LTIuOS0zLjIgMC01LjIgMi4xLTYuOCA2LjYgMCAwLTQuNCAxMi41LTUgMTQuMy0uMS4zLS4xLjctLjEgMSAuMSA0LjcgMTkuMiAyMC42IDQ0LjcgMjAuNm0xNy4xLTZjLjkgNC4zLjkgNC44LjkgNS4zIDAgNy40LTguMyAxMS40LTE5LjEgMTEuNC0yNC42IDAtNDYuMS0xNC40LTQ2LjEtMjMuOSAwLTEuMy4zLTIuNi44LTMuOS04LjkuNS0yMC4zIDIuMS0yMC4zIDEyLjIgMCAxNi41IDM5LjIgMzYuOSA3MC4yIDM2LjkgMjMuOCAwIDI5LjgtMTAuNyAyOS44LTE5LjIgMC02LjctNS44LTE0LjMtMTYuMi0xOC44IiBmaWxsPSIjZWQxYzI0Ii8+PHBhdGggZD0ibTgzLjggNDkuOGMuOSA0LjMuOSA0LjguOSA1LjMgMCA3LjQtOC4zIDExLjQtMTkuMSAxMS40LTI0LjYgMC00Ni4xLTE0LjQtNDYuMS0yMy45IDAtMS4zLjMtMi42LjgtMy45bDEuOS00LjhjLS4xLjMtLjEuNy0uMSAxIDAgNC44IDE5LjEgMjAuNyA0NC43IDIwLjcgNi42IDAgMTYuMS0xLjQgMTYuMS05LjIgMC0uNiAwLTEuMi0uMi0xLjh6IiBmaWxsPSIjMDEwMTAxIi8+PC9zdmc+
   description: Learn how to create persistent files, object storage and connect it with your applications.
   introduction: >-
-    RedHat OpenShift Data Foundation provides a highly integrated collection of cloud storage and data services for OpenShift Container Platform.
+    **Red Hat OpenShift® Data Foundation** provides a highly integrated collection of cloud storage and data services for OpenShift Container Platform.
 
-    In this tour, you'll learn how to add block, file, or object storage to your applications, and how to monitor your storage resources in the OpenShift Data Foundation dashboards.
 
-      1. Connecting applications to block or file storage (persistent volumes)
+    In this tour, you'll learn how to:
 
-      1. Connecting applications to object storage (object buckets)
+      - Add block, file, or object storage to your applications.
 
-      1. Using the dashboards to monitor OpenShift Data Foundation resources
+      - Monitor your storage resources with OpenShift Data Foundation dashboards.
 
   tasks:
     -
-      title: Connecting applications to block or file storage (persistent volumes)
+      title: Connecting applications to block or file storage (PersistentVolumeClaims)
       description: >-
 
-        If you want yours data to live longer than yours pods, you need persistent volumes.
-
-        Persistent volumes exist outside the pod lifecycle, meaning that your data is retained even after your pod has been restarted, rescheduled, or deleted. You might use persistent volumes with a MySQL or WordPress application to store information for longer than the lifetime of any individual application pod.
+        PersistentVolumes (PVs) allow your data to exist beyond your pod's lifecycle, even after you restart, rescheduled, or delete it.
 
 
-        After an administrator has set up an OpenShift Data Foundation cluster, developers can use persistent volume claims (PVCs) to request persistent volume (PV) resources without needing to know anything specific about the underlying storage infrastructure.
+        After an administrator sets up an OpenShift Data Foundation StorageSystem, developers can use PersistentVolumeClaims (PVCs) to request PV resources without needing to know anything specific about their underlying storage infrastructure.
 
 
-        **Connect your application with a PVC**
+        **Connect your application with a PVC:**
 
-           1. Click Workloads > Deployments in the navigation menu on the left.
+           1. In the side navigation menu, select **Workloads > Deployments**.
 
-           2. Select your project from the Project drop-down and find your application in the list of deployments.
+           2. Select your project from the **Project** dropdown and find your application in the list of deployments.
 
-           3. Click the Action menu &*⋮&* > Add Storage
+           3. Open the action menu &*⋮&* and select **Add Storage**.
 
-           4. Select &*Create new claim&*, You would select &*Use existing claim&* here if you wanted to restore an existing persistent volume to a redeployed application.
+           4. To create a claim, select **Create new claim**. To restore an existing PV to a redeployed application, select **Use existing claim**.
 
-           5. Select the appropriate type of storage for your application.
+           5. Select the appropriate storage type for your application:
 
-              - &*For block storage&*, select ocs-storagecluster-ceph-rbd.
+              - &*Block storage:&* Select **ocs-storagecluster-ceph-rbd**.
 
-              - &*For file storage&*, select ocs-storagecluster-cephfs.
+              - &*File storage:&* Select **ocs-storagecluster-cephfs**.
 
+           6. Specify storage details.
 
-           6. Specify details of the storage you want to create.
-
-           7. Click Save.
+           7. Click **Save**.
       review:
         instructions: >-
-          To verify that your application is using persistent volume claim:
+          To verify that your application is using PersistentVolumeClaim:
 
             - Click the name of the deployment that you assigned storage to.
 
@@ -86,32 +82,36 @@ spec:
 
         failedTaskHelp: Try the steps again.
     -
-      title: Connecting application to Object Storage
+      title: Connecting application to object storage (Object Bucket Claims)
       description: >-
 
-        Object Buckets provide an easy way to consume object storage across OpenShift Data Foundation. Use your object service endpoint, access key, and secret key to add your object service provider to OpenShift Data Foundation as a backing store. See Adding storage resources for hybrid or multicloud docs.
+        Object Bucket Claims provide an easy way to consume object storage across OpenShift Data Foundation. 
+        
+        
+        Use your object service endpoint, access key, and secret key to add your object service provider to OpenShift Data Foundation as a BackingStore. See Learn how to add storage resources for hybrid or multicloud docs.
 
-        After your object service is configured, you can create an Object Bucket Claim and connect it to your application.
+       
+        **To create an Object Bucket Claim and connect it to your application:**
 
-          1. Click Storage > Object Bucket Claims.
+          1. Select **Storage > Object Bucket Claims**.
 
-          2. Click Create Object Bucket Claim.
+          2. Select **Create Object Bucket Claim**.
 
-          3. Specify a name for your claim and select an appropriate storage class for your application:
+          3. Enter a name for your claim and select an appropriate StorageClass for your application:
 
-             - &*To use on-premises object storage&* select ocs-storagecluster-ceph-rgw.
+             - &*On-premises object storage:&* Select **ocs-storagecluster-ceph-rgw**.
 
-             - &*To use Multicloud Object Gateway&* select openshift-storage.noobaa.io.
+             - &*Multicloud Object Gateway:&* Select **openshift-storage.noobaa.io**.
 
-          4. Click Create.
+          4. To create your Object Bucket Claim, select **Create**.
 
-          5. Click the Action menu &*⋮&* > Attach to deployment.
+          5. Open the action menu &*⋮&* and select **Attach to deployment**.
 
-          6. Select the application to attach the Object Bucket Claim to and click Attach.
+          6. To attach the Object Bucket to your application, select its name from the application list.
 
       review:
         instructions: >-
-          To verify that your application is using an object bucket claim:
+          To verify that your application is using an Object Bucket Claim:
 
             - Click the name of the deployment that you assigned storage to.
 
@@ -121,23 +121,28 @@ spec:
     -
       title: Using the dashboards to monitor OpenShift Data Foundation resources
       description:  >-
-        You can monitor any storage resource manage by Openshift Container Storage on Openshift Data Foundation views:
+
+        Monitor any storage resource manage by Openshift Data Foundation through various dashboard overviews.
 
 
-        Click Storage > Openshift Data Foundation
+        In the side navigation, select **Storage > Openshift Data Foundation** to access the Openshift Data Foundation dashboard view.
 
-        1. The ODF overview gives you a high level view for all storage systems.
+        1. Observe high level insights for all your StorageSystems with the overview screen.
 
-        1. To get deeper view for a specific system, you can drill down to see system overview.
+        1. To access more specific information for a system, drill down to its system overview.
 
-            - The Block & File dashboard tab shows the state of the Openshift Container Storage as whole, as well a the state of the persistent volumes.
+            - The **Block & File overview** tab shows the holistic state of Openshift Data Foundation and the state of any PersistentVolumes.
 
-            - The Object dashboard shows the state of the Multicloud Object Gateway, RADOS Object Gateway, and any object claims.
+            - The **Object overview** tab shows the state of the Multicloud Object Gateway, RADOS Object Gateway, and any Object Claims.
 
-  conclusion: You finished the Getting Started Quickstart
+  conclusion: Now you're ready to add storage to your applications and monitor your storage resources.
+
+
+  nextQuickStart:
+  - "odf-configuration"
 `, "&*", "`")
 
-const odfConfigAndManagementQS = `
+var odfConfigAndManagementQS = strings.ReplaceAll(`
 apiVersion: console.openshift.io/v1
 kind: ConsoleQuickStart
 metadata:
@@ -149,54 +154,79 @@ spec:
   description: Learn how to configure OpenShift Data Foundation to meet your deployment
     needs.
   prerequisites: ["Getting Started with OpenShift Data Foundation", "Install the Openshift Data Foundation" ]
-  introduction: In this tour, you will learn about the various configurations available
-    to customize your OpenShift® Data Foundation deployment.
+  introduction: In this tour, you will learn how to customize your **Red Hat OpenShift® Data Foundation** StorageSystems.
   tasks:
-    - title: Expand the ODF Storage System
+    - title: Expand your StorageSystem
       description: |-
-        When we install the ODF operator we created a storage cluster, chose
-        the cluster size, provisioned the underlying storage subsystem, deployed necessary
-        drivers, and created the storage classes to allow the OpenShift users to easily
-        provision and consume storage services that have just been deployed
+        When you installed the OpenShift Data Foundation operator, you:
+        
+        - Created a StorageSystem.
+        
+        - Set a cluster size. 
+        
+        - Provisioned a storage subsystem.
+        
+        - Deployed necessary drivers. 
+        
+        - Created StorageClasses 
+        
 
-        When the capacity of the cluster is about to runout we will notify you.
+        These installation actions enable you to easily provision and consume your deployed storage services.
 
-        **To expand the OCS storage cluster follow these steps:**
-        1. Go to installed operators page and click on **OpenShift Data Foundation**
-        2. Go to storage cluster tab
-        3. Click on the **3 dots icon**
-        4. Click on add capacity
-        5. Use the expand cluster modal if your capacity is about to runout.
+
+        Monitor your storage regularly so that you don't run out of storage space.
+
+
+        As you consume storage, you'll receive cluster capacity alerts at 75% capacity (near-full) and 85% (full) capacity. Always address capacity warnings promptly.
+
+
+        **To expand your StorageSystem:**
+
+        1. In the navigation menu, select **Storage > OpenShift Data Foundation**.
+
+        2. Navigate to the **Storage Systems** tab.
+
+        3. Open the action menu &*⋮&*.
+
+        4. Select **Add Capacity**.
+
       review:
         instructions: |-
-          ####  To verify that you have expanded your storage cluster.
-          Did you expand your cluster?
+          ####  To verify that you have expanded your StorageSystem.
+          Did you expand your StorageSystem?
         failedTaskHelp: This task isn’t verified yet. Try the task again.
       summary:
-        success: You have expanded the Storage Cluster for the ODF operator!
+        success: You have expanded the StorageSystem for the ODF operator!
         failed: Try the steps again.
-    - title: Bucket Class Configuration
+    - title: Configure BucketClass
       description: |-
 
-          Bucket class policy determines the bucket's data location. Its set of policies which apply to all buckets (OBCs) created with the specific bucket class. These policies include: placement, namespace, caching
+          BucketClass determines a bucket's data location and provides a set of policies (placement, namespace, caching) that apply to all buckets created with the same class.
 
-          There are two types of Bucket Classes:
-           - **Standard:** Data will be ingested by Multi Cloud Object Gateway, deduped, compressed and encrypted.
-           - **Namespace:** Data will be stored as is (no dedup, compression, encryption) on the namespace stores.
 
-          **Create a new Bucket class**
+          BucketClasses occur in two types:
 
-          1. Go to installed operators page and click on OpenShift Data Foundation,
-          2. Go to bucket class tab.
-          3. Click on **Create Bucket Class**
-          4. Follow the wizard steps to  finish creation process.
+           - &*Standard:&* Data is ingested by Multicloud Object Gateway, deduped, compressed and encrypted.
+           - &*Namespace:&* Data is stored as-is on the NamespaceStores without being deduped, compressed or encrypted.
+
+
+          **To create a BucketClass:**
+
+          1. in the navigation menu, select **Installed Operators > OpenShift Data Foundation**.
+
+          2. Select **Bucket Class** tab.
+
+          3. Select **Create Bucket Class**
+
+          4. In the wizard, follow each step to create your BucketClass.
       review:
         instructions: |-
-          ####  To verify that you have created bucket class and backing store.
-          Is the Bucket Class in ready state?
+          ####  To verify that you have created BucketClass and BackingStore.
+          Is the BucketClass in ready state?
         failedTaskHelp: This task isn’t verified yet. Try the task again.
       summary:
-        success: You have successfully created bucket class
+        success: You have successfully created BucketClass
         failed: Try the steps again.
-  conclusion: Congrats, the OpenShift Data Foundation operator is ready to use.
-`
+
+  conclusion: You're ready to go! Now you can customize your StorageSystems in OpenShift Data Foundation.
+`, "&*", "`")
