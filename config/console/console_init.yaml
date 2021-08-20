@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: odf-console
-          image: badhikar/odf-console:latest
+          image: quay.io/ocs-dev/odf-console:latest
           resources:
             limits:
               cpu: "100m"
