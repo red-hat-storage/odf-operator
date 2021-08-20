@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: odf-console
-          image: quay.io/ocs-dev/odf-console:latest
+          image: odf-console:latest
           resources:
             limits:
               cpu: "100m"
@@ -28,7 +28,7 @@ spec:
               mountPath: /var/serving-cert
               readOnly: true
         - name: ibm-console
-          image: ibmcom/ibm-storage-odf-plugin:0.2.0
+          image: ibm-console:latest
           resources:
             limits:
               cpu: "100m"
