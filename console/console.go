@@ -40,7 +40,7 @@ func GetService(serviceName string, port int, owner metav1.ObjectMeta) apiv1.Ser
 				"service.alpha.openshift.io/serving-cert-secret-name": serviceName + "-serving-cert",
 			},
 			Labels: map[string]string{
-				"app": "odf-ui",
+				"app": "odf-console",
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				{
@@ -60,7 +60,7 @@ func GetService(serviceName string, port int, owner metav1.ObjectMeta) apiv1.Ser
 				},
 			},
 			Selector: map[string]string{
-				"app": "odf-ui",
+				"app": "odf-console",
 			},
 			Type: "ClusterIP",
 		},
