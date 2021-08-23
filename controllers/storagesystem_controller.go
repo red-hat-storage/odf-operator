@@ -111,8 +111,6 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 
 	var err error
 
-	instance.Status.Phase = odfv1alpha1.PhaseProgressing
-
 	// add/remove finalizer
 	if instance.GetDeletionTimestamp().IsZero() {
 		if !util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
@@ -125,7 +123,6 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		}
 	} else {
 		// deletion phase
-		instance.Status.Phase = odfv1alpha1.PhaseDeleting
 
 		if util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
 
@@ -165,15 +162,12 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	instance.Status.Phase = odfv1alpha1.PhaseReady
-
 	return ctrl.Result{}, nil
 }
 
 func (r *StorageSystemReconciler) validateStorageSystemSpec(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
 	if instance.Spec.Kind != VendorStorageCluster() && instance.Spec.Kind != VendorFlashSystemCluster() {
-		instance.Status.Phase = odfv1alpha1.PhaseError
 		return fmt.Errorf("unsupported kind %s", instance.Spec.Kind)
 	}
 

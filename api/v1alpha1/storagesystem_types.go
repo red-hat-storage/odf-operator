@@ -34,20 +34,6 @@ const (
 	ConditionResourcePresent conditionsv1.ConditionType = "ResourcePresent"
 )
 
-const (
-	// PhaseDeleting represents the Deleting state of storagesystem
-	PhaseDeleting = "Deleting"
-
-	// PhaseError represents the Error state of storagesystem
-	PhaseError = "Error"
-
-	// PhaseProgressing represents the Progressing state of storagesystem
-	PhaseProgressing = "Progressing"
-
-	// PhaseReady represents the Ready state of storagesystem
-	PhaseReady = "Ready"
-)
-
 // StorageSystemSpec defines the desired state of StorageSystem
 type StorageSystemSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
@@ -70,11 +56,6 @@ type StorageSystemSpec struct {
 type StorageSystemStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Phase describes the Phase of StorageSystem
-	// This is used by OLM UI to provide status information
-	// to the user
-	Phase string `json:"phase,omitempty"`
-
 	// Conditions describes the state of the StorageCluster resource.
 	// +optional
 	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
@@ -85,7 +66,6 @@ type StorageSystemStatus struct {
 //+kubebuilder:resource:shortName=storsys
 //+kubebuilder:printcolumn:JSONPath=".spec.kind",name=storage-system-kind,type=string
 //+kubebuilder:printcolumn:JSONPath=".spec.name",name=storage-system-name,type=string
-//+kubebuilder:printcolumn:JSONPath=".status.phase",name=phase,type=string
 
 // StorageSystem is the Schema for the storagesystems API
 type StorageSystem struct {
