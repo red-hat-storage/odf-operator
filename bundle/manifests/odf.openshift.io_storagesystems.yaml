@@ -23,9 +23,6 @@ spec:
     - jsonPath: .spec.name
       name: storage-system-name
       type: string
-    - jsonPath: .status.phase
-      name: phase
-      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -95,10 +92,6 @@ spec:
                   - type
                   type: object
                 type: array
-              phase:
-                description: Phase describes the Phase of StorageSystem This is used
-                  by OLM UI to provide status information to the user
-                type: string
             type: object
         type: object
     served: true
