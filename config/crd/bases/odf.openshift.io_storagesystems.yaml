@@ -67,8 +67,7 @@ spec:
             description: StorageSystemStatus defines the observed state of StorageSystem
             properties:
               conditions:
-                description: Conditions describes the state of the StorageCluster
-                  resource.
+                description: Conditions describes the state of the StorageSystem resource.
                 items:
                   description: Condition represents the state of the operator's reconciliation
                     functionality.
