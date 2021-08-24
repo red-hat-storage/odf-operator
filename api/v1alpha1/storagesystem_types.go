@@ -30,8 +30,14 @@ import (
 type StorageKind string
 
 const (
-	// ConditionResourcePresent communicates the status of underlying resource
-	ConditionResourcePresent conditionsv1.ConditionType = "ResourcePresent"
+	//ConditionStorageSystemInvalid communicates if storagesystem CR is invalid
+	ConditionStorageSystemInvalid conditionsv1.ConditionType = "StorageSystemInvalid"
+
+	// ConditionVendorCsvReady communicates if CSV is ready
+	ConditionVendorCsvReady conditionsv1.ConditionType = "VendorCsvReady"
+
+	// ConditionVendorSystemPresent communicates if backend storage CR is present in the cluster
+	ConditionVendorSystemPresent conditionsv1.ConditionType = "VendorSystemPresent"
 )
 
 // StorageSystemSpec defines the desired state of StorageSystem

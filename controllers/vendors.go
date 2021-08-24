@@ -17,8 +17,14 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"reflect"
 	"strings"
+
+	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 
 	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	ocsv1 "github.com/openshift/ocs-operator/api/v1"
@@ -39,4 +45,32 @@ func VendorFlashSystemCluster() odfv1alpha1.StorageKind {
 	// flashsystemcluster.odf.ibm.com/v1alpha1
 	return odfv1alpha1.StorageKind(strings.ToLower(reflect.TypeOf(ibmv1alpha1.FlashSystemCluster{}).Name()) +
 		"." + ibmv1alpha1.GroupVersion.String())
+}
+
+func (r *StorageSystemReconciler) isVendorSystemPresent(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+
+	var err error
+
+	if instance.Spec.Kind == VendorStorageCluster() {
+		logger.Info("get storageCluster")
+		storageCluster := &ocsv1.StorageCluster{}
+		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.Namespace}, storageCluster)
+	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
+		logger.Info("get flashSystemCluster")
+		flashSystemCluster := &ibmv1alpha1.FlashSystemCluster{}
+		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.Namespace}, flashSystemCluster)
+	}
+
+	if err == nil {
+		logger.Info("Vendor system found", "Name", instance.Spec.Name)
+		SetVendorSystemPresentCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Found", "")
+	} else if errors.IsNotFound(err) {
+		logger.Error(err, "Vendor system not found", "Name", instance.Spec.Name)
+		SetVendorSystemPresentCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
+	} else {
+		logger.Error(err, "Vendor system fetch error", "Name", instance.Spec.Name)
+		SetVendorSystemPresentCondition(&instance.Status.Conditions, corev1.ConditionUnknown, "Error", err.Error())
+	}
+
+	return err
 }

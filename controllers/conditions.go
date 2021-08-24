@@ -17,60 +17,116 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
-
-	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 
-	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
-	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
-func GetCondition(condition conditionsv1.ConditionType, status corev1.ConditionStatus, reason, msg string) conditionsv1.Condition {
-	return conditionsv1.Condition{
-		Type:    condition,
+func SetAvailableCondition(conditions *[]conditionsv1.Condition,
+	status corev1.ConditionStatus, reason string, message string) {
+
+	conditionsv1.SetStatusCondition(conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionAvailable,
 		Status:  status,
 		Reason:  reason,
-		Message: msg,
-	}
+		Message: message,
+	})
 }
 
-func GetConditionResourcePresent(status corev1.ConditionStatus, reason, msg string) conditionsv1.Condition {
-	return GetCondition(odfv1alpha1.ConditionResourcePresent, status, reason, msg)
+func SetProgressingCondition(conditions *[]conditionsv1.Condition,
+	status corev1.ConditionStatus, reason string, message string) {
+
+	conditionsv1.SetStatusCondition(conditions, conditionsv1.Condition{
+		Type:    conditionsv1.ConditionProgressing,
+		Status:  status,
+		Reason:  reason,
+		Message: message,
+	})
 }
 
-func (r *StorageSystemReconciler) setConditionResourcePresent(instance *odfv1alpha1.StorageSystem, logger logr.Logger) (bool, error) {
+func SetStorageSystemInvalidCondition(conditions *[]conditionsv1.Condition,
+	status corev1.ConditionStatus, reason string, message string) {
 
-	var requeue bool
-	var err error
+	conditionsv1.SetStatusCondition(conditions, conditionsv1.Condition{
+		Type:    odfv1alpha1.ConditionStorageSystemInvalid,
+		Status:  status,
+		Reason:  reason,
+		Message: message,
+	})
+}
 
-	if instance.Spec.Kind == VendorStorageCluster() {
-		logger.Info("get storageCluster")
-		storageCluster := &ocsv1.StorageCluster{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.Namespace}, storageCluster)
-	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
-		logger.Info("get flashSystemCluster")
-		flashSystemCluster := &ibmv1alpha1.FlashSystemCluster{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.Namespace}, flashSystemCluster)
-	}
+func SetVendorCsvReadyCondition(conditions *[]conditionsv1.Condition,
+	status corev1.ConditionStatus, reason string, message string) {
 
-	if err == nil {
-		logger.Info("set condition", string(odfv1alpha1.ConditionResourcePresent), corev1.ConditionTrue)
-		conditionsv1.SetStatusCondition(&instance.Status.Conditions, GetConditionResourcePresent(corev1.ConditionTrue, "Found", ""))
-		requeue = false
-	} else if errors.IsNotFound(err) {
-		logger.Error(err, "set condition", string(odfv1alpha1.ConditionResourcePresent), corev1.ConditionFalse)
-		conditionsv1.SetStatusCondition(&instance.Status.Conditions, GetConditionResourcePresent(corev1.ConditionFalse, "NotFound", err.Error()))
-		requeue = true
-	} else {
-		logger.Error(err, "set condition", string(odfv1alpha1.ConditionResourcePresent), corev1.ConditionUnknown)
-		conditionsv1.SetStatusCondition(&instance.Status.Conditions, GetConditionResourcePresent(corev1.ConditionUnknown, "", err.Error()))
-		requeue = true
-	}
+	conditionsv1.SetStatusCondition(conditions, conditionsv1.Condition{
+		Type:    odfv1alpha1.ConditionVendorCsvReady,
+		Status:  status,
+		Reason:  reason,
+		Message: message,
+	})
+}
 
-	return requeue, err
+func SetVendorSystemPresentCondition(conditions *[]conditionsv1.Condition,
+	status corev1.ConditionStatus, reason string, message string) {
+
+	conditionsv1.SetStatusCondition(conditions, conditionsv1.Condition{
+		Type:    odfv1alpha1.ConditionVendorSystemPresent,
+		Status:  status,
+		Reason:  reason,
+		Message: message,
+	})
+}
+
+func SetReconcileInitConditions(conditions *[]conditionsv1.Condition,
+	reason string, message string) {
+
+	SetAvailableCondition(
+		conditions, corev1.ConditionFalse, reason, message)
+	SetProgressingCondition(
+		conditions, corev1.ConditionTrue, reason, message)
+
+	SetStorageSystemInvalidCondition(
+		conditions, corev1.ConditionUnknown, reason, message)
+	SetVendorCsvReadyCondition(
+		conditions, corev1.ConditionUnknown, reason, message)
+	SetVendorSystemPresentCondition(
+		conditions, corev1.ConditionUnknown, reason, message)
+}
+
+func SetReconcileStartConditions(conditions *[]conditionsv1.Condition,
+	reason string, message string) {
+
+	SetAvailableCondition(
+		conditions, corev1.ConditionFalse, reason, message)
+	SetProgressingCondition(
+		conditions, corev1.ConditionTrue, reason, message)
+}
+
+func SetReconcileCompleteConditions(conditions *[]conditionsv1.Condition,
+	reason string, message string) {
+
+	SetAvailableCondition(
+		conditions, corev1.ConditionTrue, reason, message)
+	SetProgressingCondition(
+		conditions, corev1.ConditionFalse, reason, message)
+}
+
+func SetDeletionInProgressConditions(conditions *[]conditionsv1.Condition,
+	reason string, message string) {
+
+	SetAvailableCondition(
+		conditions, corev1.ConditionFalse, reason, message)
+	SetProgressingCondition(
+		conditions, corev1.ConditionTrue, reason, message)
+}
+
+func SetStorageSystemInvalidConditions(conditions *[]conditionsv1.Condition,
+	reason string, message string) {
+
+	SetProgressingCondition(
+		conditions, corev1.ConditionUnknown, reason, message)
+
+	SetStorageSystemInvalidCondition(
+		conditions, corev1.ConditionTrue, reason, message)
 }
