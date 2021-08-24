@@ -56,7 +56,7 @@ type StorageSystemSpec struct {
 type StorageSystemStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Conditions describes the state of the StorageCluster resource.
+	// Conditions describes the state of the StorageSystem resource.
 	// +optional
 	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
 }
