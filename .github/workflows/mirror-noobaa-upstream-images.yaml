@@ -1,0 +1,22 @@
+name: mirror-noobaa-upstream-images
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  mirror-noobaa-upstream-images:
+    runs-on: ubuntu-latest
+    if: github.repository == 'red-hat-storage/odf-operator' && github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: log into quay
+      uses: docker/login-action@v1
+      with:
+        registry: quay.io
+        username: ${{ secrets.QUAY_USERNAME }}
+        password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+
+    - name: mirror images
+      run: hack/mirror-noobaa-images.sh
