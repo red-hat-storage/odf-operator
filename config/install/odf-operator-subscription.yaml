@@ -9,4 +9,4 @@ spec:
   name: odf-operator
   source: odf-catalogsource
   sourceNamespace: openshift-storage
-  startingCSV: odf-operator.v0.0.1
+  startingCSV: odf-operator.v4.9.0
