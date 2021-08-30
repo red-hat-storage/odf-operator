@@ -12,6 +12,7 @@ metadata:
     operatorframework.io/suggested-namespace: openshift-storage
     repository: https://github.com/red-hat-storage/odf-operator
     support: Red Hat
+    vendors.odf.openshift.io/kind: '["storagecluster.ocs.openshift.io/v1", "flashsystemcluster.odf.ibm.com/v1alpha1"]'
   labels:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
