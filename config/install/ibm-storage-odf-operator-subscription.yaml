@@ -8,5 +8,5 @@ spec:
   installPlanApproval: Automatic
   name: ibm-storage-odf-operator
   source: odf-catalogsource
-  sourceNamespace: openshift-marketplace
+  sourceNamespace: openshift-storage
   startingCSV: ibm-storage-odf-operator.v0.2.0
