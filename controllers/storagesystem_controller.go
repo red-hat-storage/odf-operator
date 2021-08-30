@@ -81,12 +81,6 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	metrics.ReportODFSystemMapMetrics(instance.Name, instance.Spec.Name, instance.Spec.Namespace, string(instance.Spec.Kind))
 
-	if err := r.validateStorageSystemSpec(instance, logger); err != nil {
-		r.Recorder.ReportIfNotPresent(instance, corev1.EventTypeWarning, EventReasonValidationFailed, err.Error())
-		logger.Error(err, "failed to validate storagesystem")
-		return reconcile.Result{}, err
-	}
-
 	// Reconcile changes
 	result, reconcileError := r.reconcile(instance, logger)
 
@@ -111,7 +105,16 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 
 	var err error
 
-	instance.Status.Phase = odfv1alpha1.PhaseProgressing
+	if instance.Status.Conditions == nil {
+		SetReconcileInitConditions(&instance.Status.Conditions, "Init", "Initializing StorageSystem")
+	} else {
+		SetReconcileStartConditions(&instance.Status.Conditions, "Reconciling", "Reconcile is in progress")
+	}
+
+	if err = r.validateStorageSystemSpec(instance, logger); err != nil {
+		logger.Error(err, "failed to validate storagesystem")
+		return reconcile.Result{}, err
+	}
 
 	// add/remove finalizer
 	if instance.GetDeletionTimestamp().IsZero() {
@@ -125,9 +128,9 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		}
 	} else {
 		// deletion phase
-		instance.Status.Phase = odfv1alpha1.PhaseDeleting
 
 		if util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
+			SetDeletionInProgressConditions(&instance.Status.Conditions, "Deleting", "Deletion is in progress")
 
 			err = r.deleteResources(instance, logger)
 			if err != nil {
@@ -155,17 +158,17 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		return ctrl.Result{}, err
 	}
 
-	err = r.isCsvReady(instance, logger)
+	err = r.isVendorCsvReady(instance, logger)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	requeue, err := r.setConditionResourcePresent(instance, logger)
-	if requeue {
-		return ctrl.Result{Requeue: true}, err
+	err = r.isVendorSystemPresent(instance, logger)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
-	instance.Status.Phase = odfv1alpha1.PhaseReady
+	SetReconcileCompleteConditions(&instance.Status.Conditions, "ReconcileCompleted", "Reconcile is completed successfully")
 
 	return ctrl.Result{}, nil
 }
@@ -173,8 +176,10 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 func (r *StorageSystemReconciler) validateStorageSystemSpec(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
 	if instance.Spec.Kind != VendorStorageCluster() && instance.Spec.Kind != VendorFlashSystemCluster() {
-		instance.Status.Phase = odfv1alpha1.PhaseError
-		return fmt.Errorf("unsupported kind %s", instance.Spec.Kind)
+		err := fmt.Errorf("unsupported kind %s", instance.Spec.Kind)
+		r.Recorder.ReportIfNotPresent(instance, corev1.EventTypeWarning, EventReasonValidationFailed, err.Error())
+		SetStorageSystemInvalidConditions(&instance.Status.Conditions, "NotValid", err.Error())
+		return err
 	}
 
 	return nil

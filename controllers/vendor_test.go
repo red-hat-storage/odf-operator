@@ -28,7 +28,7 @@ import (
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
-func TestSetConditionResourcePresent(t *testing.T) {
+func TestIsVendorSystemPresent(t *testing.T) {
 
 	testCases := []struct {
 		label             string
@@ -40,13 +40,11 @@ func TestSetConditionResourcePresent(t *testing.T) {
 		{
 			label:             "ensure ResourcePresent condition is true",
 			hasBackEndStorage: true,
-			expectedRequeue:   false,
 			expectedError:     false,
 		},
 		{
 			label:             "ensure ResourcePresent condition is false",
 			hasBackEndStorage: false,
-			expectedRequeue:   true,
 			expectedError:     true,
 		},
 	}
@@ -69,12 +67,11 @@ func TestSetConditionResourcePresent(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		requeue, err := fakeReconciler.setConditionResourcePresent(fakeStorageSystem, fakeReconciler.Log)
-		assert.Equal(t, tc.expectedRequeue, requeue)
+		err = fakeReconciler.isVendorSystemPresent(fakeStorageSystem, fakeReconciler.Log)
 
 		assert.Equal(t, tc.hasBackEndStorage,
 			conditionsv1.IsStatusConditionTrue(
-				fakeStorageSystem.Status.Conditions, odfv1alpha1.ConditionResourcePresent))
+				fakeStorageSystem.Status.Conditions, odfv1alpha1.ConditionVendorSystemPresent))
 
 		if tc.expectedError {
 			assert.Error(t, err)

@@ -30,22 +30,14 @@ import (
 type StorageKind string
 
 const (
-	// ConditionResourcePresent communicates the status of underlying resource
-	ConditionResourcePresent conditionsv1.ConditionType = "ResourcePresent"
-)
+	//ConditionStorageSystemInvalid communicates if storagesystem CR is invalid
+	ConditionStorageSystemInvalid conditionsv1.ConditionType = "StorageSystemInvalid"
 
-const (
-	// PhaseDeleting represents the Deleting state of storagesystem
-	PhaseDeleting = "Deleting"
+	// ConditionVendorCsvReady communicates if CSV is ready
+	ConditionVendorCsvReady conditionsv1.ConditionType = "VendorCsvReady"
 
-	// PhaseError represents the Error state of storagesystem
-	PhaseError = "Error"
-
-	// PhaseProgressing represents the Progressing state of storagesystem
-	PhaseProgressing = "Progressing"
-
-	// PhaseReady represents the Ready state of storagesystem
-	PhaseReady = "Ready"
+	// ConditionVendorSystemPresent communicates if backend storage CR is present in the cluster
+	ConditionVendorSystemPresent conditionsv1.ConditionType = "VendorSystemPresent"
 )
 
 // StorageSystemSpec defines the desired state of StorageSystem
@@ -70,12 +62,7 @@ type StorageSystemSpec struct {
 type StorageSystemStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Phase describes the Phase of StorageSystem
-	// This is used by OLM UI to provide status information
-	// to the user
-	Phase string `json:"phase,omitempty"`
-
-	// Conditions describes the state of the StorageCluster resource.
+	// Conditions describes the state of the StorageSystem resource.
 	// +optional
 	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
 }
@@ -85,7 +72,6 @@ type StorageSystemStatus struct {
 //+kubebuilder:resource:shortName=storsys
 //+kubebuilder:printcolumn:JSONPath=".spec.kind",name=storage-system-kind,type=string
 //+kubebuilder:printcolumn:JSONPath=".spec.name",name=storage-system-name,type=string
-//+kubebuilder:printcolumn:JSONPath=".status.phase",name=phase,type=string
 
 // StorageSystem is the Schema for the storagesystems API
 type StorageSystem struct {

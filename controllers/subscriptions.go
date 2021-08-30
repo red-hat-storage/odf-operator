@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -86,7 +87,7 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 	return nil
 }
 
-func (r *StorageSystemReconciler) isCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
 	var csvName string
 
@@ -99,15 +100,22 @@ func (r *StorageSystemReconciler) isCsvReady(instance *odfv1alpha1.StorageSystem
 	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
 		Name: csvName, Namespace: instance.Spec.Namespace}, csvObj)
+
 	if err != nil {
+		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
 		return err
 	}
 
 	if csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
 		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful {
 
+		logger.Info("Vendor csv is in ready state")
+		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
 		return nil
 	} else {
-		return fmt.Errorf("CSV %s is not ready", csvName)
+		err = fmt.Errorf("Vendor CSV %s is not ready", csvName)
+		logger.Error(err, "Vendor csv is not ready")
+		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", err.Error())
+		return err
 	}
 }
