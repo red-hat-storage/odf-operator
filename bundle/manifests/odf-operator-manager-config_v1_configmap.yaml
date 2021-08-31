@@ -1,7 +1,7 @@
 apiVersion: v1
 data:
   IBM_SUBSCRIPTION_CATALOGSOURCE: odf-catalogsource
-  IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE: openshift-marketplace
+  IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE: openshift-storage
   IBM_SUBSCRIPTION_CHANNEL: stable-v1
   IBM_SUBSCRIPTION_NAME: ibm-storage-odf-operator
   IBM_SUBSCRIPTION_PACKAGE: ibm-storage-odf-operator
