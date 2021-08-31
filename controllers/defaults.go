@@ -28,7 +28,7 @@ var (
 		"IBM_SUBSCRIPTION_CHANNEL":                 "stable-v1",
 		"IBM_SUBSCRIPTION_STARTINGCSV":             "ibm-storage-odf-operator.v0.2.0",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
-		"IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+		"IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
 	}
 
 	OcsCsvName                            = GetEnvOrDefault("OCS_CSV_NAME")
