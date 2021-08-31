@@ -49,6 +49,11 @@ OCS_BUNDLE_IMG_NAME ?= $(OCS_BUNDLE_NAME)-bundle
 OCS_BUNDLE_IMG_TAG ?= v4.9.0
 OCS_BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE_IMG_TAG)
 
+NOOBAA_BUNDLE_NAME ?= noobaa-operator
+NOOBAA_BUNDLE_IMG_NAME ?= $(NOOBAA_BUNDLE_NAME)-bundle
+NOOBAA_BUNDLE_IMG_TAG ?= v5.9.0
+NOOBAA_BUNDLE_IMG ?= $(IMAGE_REGISTRY)/noobaa/$(NOOBAA_BUNDLE_IMG_NAME):$(NOOBAA_BUNDLE_IMG_TAG)
+
 IBM_BUNDLE_NAME ?= ibm-storage-odf-operator
 IBM_BUNDLE_IMG_NAME ?= $(IBM_BUNDLE_NAME)-bundle
 IBM_BUNDLE_IMG_TAG ?= 0.2.0
@@ -56,7 +61,7 @@ IBM_BUNDLE_IMG ?= docker.io/ibmcom/$(IBM_BUNDLE_IMG_NAME):$(IBM_BUNDLE_IMG_TAG)
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
-BUNDLE_IMGS ?= $(shell echo $(BUNDLE_IMG) $(OCS_BUNDLE_IMG) $(IBM_BUNDLE_IMG) | sed "s/ /,/g")
+BUNDLE_IMGS ?= $(shell echo $(BUNDLE_IMG) $(OCS_BUNDLE_IMG) $(IBM_BUNDLE_IMG) $(NOOBAA_BUNDLE_IMG) | sed "s/ /,/g")
 
 # Set CATALOG_BASE_IMG to an existing catalog image tag to add $BUNDLE_IMGS to that image.
 ifneq ($(origin CATALOG_BASE_IMG), undefined)
