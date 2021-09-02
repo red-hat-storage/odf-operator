@@ -180,6 +180,8 @@ func (r *StorageSystemReconciler) validateStorageSystemSpec(instance *odfv1alpha
 		r.Recorder.ReportIfNotPresent(instance, corev1.EventTypeWarning, EventReasonValidationFailed, err.Error())
 		SetStorageSystemInvalidConditions(&instance.Status.Conditions, "NotValid", err.Error())
 		return err
+	} else {
+		SetStorageSystemInvalidCondition(&instance.Status.Conditions, corev1.ConditionFalse, "Valid", "StorageSystem CR is valid")
 	}
 
 	return nil
