@@ -21,7 +21,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
-	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -29,15 +28,6 @@ import (
 )
 
 func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {
-	qscrd := extv1.CustomResourceDefinition{}
-	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: "consolequickstarts.console.openshift.io", Namespace: ""}, &qscrd)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			logger.V(2).Info("No custom resource definition found for consolequickstart. Skipping quickstart initialization")
-			return nil
-		}
-		return err
-	}
 	if len(AllQuickStarts) == 0 {
 		logger.Info("No quickstarts found")
 		return nil
@@ -73,4 +63,40 @@ func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {
 		logger.Info("Updating quickstarts", "Name", cqs.Name, "Namespace", cqs.Namespace)
 	}
 	return nil
+}
+
+func (r *StorageSystemReconciler) deleteQuickStarts(logger logr.Logger) {
+	if len(AllQuickStarts) == 0 {
+		logger.Info("No quickstarts found.")
+	}
+
+	allSSDeleted, err := r.areAllStorageSystemsMarkedForDeletion()
+	if err != nil {
+		// Log the error but not fail the operator
+		logger.Error(err, "Failed to List", "Kind", "StorageSystem")
+		return
+	}
+
+	if !allSSDeleted {
+		return
+	}
+
+	for _, qs := range AllQuickStarts {
+		cqs := consolev1.ConsoleQuickStart{}
+		err := yaml.Unmarshal(qs, &cqs)
+		if err != nil {
+			logger.Error(err, "Failed to unmarshal ConsoleQuickStart.", "ConsoleQuickStartString", string(qs))
+			continue
+		}
+
+		err = r.Client.Delete(context.TODO(), &cqs)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				continue
+			}
+			logger.Error(err, "Failed to delete quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
+		}
+
+		logger.Info("Quickstart marked for deletion", "Name", cqs.Name, "Namespace", cqs.Namespace)
+	}
 }
