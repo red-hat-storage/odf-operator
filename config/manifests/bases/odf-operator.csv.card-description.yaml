@@ -1,0 +1,27 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  name: odf-operator.v0.0.0
+  namespace: placeholder
+spec:
+  description: |
+    ## Red Hat OpenShift Data Foundation
+
+    ### OpenShift Data Foundation operator
+
+    This is the primary operator for Red Hat OpenShift Data Foundation (ODF).
+      It is a "meta" operator, meaning it serves to facilitate the other
+      operators in ODF by providing dependencies and performing administrative
+      tasks outside their scope.
+
+    ### OpenShift Data Foundation console
+
+    ODF Console is the UI plugin for Openshift Data Foundation Operator. It
+    works as a remote module for OpenShift Container Platform console.
+
+    ## Core Capabilities
+
+    * **Vendors** ODF manages multiple vendors for you eg. Openshift Container
+      Storage and IBM flashsystemcluster.
+
+    * **Subscription** It manages subscription for the IBM flashsystemcluster.
