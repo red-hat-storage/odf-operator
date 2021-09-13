@@ -56,7 +56,7 @@ NOOBAA_BUNDLE_IMG ?= $(IMAGE_REGISTRY)/noobaa/$(NOOBAA_BUNDLE_IMG_NAME):$(NOOBAA
 
 IBM_BUNDLE_NAME ?= ibm-storage-odf-operator
 IBM_BUNDLE_IMG_NAME ?= $(IBM_BUNDLE_NAME)-bundle
-IBM_BUNDLE_IMG_TAG ?= 0.2.0
+IBM_BUNDLE_IMG_TAG ?= 0.2.1
 IBM_BUNDLE_IMG ?= docker.io/ibmcom/$(IBM_BUNDLE_IMG_NAME):$(IBM_BUNDLE_IMG_TAG)
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
@@ -93,5 +93,5 @@ ODF_CONSOLE_IMG_TAG ?= latest
 ODF_CONSOLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(ODF_CONSOLE_IMG_NAME):$(ODF_CONSOLE_IMG_TAG)
 
 IBM_CONSOLE_IMG_NAME ?= ibm-storage-odf-plugin
-IBM_CONSOLE_IMG_TAG ?= 0.2.0
+IBM_CONSOLE_IMG_TAG ?= 0.2.1
 IBM_CONSOLE_IMG ?= docker.io/ibmcom/$(IBM_CONSOLE_IMG_NAME):$(IBM_CONSOLE_IMG_TAG)

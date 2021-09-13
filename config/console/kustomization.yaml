@@ -12,7 +12,7 @@ kind: Kustomization
 images:
 - name: ibm-console
   newName: docker.io/ibmcom/ibm-storage-odf-plugin
-  newTag: 0.2.0
+  newTag: 0.2.1
 - name: odf-console
   newName: quay.io/ocs-dev/odf-console
   newTag: latest

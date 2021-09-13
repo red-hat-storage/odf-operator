@@ -385,7 +385,7 @@ spec:
                   readOnly: true
               - args:
                 - --ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key
-                image: docker.io/ibmcom/ibm-storage-odf-plugin:0.2.0
+                image: docker.io/ibmcom/ibm-storage-odf-plugin:0.2.1
                 name: ibm-console
                 ports:
                 - containerPort: 9003
