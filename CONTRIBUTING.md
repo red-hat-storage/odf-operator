@@ -48,6 +48,12 @@ useful for maintainability to split code changes and related changes to CRDs
 and CSVs). Unless you are very sure this is true for your change, though, make
 sure each commit passes CI checks as above.
 
+Make sure to update the bundle manifests after making changes, in a separate
+commit using:
+```
+make bundle
+```
+
 ## Commit structure
 
 ODF maintainers value clear and explanatory commit messages. So by default
