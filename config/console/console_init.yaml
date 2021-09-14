@@ -37,7 +37,9 @@ spec:
             - containerPort: 9003
               protocol: TCP
           args:
-            - "--ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key"
+            - "--ssl"
+            - "--cert=/var/serving-cert/tls.crt"
+            - "--key=/var/serving-cert/tls.key"
           volumeMounts:
             - name: ibm-console-serving-cert
               mountPath: /var/serving-cert
