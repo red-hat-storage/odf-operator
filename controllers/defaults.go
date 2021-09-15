@@ -23,6 +23,7 @@ import (
 var (
 	DefaultValMap = map[string]string{
 		"OCS_CSV_NAME":                             "ocs-operator.v4.9.0",
+		"OCS_SUBSCRIPTION_PACKAGE":                 "ocs-operator",
 		"IBM_SUBSCRIPTION_NAME":                    "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_PACKAGE":                 "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_CHANNEL":                 "stable-v1",
@@ -32,6 +33,7 @@ var (
 	}
 
 	OcsCsvName                            = GetEnvOrDefault("OCS_CSV_NAME")
+	OcsSubscriptionPackage                = GetEnvOrDefault("OCS_SUBSCRIPTION_PACKAGE")
 	IbmSubscriptionName                   = GetEnvOrDefault("IBM_SUBSCRIPTION_NAME")
 	IbmSubscriptionPackage                = GetEnvOrDefault("IBM_SUBSCRIPTION_PACKAGE")
 	IbmSubscriptionChannel                = GetEnvOrDefault("IBM_SUBSCRIPTION_CHANNEL")
