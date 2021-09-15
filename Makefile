@@ -48,6 +48,7 @@ test: manifests generate fmt vet ## Run tests.
 
 update-mgr-env: ## Feed env variables to the manager configmap
 	@echo -e "OCS_CSV_NAME=$(OCS_CSV_NAME)\n\
+	OCS_SUBSCRIPTION_PACKAGE=$(OCS_SUBSCRIPTION_PACKAGE)\n\
 	IBM_SUBSCRIPTION_NAME=$(IBM_SUBSCRIPTION_NAME)\n\
 	IBM_SUBSCRIPTION_PACKAGE=$(IBM_SUBSCRIPTION_PACKAGE)\n\
 	IBM_SUBSCRIPTION_CHANNEL=$(IBM_SUBSCRIPTION_CHANNEL)\n\
