@@ -45,10 +45,18 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 	var desiredSubscription *operatorv1alpha1.Subscription
 
 	if instance.Spec.Kind == VendorStorageCluster() {
+		err := r.addSubscriptionToRelatedObjects(instance, logger, OcsSubscriptionPackage)
+		if err != nil {
+			return err
+		}
 		// No need to create subscription
 		return nil
 	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
 		desiredSubscription = GetFlashSystemClusterSubscription(instance)
+		err := r.addReferenceToRelatedObjects(instance, logger, desiredSubscription)
+		if err != nil {
+			return err
+		}
 	}
 
 	// create/update subscription
@@ -87,6 +95,27 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 	return nil
 }
 
+func (r *StorageSystemReconciler) addSubscriptionToRelatedObjects(instance *odfv1alpha1.StorageSystem, logger logr.Logger, pkg string) error {
+
+	existingSubscriptions := &operatorv1alpha1.SubscriptionList{}
+	err := r.Client.List(context.TODO(), existingSubscriptions)
+	if err != nil {
+		return err
+	}
+
+	existingSubscription := FilterSubscriptionWithPackage(existingSubscriptions, pkg)
+	if existingSubscription == nil {
+		return fmt.Errorf("No subscription found with package name %s", pkg)
+	}
+
+	err = r.addReferenceToRelatedObjects(instance, logger, existingSubscription)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
 	var csvName string
@@ -103,6 +132,11 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 
 	if err != nil {
 		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
+		return err
+	}
+
+	err = r.addReferenceToRelatedObjects(instance, logger, csvObj)
+	if err != nil {
 		return err
 	}
 
