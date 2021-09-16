@@ -18,17 +18,23 @@ package controllers
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"testing"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
-	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	consolev1 "github.com/openshift/api/console/v1"
+	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
 var (
@@ -42,13 +48,6 @@ var (
 			quickstartName: "odf-configuration",
 		},
 	}
-
-	testQuickStartCRD = extv1.CustomResourceDefinition{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "consolequickstarts.console.openshift.io",
-			Namespace: "",
-		},
-	}
 )
 
 func TestQuickStartYAMLs(t *testing.T) {
@@ -58,6 +57,7 @@ func TestQuickStartYAMLs(t *testing.T) {
 		assert.NoError(t, err)
 	}
 }
+
 func TestEnsureQuickStarts(t *testing.T) {
 	allExpectedQuickStarts := []consolev1.ConsoleQuickStart{}
 	for _, qs := range AllQuickStarts {
@@ -69,8 +69,6 @@ func TestEnsureQuickStarts(t *testing.T) {
 
 	fakeReconciler, _ := GetFakeStorageSystemReconciler()
 	err := operatorv1alpha1.AddToScheme(fakeReconciler.Scheme)
-	assert.NoError(t, err)
-	err = fakeReconciler.Client.Create(context.TODO(), &testQuickStartCRD)
 	assert.NoError(t, err)
 	err = fakeReconciler.ensureQuickStarts(fakeReconciler.Log)
 	assert.NoError(t, err)
@@ -114,4 +112,107 @@ func getActualQuickStarts(t *testing.T, cases []struct {
 		allActualQuickStarts = append(allActualQuickStarts, qs)
 	}
 	return allActualQuickStarts
+}
+
+func TestDeleteQuickStarts(t *testing.T) {
+	fss1 := generateFakeStorageSystem()
+	fss2 := generateFakeStorageSystem()
+
+	testCases := []struct {
+		label                string
+		createStorageSystems []odfv1alpha1.StorageSystem
+		deleteStorageSystems []odfv1alpha1.StorageSystem
+		expectDeleted        bool
+	}{
+		{
+			label:                "having two storage systems but only deleting one does not delete quickstarts",
+			createStorageSystems: []odfv1alpha1.StorageSystem{fss1, fss2},
+			deleteStorageSystems: []odfv1alpha1.StorageSystem{fss1},
+			expectDeleted:        false,
+		},
+		{
+			label:                "having two storage systems and deleting both deletes the quickstarts",
+			createStorageSystems: []odfv1alpha1.StorageSystem{fss1, fss2},
+			deleteStorageSystems: []odfv1alpha1.StorageSystem{fss1, fss2},
+			expectDeleted:        true,
+		},
+
+		{
+			label:                "having one storage system and deleting it deletes the quickstarts",
+			createStorageSystems: []odfv1alpha1.StorageSystem{fss1},
+			deleteStorageSystems: []odfv1alpha1.StorageSystem{fss1},
+			expectDeleted:        true,
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Logf("Case %d: %s\n", i+1, tc.label)
+
+		fakeReconciler, fakeStorageSystem := GetFakeStorageSystemReconciler()
+		err := operatorv1alpha1.AddToScheme(fakeReconciler.Scheme)
+		assert.NoError(t, err)
+
+		// Cleanup of default StorageSystem for clean tests
+		err = fakeReconciler.Client.Delete(context.TODO(), fakeStorageSystem)
+		assert.NoError(t, err)
+
+		err = fakeReconciler.ensureQuickStarts(fakeReconciler.Log)
+		assert.NoError(t, err)
+
+		var quickstarts []consolev1.ConsoleQuickStart = getActualQuickStarts(t, cases, fakeReconciler)
+		assert.Equal(t, 2, len(quickstarts))
+
+		err = ocsv1.AddToScheme(fakeReconciler.Scheme)
+		assert.NoError(t, err)
+
+		err = ibmv1alpha1.AddToScheme(fakeReconciler.Scheme)
+		assert.NoError(t, err)
+
+		for i := range tc.createStorageSystems {
+			err = fakeReconciler.Client.Create(context.TODO(), &tc.createStorageSystems[i])
+			assert.NoError(t, err)
+		}
+		for i := range tc.deleteStorageSystems {
+			var ss odfv1alpha1.StorageSystem
+			err := fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
+				Name: tc.deleteStorageSystems[i].Name, Namespace: tc.deleteStorageSystems[i].Namespace}, &ss)
+			assert.NoError(t, err)
+			ss.SetDeletionTimestamp(&v1.Time{Time: time.Now()})
+			err = fakeReconciler.Client.Update(context.TODO(), &ss)
+			assert.NoError(t, err)
+			err = fakeReconciler.deleteResources(&ss, fakeReconciler.Log)
+			assert.NoError(t, err)
+
+		}
+		quickstarts = getActualQuickStarts(t, cases, fakeReconciler)
+		if tc.expectDeleted {
+			assert.Equal(t, 0, len(quickstarts))
+		} else {
+			assert.Equal(t, 2, len(quickstarts))
+		}
+	}
+
+}
+
+// Generate a unique StorageSystem
+func generateFakeStorageSystem() odfv1alpha1.StorageSystem {
+	return odfv1alpha1.StorageSystem{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      generateShortRandomString(),
+			Namespace: "fake-namespace",
+		},
+		Spec: odfv1alpha1.StorageSystemSpec{
+			Kind:      VendorStorageCluster(),
+			Name:      generateShortRandomString(),
+			Namespace: "fake-namespace",
+		},
+	}
+
+}
+
+// Not meant to be collison-proof like UUID but good enough for small tests like this.
+func generateShortRandomString() string {
+	b := make([]byte, 4) //equals 8 characters
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
 }
