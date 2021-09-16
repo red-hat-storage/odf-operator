@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
@@ -65,6 +66,12 @@ type StorageSystemStatus struct {
 	// Conditions describes the state of the StorageSystem resource.
 	// +optional
 	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
+
+	// RelatedObjects is a list of objects created and maintained by this
+	// operator. Object references will be added to this list after they have
+	// been created or found in the cluster.
+	// +optional
+	RelatedObjects []corev1.ObjectReference `json:"relatedObjects,omitempty"`
 }
 
 //+kubebuilder:object:root=true

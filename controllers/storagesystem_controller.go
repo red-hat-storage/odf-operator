@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	objectreferencesv1 "github.com/openshift/custom-resource-status/objectreferences/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/red-hat-data-services/odf-operator/metrics"
@@ -182,6 +184,23 @@ func (r *StorageSystemReconciler) validateStorageSystemSpec(instance *odfv1alpha
 		return err
 	} else {
 		SetStorageSystemInvalidCondition(&instance.Status.Conditions, corev1.ConditionFalse, "Valid", "StorageSystem CR is valid")
+	}
+
+	return nil
+}
+
+func (r *StorageSystemReconciler) addReferenceToRelatedObjects(instance *odfv1alpha1.StorageSystem, logger logr.Logger, object runtime.Object) error {
+
+	objectRef, err := reference.GetReference(r.Scheme, object)
+	if err != nil {
+		logger.Error(err, "Failed to get reference of object.")
+		return err
+	}
+
+	err = objectreferencesv1.SetObjectReference(&instance.Status.RelatedObjects, *objectRef)
+	if err != nil {
+		logger.Error(err, "Failed to set reference of object into RelatedObjects.")
+		return err
 	}
 
 	return nil

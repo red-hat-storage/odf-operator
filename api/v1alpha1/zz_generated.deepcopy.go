@@ -22,6 +22,7 @@ package v1alpha1
 
 import (
 	"github.com/openshift/custom-resource-status/conditions/v1"
+	corev1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -108,6 +109,11 @@ func (in *StorageSystemStatus) DeepCopyInto(out *StorageSystemStatus) {
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.RelatedObjects != nil {
+		in, out := &in.RelatedObjects, &out.RelatedObjects
+		*out = make([]corev1.ObjectReference, len(*in))
+		copy(*out, *in)
 	}
 }
 
