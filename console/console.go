@@ -95,7 +95,7 @@ func GetConsolePluginCR(pluginName string, displayName string, consolePort int, 
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=*
 
-func InitConsole(client client.Client, odfPort int, ibmPort int) error {
+func InitConsole(client client.Client, odfPort int) error {
 	deployment := appsv1.Deployment{}
 	if err := client.Get(context.TODO(), types.NamespacedName{
 		Name:      "odf-console",
@@ -111,16 +111,6 @@ func InitConsole(client client.Client, odfPort int, ibmPort int) error {
 	// Create core ODF Plugin
 	odfConsolePlugin := GetConsolePluginCR("odf-console", "ODF Plugin", odfPort, odfService.ObjectMeta.Name, deployment.ObjectMeta)
 	if err := client.Create(context.TODO(), &odfConsolePlugin); err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-	// Create IBM console Service
-	ibmService := GetService("ibm-console", ibmPort, deployment.ObjectMeta)
-	if err := client.Create(context.TODO(), &ibmService); err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-	// Create IBM Console Plugin
-	ibmConsolePlugin := GetConsolePluginCR("ibm-console", "IBM Plugin", ibmPort, ibmService.ObjectMeta.Name, deployment.ObjectMeta)
-	if err := client.Create(context.TODO(), &ibmConsolePlugin); err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
 	return nil
