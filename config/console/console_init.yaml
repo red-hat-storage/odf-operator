@@ -27,25 +27,7 @@ spec:
             - name: odf-console-serving-cert
               mountPath: /var/serving-cert
               readOnly: true
-        - name: ibm-console
-          image: ibm-console:latest
-          resources:
-            limits:
-              cpu: "100m"
-              memory: "512Mi"
-          ports:
-            - containerPort: 9003
-              protocol: TCP
-          args:
-            - "--ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key"
-          volumeMounts:
-            - name: ibm-console-serving-cert
-              mountPath: /var/serving-cert
-              readOnly: true
       volumes:
         - name: odf-console-serving-cert
           secret:
             secretName: odf-console-serving-cert
-        - name: ibm-console-serving-cert
-          secret:
-            secretName: ibm-console-serving-cert

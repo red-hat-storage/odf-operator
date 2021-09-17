@@ -73,14 +73,12 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var odfConsolePort int
-	var ibmConsolePort int
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8085", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8082", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.IntVar(&odfConsolePort, "odf-console-port", 9001, "The port where the ODF console server will be serving it's payload")
-	flag.IntVar(&ibmConsolePort, "ibm-console-port", 9003, "The port where the IBM console server will be serving it's payload")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -104,7 +102,7 @@ func main() {
 
 	setupLog.Info("starting console")
 	if err := mgr.Add(manager.RunnableFunc(func(context.Context) error {
-		err = console.InitConsole(mgr.GetClient(), odfConsolePort, ibmConsolePort)
+		err = console.InitConsole(mgr.GetClient(), odfConsolePort)
 		if err != nil {
 			setupLog.Error(err, "unable to Initialize ODF Console")
 			os.Exit(1)
