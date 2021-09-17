@@ -10,9 +10,6 @@ resources:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-- name: ibm-console
-  newName: docker.io/ibmcom/ibm-storage-odf-plugin
-  newTag: 0.2.1
 - name: odf-console
   newName: quay.io/ocs-dev/odf-console
   newTag: latest
