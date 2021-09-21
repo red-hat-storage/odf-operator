@@ -29,42 +29,9 @@ spec:
         - /manager
         args:
         - --leader-elect
-        env:
-          - name: OCS_CSV_NAME
-            valueFrom:
-              configMapKeyRef:
-                name: odf-operator-manager-config
-                key: OCS_CSV_NAME
-          - name: IBM_SUBSCRIPTION_NAME
-            valueFrom:
-              configMapKeyRef:
-                name: odf-operator-manager-config
-                key: IBM_SUBSCRIPTION_NAME
-          - name: IBM_SUBSCRIPTION_PACKAGE
-            valueFrom:
-              configMapKeyRef:
-                name: odf-operator-manager-config
-                key: IBM_SUBSCRIPTION_PACKAGE
-          - name: IBM_SUBSCRIPTION_CHANNEL
-            valueFrom:
-              configMapKeyRef:
-                name: odf-operator-manager-config
-                key: IBM_SUBSCRIPTION_CHANNEL
-          - name: IBM_SUBSCRIPTION_STARTINGCSV
-            valueFrom:
-              configMapKeyRef:
-                name: odf-operator-manager-config
-                key: IBM_SUBSCRIPTION_STARTINGCSV
-          - name: IBM_SUBSCRIPTION_CATALOGSOURCE
-            valueFrom:
-              configMapKeyRef:
-                name: odf-operator-manager-config
-                key: IBM_SUBSCRIPTION_CATALOGSOURCE
-          - name: IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE
-            valueFrom:
-              configMapKeyRef:
-                name: odf-operator-manager-config
-                key: IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE
+        envFrom:
+        - configMapRef:
+            name: manager-config
         image: controller:latest
         name: manager
         securityContext:
