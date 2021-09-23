@@ -113,23 +113,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.StorageSystemReconciler{
+	storageSystemReconciler := &controllers.StorageSystemReconciler{
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
 		Scheme:   mgr.GetScheme(),
 		Recorder: controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageSystem controller")),
-	}).SetupWithManager(mgr); err != nil {
+	}
+	if err = storageSystemReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageSystem")
 		os.Exit(1)
 	}
-	if err = (&controllers.StorageClusterReconciler{
+
+	storageClusterReconciler := &controllers.StorageClusterReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageCluster controller")),
-	}).SetupWithManager(mgr); err != nil {
+	}
+	if err = storageClusterReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageCluster")
 		os.Exit(1)
 	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
