@@ -23,6 +23,7 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -52,7 +53,15 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 		// No need to create subscription
 		return nil
 	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
-		desiredSubscription = GetFlashSystemClusterSubscription(instance)
+		desiredSubscription = GetFlashSystemClusterSubscriptions()[0]
+		desiredSubscription.OwnerReferences = []metav1.OwnerReference{{
+			APIVersion: instance.APIVersion,
+			Kind:       instance.Kind,
+			Name:       instance.Name,
+			UID:        instance.UID,
+			Controller: func() *bool { flag := true; return &flag }(),
+		}}
+
 		err := r.addReferenceToRelatedObjects(instance, logger, desiredSubscription)
 		if err != nil {
 			return err
@@ -152,4 +161,72 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", err.Error())
 		return err
 	}
+}
+
+// GetSubscriptions returns all required Subscriptions for the given StorageKind
+func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscription {
+
+	subscriptions := []*operatorv1alpha1.Subscription{}
+	if k == StorageClusterKind {
+		subscriptions = GetStorageClusterSubscriptions()
+	} else if k == FlashSystemKind {
+		subscriptions = GetFlashSystemClusterSubscriptions()
+	}
+
+	return subscriptions
+}
+
+// GetStorageClusterSubscription return subscription for StorageCluster
+func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
+	noobaaSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      NoobaaSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          NoobaaSubscriptionCatalogSource,
+			CatalogSourceNamespace: NoobaaSubscriptionCatalogSourceNamespace,
+			Package:                NoobaaSubscriptionPackage,
+			Channel:                NoobaaSubscriptionChannel,
+			StartingCSV:            NoobaaSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
+	ocsSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      OcsSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          OcsSubscriptionCatalogSource,
+			CatalogSourceNamespace: OcsSubscriptionCatalogSourceNamespace,
+			Package:                OcsSubscriptionPackage,
+			Channel:                OcsSubscriptionChannel,
+			StartingCSV:            OcsSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
+	return []*operatorv1alpha1.Subscription{noobaaSubscription, ocsSubscription}
+}
+
+// GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
+func GetFlashSystemClusterSubscriptions() []*operatorv1alpha1.Subscription {
+	ibmSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      IbmSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          IbmSubscriptionCatalogSource,
+			CatalogSourceNamespace: IbmSubscriptionCatalogSourceNamespace,
+			Package:                IbmSubscriptionPackage,
+			Channel:                IbmSubscriptionChannel,
+			StartingCSV:            IbmSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
+	return []*operatorv1alpha1.Subscription{ibmSubscription}
 }

@@ -66,7 +66,7 @@ func TestEnsureSubscription(t *testing.T) {
 		}
 
 		if tc.subscriptionAlreadyExist {
-			subscription := GetFlashSystemClusterSubscription(fakeStorageSystem)
+			subscription := GetFlashSystemClusterSubscriptions()[0]
 			subscription.Spec.Channel = "fake-channel"
 			err := fakeReconciler.Client.Create(context.TODO(), subscription)
 			assert.NoError(t, err)
