@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	ocsv1 "github.com/openshift/ocs-operator/api/v1"
@@ -30,6 +31,8 @@ import (
 )
 
 func TestDeleteResources(t *testing.T) {
+
+	var err error
 
 	testCases := []struct {
 		label         string
@@ -66,19 +69,22 @@ func TestDeleteResources(t *testing.T) {
 	for i, tc := range testCases {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
-		var err error
 		fakeStorageSystem := GetFakeStorageSystem(tc.kind)
 		fakeReconciler := GetFakeStorageSystemReconciler(t, fakeStorageSystem)
 
 		if tc.resourceExist {
 			// create resource
+			var vendorSystem client.Object
 			if tc.kind == VendorStorageCluster() {
-				err = fakeReconciler.Client.Create(context.TODO(), GetFakeStorageCluster())
-				assert.NoError(t, err)
+				vendorSystem = GetFakeStorageCluster()
 			} else if tc.kind == VendorFlashSystemCluster() {
-				err = fakeReconciler.Client.Create(context.TODO(), GetFakeFlashSystemCluster())
-				assert.NoError(t, err)
+				vendorSystem = GetFakeFlashSystemCluster()
 			}
+
+			fakeStorageSystem.Spec.Name = vendorSystem.GetName()
+			fakeStorageSystem.Spec.Namespace = vendorSystem.GetNamespace()
+			err = fakeReconciler.Client.Create(context.TODO(), vendorSystem)
+			assert.NoError(t, err)
 		}
 
 		err = fakeReconciler.deleteResources(fakeStorageSystem, fakeReconciler.Log)

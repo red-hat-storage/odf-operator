@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/types"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
@@ -28,62 +29,49 @@ import (
 
 func TestEnsureSubscription(t *testing.T) {
 
-	var err error
 	testCases := []struct {
 		label                    string
 		kind                     odfv1alpha1.StorageKind
 		subscriptionAlreadyExist bool
-		expectedSubscriptions    int
 	}{
 		{
-			label:                    "create subscriptions for StorageCluster",
-			kind:                     VendorStorageCluster(),
+			label:                    "create subscription(s) for StorageVendors if none exist",
 			subscriptionAlreadyExist: false,
-			expectedSubscriptions:    2,
 		},
 		{
-			label:                    "create subscription for FlashSystemCluster if does not exist one",
-			kind:                     VendorFlashSystemCluster(),
-			subscriptionAlreadyExist: false,
-			expectedSubscriptions:    1,
-		},
-		{
-			label:                    "update subscription for FlashSystemCluster if it does exist",
-			kind:                     VendorFlashSystemCluster(),
+			label:                    "update subscription(s) for StorageVendors if exist",
 			subscriptionAlreadyExist: true,
-			expectedSubscriptions:    1,
 		},
 	}
 
 	for i, tc := range testCases {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
-		fakeStorageSystem := GetFakeStorageSystem(tc.kind)
-		fakeReconciler := GetFakeStorageSystemReconciler(t, fakeStorageSystem)
+		for _, kind := range KnownKinds {
+			var err error
 
-		if tc.kind == VendorFlashSystemCluster() {
-			fakeStorageSystem.Spec.Kind = tc.kind
-		}
+			fakeStorageSystem := GetFakeStorageSystem(kind)
+			fakeReconciler := GetFakeStorageSystemReconciler(t, fakeStorageSystem)
+			subs := GetSubscriptions(kind)
 
-		if tc.subscriptionAlreadyExist {
-			subscription := GetFlashSystemClusterSubscriptions()[0]
-			subscription.Spec.Channel = "fake-channel"
-			err := fakeReconciler.Client.Create(context.TODO(), subscription)
+			if tc.subscriptionAlreadyExist {
+				for _, subscription := range subs {
+					sub := subscription.DeepCopy()
+					sub.Spec.Channel = "fake-channel"
+					err = fakeReconciler.Client.Create(context.TODO(), sub)
+					assert.NoError(t, err)
+				}
+			}
+
+			err = fakeReconciler.ensureSubscription(fakeStorageSystem, fakeReconciler.Log)
 			assert.NoError(t, err)
-		}
 
-		err = fakeReconciler.ensureSubscription(fakeStorageSystem, fakeReconciler.Log)
-		assert.NoError(t, err)
-
-		existingSubscriptions := &operatorv1alpha1.SubscriptionList{}
-		err = fakeReconciler.Client.List(context.TODO(), existingSubscriptions)
-		assert.NoError(t, err)
-
-		assert.Equal(t, tc.expectedSubscriptions, len(existingSubscriptions.Items))
-
-		if tc.kind == VendorFlashSystemCluster() {
-			assert.Equal(t, IbmSubscriptionPackage, existingSubscriptions.Items[0].Spec.Package)
-			assert.Equal(t, IbmSubscriptionChannel, existingSubscriptions.Items[0].Spec.Channel)
+			for _, expectedSubscription := range subs {
+				actualSubscription := &operatorv1alpha1.Subscription{}
+				err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{Name: expectedSubscription.Name, Namespace: expectedSubscription.Namespace}, actualSubscription)
+				assert.NoError(t, err)
+				assert.Equal(t, expectedSubscription.Spec, actualSubscription.Spec)
+			}
 		}
 	}
 }
