@@ -52,9 +52,8 @@ func TestIsVendorSystemPresent(t *testing.T) {
 	for i, tc := range testCases {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
-		fakeReconciler, fakeStorageSystem := GetFakeStorageSystemReconciler()
-		err := ocsv1.AddToScheme(fakeReconciler.Scheme)
-		assert.NoError(t, err)
+		fakeStorageSystem := GetFakeStorageSystem(StorageClusterKind)
+		fakeReconciler := GetFakeStorageSystemReconciler(t, fakeStorageSystem)
 
 		if tc.hasBackEndStorage {
 			storageCluster := &ocsv1.StorageCluster{
@@ -67,7 +66,7 @@ func TestIsVendorSystemPresent(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		err = fakeReconciler.isVendorSystemPresent(fakeStorageSystem, fakeReconciler.Log)
+		err := fakeReconciler.isVendorSystemPresent(fakeStorageSystem, fakeReconciler.Log)
 
 		assert.Equal(t, tc.hasBackEndStorage,
 			conditionsv1.IsStatusConditionTrue(
