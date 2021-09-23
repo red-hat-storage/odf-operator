@@ -73,13 +73,7 @@ func TestEnsureSubscription(t *testing.T) {
 		}
 
 		err = fakeReconciler.ensureSubscription(fakeStorageSystem, fakeReconciler.Log)
-
-		if tc.kind == VendorStorageCluster() {
-			assert.Error(t, err)
-			assert.Equal(t, "No subscription found with package name ocs-operator", err.Error())
-		} else {
-			assert.NoError(t, err)
-		}
+		assert.NoError(t, err)
 
 		existingSubscriptions := &operatorv1alpha1.SubscriptionList{}
 		err = fakeReconciler.Client.List(context.TODO(), existingSubscriptions)
