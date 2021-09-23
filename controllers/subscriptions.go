@@ -46,9 +46,11 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 	var desiredSubscription *operatorv1alpha1.Subscription
 
 	if instance.Spec.Kind == VendorStorageCluster() {
-		err := r.addSubscriptionToRelatedObjects(instance, logger, OcsSubscriptionPackage)
-		if err != nil {
-			return err
+		for _, subscription := range GetStorageClusterSubscriptions() {
+			err := r.addReferenceToRelatedObjects(instance, logger, subscription)
+			if err != nil {
+				return err
+			}
 		}
 		// No need to create subscription
 		return nil
@@ -98,27 +100,6 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 		}
 	} else {
 		logger.Error(err, "failed to fetch subscription")
-		return err
-	}
-
-	return nil
-}
-
-func (r *StorageSystemReconciler) addSubscriptionToRelatedObjects(instance *odfv1alpha1.StorageSystem, logger logr.Logger, pkg string) error {
-
-	existingSubscriptions := &operatorv1alpha1.SubscriptionList{}
-	err := r.Client.List(context.TODO(), existingSubscriptions)
-	if err != nil {
-		return err
-	}
-
-	existingSubscription := FilterSubscriptionWithPackage(existingSubscriptions, pkg)
-	if existingSubscription == nil {
-		return fmt.Errorf("No subscription found with package name %s", pkg)
-	}
-
-	err = r.addReferenceToRelatedObjects(instance, logger, existingSubscription)
-	if err != nil {
 		return err
 	}
 
