@@ -17,6 +17,9 @@ limitations under the License.
 package controllers
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,48 +29,77 @@ import (
 
 	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	consolev1 "github.com/openshift/api/console/v1"
+	ocsv1 "github.com/openshift/ocs-operator/api/v1"
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
-func GetFakeStorageSystem() *odfv1alpha1.StorageSystem {
+func GetFakeStorageSystem(kind odfv1alpha1.StorageKind) *odfv1alpha1.StorageSystem {
 	return &odfv1alpha1.StorageSystem{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "fake-storage-system",
 			Namespace: OperatorNamespace,
 		},
 		Spec: odfv1alpha1.StorageSystemSpec{
-			Kind:      VendorStorageCluster(),
-			Name:      "fake-storage-cluster",
+			Kind:      kind,
+			Name:      "fake-vendor-system",
 			Namespace: OperatorNamespace,
 		},
 	}
 }
 
-func GetFakeStorageSystemReconciler() (*StorageSystemReconciler, *odfv1alpha1.StorageSystem) {
+func GetFakeStorageSystemReconciler(t *testing.T, objs ...runtime.Object) *StorageSystemReconciler {
 
-	fakeStorageSystem := GetFakeStorageSystem()
-
-	scheme := runtime.NewScheme()
-	_ = odfv1alpha1.AddToScheme(scheme)
-
-	_ = consolev1.AddToScheme(scheme)
-
-	_ = extv1.AddToScheme(scheme)
-
+	scheme := createFakeScheme(t)
 	fakeStorageSystemReconciler := &StorageSystemReconciler{
-		Client:   fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(fakeStorageSystem).Build(),
+		Client:   fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objs...).Build(),
 		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
 		Scheme:   scheme,
 		Recorder: NewEventReporter(record.NewFakeRecorder(1024)),
 	}
 
-	return fakeStorageSystemReconciler, fakeStorageSystem
+	return fakeStorageSystemReconciler
+}
+
+func createFakeScheme(t *testing.T) *runtime.Scheme {
+
+	scheme, err := odfv1alpha1.SchemeBuilder.Build()
+	if err != nil {
+		assert.Fail(t, "unable to build scheme")
+	}
+
+	err = consolev1.AddToScheme(scheme)
+	if err != nil {
+		assert.Fail(t, "failed to add consolev1 scheme")
+	}
+
+	err = extv1.AddToScheme(scheme)
+	if err != nil {
+		assert.Fail(t, "failed to add extv1 scheme")
+	}
+
+	err = operatorv1alpha1.AddToScheme(scheme)
+	if err != nil {
+		assert.Fail(t, "failed to add operatorv1alpha1 scheme")
+	}
+
+	err = ocsv1.AddToScheme(scheme)
+	if err != nil {
+		assert.Fail(t, "failed to add ocsv1 scheme")
+	}
+
+	err = ibmv1alpha1.AddToScheme(scheme)
+	if err != nil {
+		assert.Fail(t, "failed to add ibmv1alpha1 scheme")
+	}
+
+	return scheme
 }
 
 func GetFakeFlashSystemCluster() *ibmv1alpha1.FlashSystemCluster {
 	return &ibmv1alpha1.FlashSystemCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "fake-flash-system-cluster",
+			Name:      "fake-vendor-system",
 			Namespace: OperatorNamespace,
 		},
 		Spec: ibmv1alpha1.FlashSystemClusterSpec{},

@@ -28,6 +28,7 @@ import (
 
 func TestEnsureSubscription(t *testing.T) {
 
+	var err error
 	testCases := []struct {
 		label                    string
 		kind                     odfv1alpha1.StorageKind
@@ -57,10 +58,8 @@ func TestEnsureSubscription(t *testing.T) {
 	for i, tc := range testCases {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
-		fakeReconciler, fakeStorageSystem := GetFakeStorageSystemReconciler()
-		fakeStorageSystem.Namespace = OperatorNamespace
-		err := operatorv1alpha1.AddToScheme(fakeReconciler.Scheme)
-		assert.NoError(t, err)
+		fakeStorageSystem := GetFakeStorageSystem(tc.kind)
+		fakeReconciler := GetFakeStorageSystemReconciler(t, fakeStorageSystem)
 
 		if tc.kind == VendorFlashSystemCluster() {
 			fakeStorageSystem.Spec.Kind = tc.kind
