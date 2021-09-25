@@ -58,6 +58,7 @@ func TestEnsureSubscription(t *testing.T) {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
 		fakeReconciler, fakeStorageSystem := GetFakeStorageSystemReconciler()
+		fakeStorageSystem.Namespace = OperatorNamespace
 		err := operatorv1alpha1.AddToScheme(fakeReconciler.Scheme)
 		assert.NoError(t, err)
 
