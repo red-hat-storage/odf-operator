@@ -31,6 +31,37 @@ import (
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
+// CheckForExistingSubscription looks for any existing Subscriptions that
+// reference the given package.
+//
+// NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
+// because fake.Client does not support them.
+func (r *StorageSystemReconciler) CheckExistingSubscriptions(desiredSubscription *operatorv1alpha1.Subscription) error {
+
+	subsList := &operatorv1alpha1.SubscriptionList{}
+	err := r.Client.List(context.TODO(), subsList)
+	if err != nil {
+		return err
+	}
+
+	var actualSub *operatorv1alpha1.Subscription
+	pkgName := desiredSubscription.Spec.Package
+	for i, sub := range subsList.Items {
+		if sub.Spec.Package == pkgName {
+			if actualSub != nil {
+				foundSubs := []string{actualSub.Name, sub.Name}
+				return fmt.Errorf("multiple Subscriptions found for package '%s': %v", pkgName, foundSubs)
+			}
+			if sub.Name != desiredSubscription.Name {
+				return fmt.Errorf("found conflicting Subscription found for package '%s': %s", pkgName, sub.Name)
+			}
+			actualSub = &subsList.Items[i]
+		}
+	}
+
+	return nil
+}
+
 func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
 	var err error
@@ -59,6 +90,11 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 		if err != nil {
 			return err
 		}
+	}
+
+	err = r.CheckExistingSubscriptions(desiredSubscription)
+	if err != nil {
+		return err
 	}
 
 	// create/update subscription
