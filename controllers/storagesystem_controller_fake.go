@@ -33,12 +33,12 @@ func GetFakeStorageSystem() *odfv1alpha1.StorageSystem {
 	return &odfv1alpha1.StorageSystem{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "fake-storage-system",
-			Namespace: "fake-namespace",
+			Namespace: OperatorNamespace,
 		},
 		Spec: odfv1alpha1.StorageSystemSpec{
 			Kind:      VendorStorageCluster(),
 			Name:      "fake-storage-cluster",
-			Namespace: "fake-namespace",
+			Namespace: OperatorNamespace,
 		},
 	}
 }
@@ -68,7 +68,7 @@ func GetFakeFlashSystemCluster() *ibmv1alpha1.FlashSystemCluster {
 	return &ibmv1alpha1.FlashSystemCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "fake-flash-system-cluster",
-			Namespace: "fake-namespace",
+			Namespace: OperatorNamespace,
 		},
 		Spec: ibmv1alpha1.FlashSystemClusterSpec{},
 	}

@@ -32,25 +32,25 @@ func TestEnsureSubscription(t *testing.T) {
 		label                    string
 		kind                     odfv1alpha1.StorageKind
 		subscriptionAlreadyExist bool
-		expectedSubscription     bool
+		expectedSubscriptions    int
 	}{
 		{
-			label:                    "do not create subscription for StorageCluster",
+			label:                    "create subscriptions for StorageCluster",
 			kind:                     VendorStorageCluster(),
 			subscriptionAlreadyExist: false,
-			expectedSubscription:     false,
+			expectedSubscriptions:    2,
 		},
 		{
 			label:                    "create subscription for FlashSystemCluster if does not exist one",
 			kind:                     VendorFlashSystemCluster(),
 			subscriptionAlreadyExist: false,
-			expectedSubscription:     true,
+			expectedSubscriptions:    1,
 		},
 		{
-			label:                    "do not create subscription for FlashSystemCluster if it does exist",
+			label:                    "update subscription for FlashSystemCluster if it does exist",
 			kind:                     VendorFlashSystemCluster(),
 			subscriptionAlreadyExist: true,
-			expectedSubscription:     true,
+			expectedSubscriptions:    1,
 		},
 	}
 
@@ -80,10 +80,9 @@ func TestEnsureSubscription(t *testing.T) {
 		err = fakeReconciler.Client.List(context.TODO(), existingSubscriptions)
 		assert.NoError(t, err)
 
-		if !tc.expectedSubscription {
-			assert.Equal(t, 0, len(existingSubscriptions.Items))
-		} else {
-			assert.Equal(t, 1, len(existingSubscriptions.Items))
+		assert.Equal(t, tc.expectedSubscriptions, len(existingSubscriptions.Items))
+
+		if tc.kind == VendorFlashSystemCluster() {
 			assert.Equal(t, IbmSubscriptionPackage, existingSubscriptions.Items[0].Spec.Package)
 			assert.Equal(t, IbmSubscriptionChannel, existingSubscriptions.Items[0].Spec.Channel)
 		}

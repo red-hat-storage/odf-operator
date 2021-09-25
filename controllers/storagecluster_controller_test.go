@@ -63,7 +63,7 @@ func TestReconcile(t *testing.T) {
 			ctrl.Request{
 				NamespacedName: types.NamespacedName{
 					Name:      "fake-storage-cluster",
-					Namespace: "fake-namespace",
+					Namespace: OperatorNamespace,
 				},
 			},
 		)
@@ -71,7 +71,7 @@ func TestReconcile(t *testing.T) {
 
 		if tc.AlreadyHasStorageSystem {
 			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
-				Name: "fake-storage-system", Namespace: "fake-namespace"}, fakeStorageSystem)
+				Name: "fake-storage-system", Namespace: OperatorNamespace}, fakeStorageSystem)
 		} else {
 			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
 				Name: fakeStorageCluster.Name + "-storagesystem", Namespace: fakeStorageCluster.Namespace}, fakeStorageSystem)

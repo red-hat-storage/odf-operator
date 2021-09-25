@@ -199,12 +199,12 @@ func generateFakeStorageSystem() odfv1alpha1.StorageSystem {
 	return odfv1alpha1.StorageSystem{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      generateShortRandomString(),
-			Namespace: "fake-namespace",
+			Namespace: OperatorNamespace,
 		},
 		Spec: odfv1alpha1.StorageSystemSpec{
 			Kind:      VendorStorageCluster(),
 			Name:      generateShortRandomString(),
-			Namespace: "fake-namespace",
+			Namespace: OperatorNamespace,
 		},
 	}
 
