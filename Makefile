@@ -44,6 +44,9 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
+lint: ## Run golangci-lint against code.
+	docker run --rm -v $(PROJECT_DIR):/app -w /app $(GO_LINT_IMG) golangci-lint run -E gosec --timeout=6m .
+
 godeps-update: ## Run go mod tidy and go mod vendor.
 	go mod tidy && go mod vendor
 

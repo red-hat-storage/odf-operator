@@ -26,9 +26,10 @@ jobs:
 
           # Optional: golangci-lint command line arguments.
           # TODO: remove --skip-files once logic is implemented
-          args: >
-            -E gosec --timeout=6m --skip-files
-            controllers/suite_test.go,api/v1alpha1/webhook_suite_test.go
+          # TODO: --out-format=github-action is enforced but doesn't print
+          # file names or line numbers. Watch for fix in Issue:
+          # https://github.com/golangci/golangci-lint-action/issues/119
+          args: -E gosec --timeout=6m
 
           # Optional: show only new issues if it's a pull request.
           # The default value is `false`.
