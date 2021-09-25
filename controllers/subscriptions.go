@@ -25,29 +25,20 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
-func FilterSubscriptionWithPackage(subs *operatorv1alpha1.SubscriptionList, pkg string) *operatorv1alpha1.Subscription {
-
-	for _, s := range subs.Items {
-		if s.Spec.Package == pkg {
-			return &s
-		}
-	}
-
-	return nil
-}
-
 func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
+	var err error
 	var desiredSubscription *operatorv1alpha1.Subscription
 
 	if instance.Spec.Kind == VendorStorageCluster() {
 		for _, subscription := range GetStorageClusterSubscriptions() {
-			err := r.addReferenceToRelatedObjects(instance, logger, subscription)
+			err = r.addReferenceToRelatedObjects(instance, logger, subscription)
 			if err != nil {
 				return err
 			}
@@ -64,42 +55,21 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 			Controller: func() *bool { flag := true; return &flag }(),
 		}}
 
-		err := r.addReferenceToRelatedObjects(instance, logger, desiredSubscription)
+		err = r.addReferenceToRelatedObjects(instance, logger, desiredSubscription)
 		if err != nil {
 			return err
 		}
 	}
 
 	// create/update subscription
-	existingSubscriptions := &operatorv1alpha1.SubscriptionList{}
-	err := r.Client.List(context.TODO(), existingSubscriptions)
-	if err == nil {
-		existingSubscription := FilterSubscriptionWithPackage(existingSubscriptions, desiredSubscription.Spec.Package)
-		if existingSubscription == nil {
-			logger.Info("subscription not found create it")
-			err = r.Client.Create(context.TODO(), desiredSubscription)
-			if err != nil {
-				logger.Error(err, "failed to create subscription")
-				return err
-			}
-		} else {
-			logger.Info("subscription found update it")
-			desiredSubscription.Spec.DeepCopyInto(existingSubscription.Spec)
-			err = r.Client.Update(context.TODO(), existingSubscription)
-			if err != nil {
-				logger.Error(err, "failed to update subscription")
-				return err
-			}
-		}
-	} else if errors.IsNotFound(err) {
-		logger.Info("subscription not found create it")
-		err = r.Client.Create(context.TODO(), desiredSubscription)
-		if err != nil {
-			logger.Error(err, "failed to create subscription")
-			return err
-		}
-	} else {
-		logger.Error(err, "failed to fetch subscription")
+	sub := &operatorv1alpha1.Subscription{}
+	sub.ObjectMeta = desiredSubscription.ObjectMeta
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, sub, func() error {
+		sub.Spec = desiredSubscription.Spec
+		return controllerutil.SetControllerReference(instance, sub, r.Scheme)
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		logger.Error(err, "failed to create subscription")
 		return err
 	}
 
