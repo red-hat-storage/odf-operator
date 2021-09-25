@@ -29,7 +29,7 @@ func GetFakeStorageCluster() *ocsv1.StorageCluster {
 	return &ocsv1.StorageCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "fake-storage-cluster",
-			Namespace: "fake-namespace",
+			Namespace: OperatorNamespace,
 		},
 		Spec: ocsv1.StorageClusterSpec{},
 	}

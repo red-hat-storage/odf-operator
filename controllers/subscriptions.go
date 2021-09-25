@@ -65,48 +65,34 @@ func (r *StorageSystemReconciler) CheckExistingSubscriptions(desiredSubscription
 func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
 	var err error
-	var desiredSubscription *operatorv1alpha1.Subscription
 
-	if instance.Spec.Kind == VendorStorageCluster() {
-		for _, subscription := range GetStorageClusterSubscriptions() {
-			err = r.addReferenceToRelatedObjects(instance, logger, subscription)
-			if err != nil {
-				return err
-			}
+	subs := GetSubscriptions(instance.Spec.Kind)
+	if len(subs) == 0 {
+		return fmt.Errorf("no subscriptions defined for kind: %v", instance.Spec.Kind)
+	}
+
+	for _, desiredSubscription := range subs {
+		err = r.CheckExistingSubscriptions(desiredSubscription)
+		if err != nil {
+			return err
 		}
-		// No need to create subscription
-		return nil
-	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
-		desiredSubscription = GetFlashSystemClusterSubscriptions()[0]
-		desiredSubscription.OwnerReferences = []metav1.OwnerReference{{
-			APIVersion: instance.APIVersion,
-			Kind:       instance.Kind,
-			Name:       instance.Name,
-			UID:        instance.UID,
-			Controller: func() *bool { flag := true; return &flag }(),
-		}}
+
+		// create/update subscription
+		sub := &operatorv1alpha1.Subscription{}
+		sub.ObjectMeta = desiredSubscription.ObjectMeta
+		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, sub, func() error {
+			sub.Spec = desiredSubscription.Spec
+			return controllerutil.SetControllerReference(instance, sub, r.Scheme)
+		})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			logger.Error(err, "failed to create subscription")
+			return err
+		}
 
 		err = r.addReferenceToRelatedObjects(instance, logger, desiredSubscription)
 		if err != nil {
 			return err
 		}
-	}
-
-	err = r.CheckExistingSubscriptions(desiredSubscription)
-	if err != nil {
-		return err
-	}
-
-	// create/update subscription
-	sub := &operatorv1alpha1.Subscription{}
-	sub.ObjectMeta = desiredSubscription.ObjectMeta
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, sub, func() error {
-		sub.Spec = desiredSubscription.Spec
-		return controllerutil.SetControllerReference(instance, sub, r.Scheme)
-	})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		logger.Error(err, "failed to create subscription")
-		return err
 	}
 
 	return nil
@@ -148,6 +134,27 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", err.Error())
 		return err
 	}
+}
+
+// RemoveSubscriptions deletes any managed Subscriptions that do not have any
+// existing CRs that their operators reconcile.
+func (r *StorageSystemReconciler) RemoveSubscriptions() error {
+	var err error
+
+	for _, kind := range KnownKinds {
+		subs := GetSubscriptions(kind)
+		for _, sub := range subs {
+			if clientErr := r.Client.Delete(context.TODO(), sub); clientErr != nil {
+				if err == nil {
+					err = clientErr
+				} else {
+					err = fmt.Errorf("%w; ", clientErr)
+				}
+			}
+		}
+	}
+
+	return err
 }
 
 // GetSubscriptions returns all required Subscriptions for the given StorageKind
