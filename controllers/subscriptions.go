@@ -123,7 +123,7 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 	if instance.Spec.Kind == VendorFlashSystemCluster() {
 		csvName = IbmSubscriptionStartingCSV
 	} else if instance.Spec.Kind == VendorStorageCluster() {
-		csvName = OcsCsvName
+		csvName = OcsSubscriptionStartingCSV
 	}
 
 	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
