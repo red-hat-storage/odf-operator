@@ -5,23 +5,22 @@
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
 VERSION ?= 4.9.0
 
-# CHANNELS define the bundle channels used in the bundle.
-# Add a new line here if you would like to change its default config. (E.g CHANNELS = "preview,fast,stable")
-# To re-generate a bundle for other specific channels without changing the standard setup, you can:
-# - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=preview,fast,stable)
-# - use environment variables to overwrite this value (e.g export CHANNELS="preview,fast,stable")
-ifneq ($(origin CHANNELS), undefined)
-BUNDLE_CHANNELS := --channels=$(CHANNELS)
-endif
-
 # DEFAULT_CHANNEL defines the default channel used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g DEFAULT_CHANNEL = "stable")
 # To re-generate a bundle for any other default channel without changing the default setup, you can:
 # - use the DEFAULT_CHANNEL as arg of the bundle target (e.g make bundle DEFAULT_CHANNEL=stable)
 # - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
-ifneq ($(origin DEFAULT_CHANNEL), undefined)
+DEFAULT_CHANNEL ?= alpha
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
-endif
+
+# CHANNELS define the bundle channels used in the bundle.
+# Add a new line here if you would like to change its default config. (E.g CHANNELS = "preview,fast,stable")
+# To re-generate a bundle for other specific channels without changing the standard setup, you can:
+# - use the CHANNELS as arg of the bundle target (e.g make bundle CHANNELS=preview,fast,stable)
+# - use environment variables to overwrite this value (e.g export CHANNELS="preview,fast,stable")
+CHANNELS ?= $(DEFAULT_CHANNEL)
+BUNDLE_CHANNELS := --channels=$(CHANNELS)
+
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
@@ -62,6 +61,11 @@ IBM_BUNDLE_IMG_TAG ?= 0.2.1
 IBM_BUNDLE_IMG_LOCATION ?= docker.io/ibmcom
 IBM_BUNDLE_IMG ?= $(IBM_BUNDLE_IMG_LOCATION)/$(IBM_BUNDLE_IMG_NAME):$(IBM_BUNDLE_IMG_TAG)
 
+ODF_CONSOLE_IMG_NAME ?= odf-console
+ODF_CONSOLE_IMG_TAG ?= latest
+ODF_CONSOLE_IMG_LOCATION ?= quay.io/ocs-dev
+ODF_CONSOLE_IMG ?= $(ODF_CONSOLE_IMG_LOCATION)/$(ODF_CONSOLE_IMG_NAME):$(ODF_CONSOLE_IMG_TAG)
+
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
 BUNDLE_IMGS ?= $(shell echo $(BUNDLE_IMG) $(OCS_BUNDLE_IMG) $(IBM_BUNDLE_IMG) $(NOOBAA_BUNDLE_IMG) | sed "s/ /,/g")
@@ -91,8 +95,3 @@ ifeq ($(CLUSTER_ENV), openshift)
 else ifeq ($(CLUSTER_ENV), kubernetes)
 	RBAC_PROXY_IMG ?= $(KUBE_RBAC_PROXY_IMG)
 endif
-
-ODF_CONSOLE_IMG_NAME ?= odf-console
-ODF_CONSOLE_IMG_TAG ?= latest
-ODF_CONSOLE_IMG_LOCATION ?= quay.io/ocs-dev
-ODF_CONSOLE_IMG ?= $(ODF_CONSOLE_IMG_LOCATION)/$(ODF_CONSOLE_IMG_NAME):$(ODF_CONSOLE_IMG_TAG)
