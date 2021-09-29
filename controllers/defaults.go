@@ -22,8 +22,22 @@ import (
 
 var (
 	DefaultValMap = map[string]string{
-		"OCS_CSV_NAME":                             "ocs-operator.v4.9.0",
+		"OPERATOR_NAMESPACE": "openshift-storage",
+
+		"NOOBAA_SUBSCRIPTION_NAME":                    "noobaa-operator",
+		"NOOBAA_SUBSCRIPTION_PACKAGE":                 "noobaa-operator",
+		"NOOBAA_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"NOOBAA_SUBSCRIPTION_STARTINGCSV":             "noobaa-operator.v5.9.0",
+		"NOOBAA_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"NOOBAA_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
+
+		"OCS_SUBSCRIPTION_NAME":                    "ocs-operator",
 		"OCS_SUBSCRIPTION_PACKAGE":                 "ocs-operator",
+		"OCS_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"OCS_SUBSCRIPTION_STARTINGCSV":             "ocs-operator.v4.9.0",
+		"OCS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
+
 		"IBM_SUBSCRIPTION_NAME":                    "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_PACKAGE":                 "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_CHANNEL":                 "stable-v1",
@@ -32,8 +46,22 @@ var (
 		"IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
 	}
 
-	OcsCsvName                            = GetEnvOrDefault("OCS_CSV_NAME")
+	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
+
+	OcsSubscriptionName                   = GetEnvOrDefault("OCS_SUBSCRIPTION_NAME")
 	OcsSubscriptionPackage                = GetEnvOrDefault("OCS_SUBSCRIPTION_PACKAGE")
+	OcsSubscriptionChannel                = GetEnvOrDefault("OCS_SUBSCRIPTION_CHANNEL")
+	OcsSubscriptionStartingCSV            = GetEnvOrDefault("OCS_SUBSCRIPTION_STARTINGCSV")
+	OcsSubscriptionCatalogSource          = GetEnvOrDefault("OCS_SUBSCRIPTION_CATALOGSOURCE")
+	OcsSubscriptionCatalogSourceNamespace = GetEnvOrDefault("OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	NoobaaSubscriptionName                   = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_NAME")
+	NoobaaSubscriptionPackage                = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_PACKAGE")
+	NoobaaSubscriptionChannel                = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_CHANNEL")
+	NoobaaSubscriptionStartingCSV            = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_STARTINGCSV")
+	NoobaaSubscriptionCatalogSource          = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_CATALOGSOURCE")
+	NoobaaSubscriptionCatalogSourceNamespace = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
 	IbmSubscriptionName                   = GetEnvOrDefault("IBM_SUBSCRIPTION_NAME")
 	IbmSubscriptionPackage                = GetEnvOrDefault("IBM_SUBSCRIPTION_PACKAGE")
 	IbmSubscriptionChannel                = GetEnvOrDefault("IBM_SUBSCRIPTION_CHANNEL")

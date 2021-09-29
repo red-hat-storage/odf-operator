@@ -30,10 +30,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	consolev1 "github.com/openshift/api/console/v1"
-	ocsv1 "github.com/openshift/ocs-operator/api/v1"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
@@ -67,10 +64,8 @@ func TestEnsureQuickStarts(t *testing.T) {
 		allExpectedQuickStarts = append(allExpectedQuickStarts, cqs)
 	}
 
-	fakeReconciler, _ := GetFakeStorageSystemReconciler()
-	err := operatorv1alpha1.AddToScheme(fakeReconciler.Scheme)
-	assert.NoError(t, err)
-	err = fakeReconciler.ensureQuickStarts(fakeReconciler.Log)
+	fakeReconciler := GetFakeStorageSystemReconciler(t)
+	err := fakeReconciler.ensureQuickStarts(fakeReconciler.Log)
 	assert.NoError(t, err)
 	for _, c := range cases {
 		qs := consolev1.ConsoleQuickStart{}
@@ -148,25 +143,13 @@ func TestDeleteQuickStarts(t *testing.T) {
 	for i, tc := range testCases {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
-		fakeReconciler, fakeStorageSystem := GetFakeStorageSystemReconciler()
-		err := operatorv1alpha1.AddToScheme(fakeReconciler.Scheme)
-		assert.NoError(t, err)
+		fakeReconciler := GetFakeStorageSystemReconciler(t)
 
-		// Cleanup of default StorageSystem for clean tests
-		err = fakeReconciler.Client.Delete(context.TODO(), fakeStorageSystem)
-		assert.NoError(t, err)
-
-		err = fakeReconciler.ensureQuickStarts(fakeReconciler.Log)
+		err := fakeReconciler.ensureQuickStarts(fakeReconciler.Log)
 		assert.NoError(t, err)
 
 		var quickstarts []consolev1.ConsoleQuickStart = getActualQuickStarts(t, cases, fakeReconciler)
 		assert.Equal(t, 2, len(quickstarts))
-
-		err = ocsv1.AddToScheme(fakeReconciler.Scheme)
-		assert.NoError(t, err)
-
-		err = ibmv1alpha1.AddToScheme(fakeReconciler.Scheme)
-		assert.NoError(t, err)
 
 		for i := range tc.createStorageSystems {
 			err = fakeReconciler.Client.Create(context.TODO(), &tc.createStorageSystems[i])
@@ -199,12 +182,12 @@ func generateFakeStorageSystem() odfv1alpha1.StorageSystem {
 	return odfv1alpha1.StorageSystem{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      generateShortRandomString(),
-			Namespace: "fake-namespace",
+			Namespace: OperatorNamespace,
 		},
 		Spec: odfv1alpha1.StorageSystemSpec{
 			Kind:      VendorStorageCluster(),
 			Name:      generateShortRandomString(),
-			Namespace: "fake-namespace",
+			Namespace: OperatorNamespace,
 		},
 	}
 

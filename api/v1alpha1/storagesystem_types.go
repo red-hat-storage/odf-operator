@@ -27,7 +27,7 @@ import (
 
 //+kubebuilder:validation:Enum=flashsystemcluster.odf.ibm.com/v1alpha1;storagecluster.ocs.openshift.io/v1
 
-// StorageVendor captures the type of storage vendor
+// StorageKind specifies a vendor's supported kinds
 type StorageKind string
 
 const (

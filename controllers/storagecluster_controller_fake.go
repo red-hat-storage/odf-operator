@@ -17,6 +17,8 @@ limitations under the License.
 package controllers
 
 import (
+	"testing"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -28,24 +30,21 @@ import (
 func GetFakeStorageCluster() *ocsv1.StorageCluster {
 	return &ocsv1.StorageCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "fake-storage-cluster",
-			Namespace: "fake-namespace",
+			Name:      "fake-vendor-system",
+			Namespace: OperatorNamespace,
 		},
 		Spec: ocsv1.StorageClusterSpec{},
 	}
 }
 
-func GetFakeStorageClusterReconciler() (*StorageClusterReconciler, *ocsv1.StorageCluster) {
-	fakeStorageCluster := GetFakeStorageCluster()
+func GetFakeStorageClusterReconciler(t *testing.T, objs ...runtime.Object) *StorageClusterReconciler {
 
-	scheme := runtime.NewScheme()
-	_ = ocsv1.AddToScheme(scheme)
-
+	scheme := createFakeScheme(t)
 	fakeStorageClusterReconciler := &StorageClusterReconciler{
-		Client:   fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(fakeStorageCluster).Build(),
+		Client:   fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objs...).Build(),
 		Scheme:   scheme,
 		Recorder: NewEventReporter(record.NewFakeRecorder(1024)),
 	}
 
-	return fakeStorageClusterReconciler, fakeStorageCluster
+	return fakeStorageClusterReconciler
 }

@@ -32,20 +32,28 @@ import (
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
+var StorageClusterKind = odfv1alpha1.StorageKind(strings.ToLower(reflect.TypeOf(ocsv1.StorageCluster{}).Name()) +
+	"." + ocsv1.GroupVersion.String())
+var FlashSystemKind = odfv1alpha1.StorageKind(strings.ToLower(reflect.TypeOf(ibmv1alpha1.FlashSystemCluster{}).Name()) +
+	"." + ibmv1alpha1.GroupVersion.String())
+
+var KnownKinds = []odfv1alpha1.StorageKind{
+	StorageClusterKind,
+	FlashSystemKind,
+}
+
 // VendorStorageCluster returns GroupVersionKind
 func VendorStorageCluster() odfv1alpha1.StorageKind {
 
 	// storagecluster.ocs.openshift.io/v1
-	return odfv1alpha1.StorageKind(strings.ToLower(reflect.TypeOf(ocsv1.StorageCluster{}).Name()) +
-		"." + ocsv1.GroupVersion.String())
+	return StorageClusterKind
 }
 
 // VendorFlashSystemCluster returns GroupVersionKind
 func VendorFlashSystemCluster() odfv1alpha1.StorageKind {
 
 	// flashsystemcluster.odf.ibm.com/v1alpha1
-	return odfv1alpha1.StorageKind(strings.ToLower(reflect.TypeOf(ibmv1alpha1.FlashSystemCluster{}).Name()) +
-		"." + ibmv1alpha1.GroupVersion.String())
+	return FlashSystemKind
 }
 
 func (r *StorageSystemReconciler) isVendorSystemPresent(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
