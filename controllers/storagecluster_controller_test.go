@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 )
 
@@ -31,27 +32,25 @@ func TestReconcile(t *testing.T) {
 	testCases := []struct {
 		label                   string
 		AlreadyHasStorageSystem bool
-		expectedStorageSystem   bool
 	}{
 		{
-			label:                   "create StorageSystem for StorageCluster if does not exist one",
+			label:                   "create StorageSystem for StorageCluster if does not exist",
 			AlreadyHasStorageSystem: false,
-			expectedStorageSystem:   true,
 		},
 		{
-			label:                   "do not create StorageSystem for StorageCluster if it does exist",
+			label:                   "no error for StorageCluster if StorageSystem already exists",
 			AlreadyHasStorageSystem: true,
-			expectedStorageSystem:   true,
 		},
 	}
 
 	for i, tc := range testCases {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
-		fakeReconciler, fakeStorageCluster := GetFakeStorageClusterReconciler()
-		_ = odfv1alpha1.AddToScheme(fakeReconciler.Scheme)
-
-		fakeStorageSystem := GetFakeStorageSystem()
+		fakeStorageCluster := GetFakeStorageCluster()
+		fakeReconciler := GetFakeStorageClusterReconciler(t, fakeStorageCluster)
+		fakeStorageSystem := GetFakeStorageSystem(StorageClusterKind)
+		fakeStorageSystem.Name = fakeStorageCluster.Name + "-storagesystem"
+		fakeStorageSystem.Spec.Name = fakeStorageCluster.Name
 
 		if tc.AlreadyHasStorageSystem {
 			err := fakeReconciler.Client.Create(context.TODO(), fakeStorageSystem)
@@ -62,26 +61,24 @@ func TestReconcile(t *testing.T) {
 			context.TODO(),
 			ctrl.Request{
 				NamespacedName: types.NamespacedName{
-					Name:      "fake-storage-cluster",
-					Namespace: "fake-namespace",
+					Name:      fakeStorageCluster.Name,
+					Namespace: fakeStorageCluster.Namespace,
 				},
 			},
 		)
 		assert.NoError(t, err)
 
-		if tc.AlreadyHasStorageSystem {
-			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
-				Name: "fake-storage-system", Namespace: "fake-namespace"}, fakeStorageSystem)
-		} else {
-			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
-				Name: fakeStorageCluster.Name + "-storagesystem", Namespace: fakeStorageCluster.Namespace}, fakeStorageSystem)
-		}
+		foundStorageSystem := &odfv1alpha1.StorageSystem{}
+		err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
+			Name: fakeStorageSystem.Name, Namespace: fakeStorageSystem.Namespace}, foundStorageSystem)
 		assert.NoError(t, err)
 
-		err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{Name: fakeStorageCluster.Name, Namespace: fakeStorageCluster.Namespace}, fakeStorageCluster)
+		foundStorageCluster := &ocsv1.StorageCluster{}
+		err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
+			Name: fakeStorageCluster.Name, Namespace: fakeStorageCluster.Namespace}, foundStorageCluster)
 		assert.NoError(t, err)
 
-		_, ok := fakeStorageCluster.ObjectMeta.Annotations[HasStorageSystemAnnotation]
+		_, ok := foundStorageCluster.ObjectMeta.Annotations[HasStorageSystemAnnotation]
 		assert.True(t, ok)
 	}
 }
