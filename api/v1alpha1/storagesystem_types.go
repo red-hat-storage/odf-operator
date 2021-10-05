@@ -43,7 +43,7 @@ const (
 
 // StorageSystemSpec defines the desired state of StorageSystem
 type StorageSystemSpec struct {
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Required
 	// Name describes the name of managed storage vendor CR
@@ -61,7 +61,7 @@ type StorageSystemSpec struct {
 
 // StorageSystemStatus defines the observed state of StorageSystem
 type StorageSystemStatus struct {
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// Conditions describes the state of the StorageSystem resource.
 	// +optional
