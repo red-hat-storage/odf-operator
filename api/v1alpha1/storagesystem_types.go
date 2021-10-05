@@ -50,7 +50,7 @@ const (
 
 // StorageSystemSpec defines the desired state of StorageSystem
 type StorageSystemSpec struct {
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make generate" to regenerate code after modifying this file
 
 	//+kubebuilder:validation:Required
 	// Name describes the name of managed storage vendor CR
@@ -68,7 +68,7 @@ type StorageSystemSpec struct {
 
 // StorageSystemStatus defines the observed state of StorageSystem
 type StorageSystemStatus struct {
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// Phase describes the Phase of StorageSystem
 	// This is used by OLM UI to provide status information
