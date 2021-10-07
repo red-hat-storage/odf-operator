@@ -22,6 +22,6 @@ spec:
     ## Core Capabilities
 
     * **Vendors** ODF manages multiple vendors for you eg. Openshift Container
-      Storage and IBM flashsystemcluster.
+      Storage and IBM FlashSystem Cluster.
 
-    * **Subscription** It manages subscription for the IBM flashsystemcluster.
+    * **Subscription** It manages subscription for the IBM FlashSystem Cluster.
