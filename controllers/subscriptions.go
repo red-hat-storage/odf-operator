@@ -106,40 +106,44 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 
 func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
-	var csvName string
+	var csvNames []string
 
 	if instance.Spec.Kind == VendorFlashSystemCluster() {
-		csvName = IbmSubscriptionStartingCSV
+		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if instance.Spec.Kind == VendorStorageCluster() {
-		csvName = OcsSubscriptionStartingCSV
+		csvNames = []string{NoobaaSubscriptionStartingCSV, OcsSubscriptionStartingCSV}
 	}
 
-	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
-	err := r.Client.Get(context.TODO(), types.NamespacedName{
-		Name: csvName, Namespace: instance.Spec.Namespace}, csvObj)
+	for _, csvName := range csvNames {
 
-	if err != nil {
-		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
-		return err
+		csvObj := &operatorv1alpha1.ClusterServiceVersion{}
+		err := r.Client.Get(context.TODO(), types.NamespacedName{
+			Name: csvName, Namespace: instance.Spec.Namespace}, csvObj)
+
+		if err != nil {
+			SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
+			return err
+		}
+
+		err = r.addReferenceToRelatedObjects(instance, logger, csvObj)
+		if err != nil {
+			return err
+		}
+
+		if csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
+			csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful {
+
+			logger.Info("Vendor csv is in ready state")
+			SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
+		} else {
+			err = fmt.Errorf("Vendor CSV %s is not ready", csvName)
+			logger.Error(err, "Vendor csv is not ready")
+			SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", err.Error())
+			return err
+		}
 	}
 
-	err = r.addReferenceToRelatedObjects(instance, logger, csvObj)
-	if err != nil {
-		return err
-	}
-
-	if csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
-		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful {
-
-		logger.Info("Vendor csv is in ready state")
-		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
-		return nil
-	} else {
-		err = fmt.Errorf("Vendor CSV %s is not ready", csvName)
-		logger.Error(err, "Vendor csv is not ready")
-		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", err.Error())
-		return err
-	}
+	return nil
 }
 
 // GetSubscriptions returns all required Subscriptions for the given StorageKind
