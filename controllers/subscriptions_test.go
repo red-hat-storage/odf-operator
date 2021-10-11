@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -62,6 +63,17 @@ func TestEnsureSubscription(t *testing.T) {
 					assert.NoError(t, err)
 				}
 			}
+
+			odfSub := &operatorv1alpha1.Subscription{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      OdfSubscriptionName,
+					Namespace: OperatorNamespace,
+				},
+
+				Spec: &operatorv1alpha1.SubscriptionSpec{},
+			}
+			err = fakeReconciler.Client.Create(context.TODO(), odfSub)
+			assert.NoError(t, err)
 
 			err = fakeReconciler.ensureSubscription(fakeStorageSystem, fakeReconciler.Log)
 			assert.NoError(t, err)
