@@ -140,27 +140,6 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 	}
 }
 
-// RemoveSubscriptions deletes any managed Subscriptions that do not have any
-// existing CRs that their operators reconcile.
-func (r *StorageSystemReconciler) RemoveSubscriptions() error {
-	var err error
-
-	for _, kind := range KnownKinds {
-		subs := GetSubscriptions(kind)
-		for _, sub := range subs {
-			if clientErr := r.Client.Delete(context.TODO(), sub); clientErr != nil {
-				if err == nil {
-					err = clientErr
-				} else {
-					err = fmt.Errorf("%w; ", clientErr)
-				}
-			}
-		}
-	}
-
-	return err
-}
-
 // GetSubscriptions returns all required Subscriptions for the given StorageKind
 func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscription {
 
