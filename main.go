@@ -150,10 +150,4 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-
-	setupLog.Info("removing managed subscriptions")
-	if err := storageSystemReconciler.RemoveSubscriptions(); err != nil {
-		setupLog.Error(err, "problem removing subscriptions")
-		os.Exit(1)
-	}
 }
