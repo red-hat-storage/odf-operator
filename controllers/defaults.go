@@ -24,6 +24,8 @@ var (
 	DefaultValMap = map[string]string{
 		"OPERATOR_NAMESPACE": "openshift-storage",
 
+		"ODF_SUBSCRIPTION_NAME": "odf-operator",
+
 		"NOOBAA_SUBSCRIPTION_NAME":                    "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_PACKAGE":                 "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_CHANNEL":                 "alpha",
@@ -47,6 +49,8 @@ var (
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
+
+	OdfSubscriptionName = GetEnvOrDefault("ODF_SUBSCRIPTION_NAME")
 
 	OcsSubscriptionName                   = GetEnvOrDefault("OCS_SUBSCRIPTION_NAME")
 	OcsSubscriptionPackage                = GetEnvOrDefault("OCS_SUBSCRIPTION_PACKAGE")
