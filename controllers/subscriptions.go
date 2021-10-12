@@ -62,7 +62,7 @@ func (r *StorageSystemReconciler) CheckExistingSubscriptions(desiredSubscription
 	return nil
 }
 
-func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.StorageSystem, setOwnership bool, logger logr.Logger) error {
 
 	var err error
 
@@ -81,8 +81,12 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 		sub := &operatorv1alpha1.Subscription{}
 		sub.ObjectMeta = desiredSubscription.ObjectMeta
 		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, sub, func() error {
+			var ownErr error
+			if setOwnership {
+				ownErr = controllerutil.SetControllerReference(instance, sub, r.Scheme)
+			}
 			sub.Spec = desiredSubscription.Spec
-			return controllerutil.SetControllerReference(instance, sub, r.Scheme)
+			return ownErr
 		})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logger.Error(err, "failed to create subscription")
