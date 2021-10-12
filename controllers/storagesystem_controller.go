@@ -155,7 +155,7 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		return ctrl.Result{}, err
 	}
 
-	err = r.ensureSubscription(instance, logger)
+	err = r.ensureSubscription(instance, true, logger)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
