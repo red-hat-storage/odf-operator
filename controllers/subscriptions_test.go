@@ -63,7 +63,7 @@ func TestEnsureSubscription(t *testing.T) {
 				}
 			}
 
-			err = fakeReconciler.ensureSubscription(fakeStorageSystem, fakeReconciler.Log)
+			err = fakeReconciler.ensureSubscription(fakeStorageSystem, true, fakeReconciler.Log)
 			assert.NoError(t, err)
 
 			for _, expectedSubscription := range subs {
