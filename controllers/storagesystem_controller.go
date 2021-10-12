@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -28,6 +29,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -208,6 +210,46 @@ func (r *StorageSystemReconciler) addReferenceToRelatedObjects(instance *odfv1al
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *StorageSystemReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	// ========== START HACK ==========
+	// TODO: This is a hack to work around the absence of StorageCluster CRs.
+	// A better fix should come in ASAP.
+	//
+	// At this point, r.Client (from the manager) is using a cache that is not
+	// initialized, so we create a temporary client that skips the cache for
+	// Subscriptions.
+	mgrClient := r.Client
+	cliOpts := client.Options{Scheme: mgrClient.Scheme(), Mapper: mgrClient.RESTMapper()}
+	tmpClient, cliErr := cluster.NewClientBuilder().
+		WithUncached(&operatorv1alpha1.Subscription{}).
+		Build(nil, ctrl.GetConfigOrDie(), cliOpts)
+	if cliErr != nil {
+		return cliErr
+	}
+	r.Client = tmpClient
+
+	// Here we create a fake StorageSystem so we can reuse r.ensureSubscription()
+	// without further modification.
+	ss := &odfv1alpha1.StorageSystem{
+		Spec: odfv1alpha1.StorageSystemSpec{
+			Kind: StorageClusterKind,
+		},
+	}
+
+	ocsSubsAbsent := true
+	for ocsSubsAbsent {
+		// Don't set Subscription owner since StorageSystem doesn't exist
+		err := r.ensureSubscription(ss, false, r.Log)
+		if err == nil {
+			ocsSubsAbsent = false
+		} else {
+			r.Log.Error(err, "failed to create OCS subscriptions, retrying after 5 seconds")
+			time.Sleep(5 * time.Second)
+		}
+	}
+
+	r.Client = mgrClient
+	// ========== END HACK ==========
 
 	generationChangedPredicate := predicate.GenerationChangedPredicate{}
 
