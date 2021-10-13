@@ -254,6 +254,14 @@ spec:
           verbs:
           - update
         - apiGroups:
+          - operators.coreos.com
+          resources:
+          - subscriptions/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
