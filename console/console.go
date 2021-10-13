@@ -67,18 +67,10 @@ func GetService(serviceName string, port int, owner metav1.ObjectMeta) apiv1.Ser
 	}
 }
 
-func GetConsolePluginCR(pluginName string, displayName string, consolePort int, serviceName string, owner metav1.ObjectMeta) consolev1alpha1.ConsolePlugin {
+func GetConsolePluginCR(pluginName string, displayName string, consolePort int, serviceName string) consolev1alpha1.ConsolePlugin {
 	return consolev1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: pluginName,
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: "apps/v1",
-					Kind:       "Deployment",
-					Name:       "odf-console",
-					UID:        owner.UID,
-				},
-			},
 		},
 		Spec: consolev1alpha1.ConsolePluginSpec{
 			DisplayName: displayName,
@@ -109,8 +101,26 @@ func InitConsole(client client.Client, odfPort int) error {
 		return err
 	}
 	// Create core ODF Plugin
-	odfConsolePlugin := GetConsolePluginCR("odf-console", "ODF Plugin", odfPort, odfService.ObjectMeta.Name, deployment.ObjectMeta)
+	odfConsolePlugin := GetConsolePluginCR("odf-console", "ODF Plugin", odfPort, odfService.Name)
 	if err := client.Create(context.TODO(), &odfConsolePlugin); err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
+}
+
+func RemoveConsole(client client.Client) error {
+	consolePlugin := consolev1alpha1.ConsolePlugin{}
+	if err := client.Get(context.TODO(), types.NamespacedName{
+		Name:      "odf-console",
+		Namespace: DEPLOYMENT_NAMESPACE,
+	}, &consolePlugin); err != nil {
+		if errors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	// Delete ODF consoleplugin
+	if err := client.Delete(context.TODO(), &consolePlugin); err != nil {
 		return err
 	}
 	return nil
