@@ -78,7 +78,7 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 			return err
 		}
 
-		odfSub, err := GetOdfSubscription(r.Client, logger)
+		odfSub, err := GetOdfSubscription(r.Client)
 		if err != nil {
 			return err
 		}
@@ -130,6 +130,14 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 			return err
 		}
 
+		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, csvObj, func() error {
+			return r.setOdfSubControllerReference(csvObj)
+		})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			logger.Error(err, "failed to set ownership on vendor CSV")
+			return err
+		}
+
 		if csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
 			csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful {
 
@@ -141,6 +149,22 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 			SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", err.Error())
 			return err
 		}
+
+	}
+
+	return nil
+}
+
+func (r *StorageSystemReconciler) setOdfSubControllerReference(obj client.Object) error {
+
+	odfSub, err := GetOdfSubscription(r.Client)
+	if err != nil {
+		return err
+	}
+
+	err = controllerutil.SetControllerReference(odfSub, obj, r.Scheme)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -161,7 +185,7 @@ func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscriptio
 
 // GetOdfSubscription return subscription for odf-operator and store it in cache
 // It fetch once and use the same again and again from cache
-func GetOdfSubscription(cli client.Client, logger logr.Logger) (*operatorv1alpha1.Subscription, error) {
+func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, error) {
 
 	if OdfSubscriptionObjectMeta != nil {
 		return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
