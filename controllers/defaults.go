@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"os"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -72,6 +74,11 @@ var (
 	IbmSubscriptionStartingCSV            = GetEnvOrDefault("IBM_SUBSCRIPTION_STARTINGCSV")
 	IbmSubscriptionCatalogSource          = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE")
 	IbmSubscriptionCatalogSourceNamespace = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+)
+
+var (
+	// Will be fetched only once and used the same again and again
+	OdfSubscriptionObjectMeta *metav1.ObjectMeta
 )
 
 func GetEnvOrDefault(env string) string {
