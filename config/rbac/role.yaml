@@ -152,3 +152,9 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - subscriptions/finalizers
+  verbs:
+  - update
