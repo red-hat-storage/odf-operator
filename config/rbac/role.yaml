@@ -158,3 +158,11 @@ rules:
   - subscriptions/finalizers
   verbs:
   - update
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - subscriptions/status
+  verbs:
+  - get
+  - patch
+  - update
