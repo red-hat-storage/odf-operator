@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -77,12 +78,17 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 			return err
 		}
 
+		odfSub, err := GetOdfSubscription(r.Client, logger)
+		if err != nil {
+			return err
+		}
+
 		// create/update subscription
 		sub := &operatorv1alpha1.Subscription{}
 		sub.ObjectMeta = desiredSubscription.ObjectMeta
 		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, sub, func() error {
 			sub.Spec = desiredSubscription.Spec
-			return controllerutil.SetControllerReference(instance, sub, r.Scheme)
+			return controllerutil.SetControllerReference(odfSub, sub, r.Scheme)
 		})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logger.Error(err, "failed to create subscription")
@@ -147,6 +153,27 @@ func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscriptio
 	}
 
 	return subscriptions
+}
+
+// GetOdfSubscription return subscription for odf-operator and store it in cache
+// It fetch once and use the same again and again from cache
+func GetOdfSubscription(cli client.Client, logger logr.Logger) (*operatorv1alpha1.Subscription, error) {
+
+	if OdfSubscriptionObjectMeta != nil {
+		return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
+	}
+
+	odfSub := &operatorv1alpha1.Subscription{}
+
+	err := cli.Get(context.TODO(), types.NamespacedName{
+		Name: OdfSubscriptionName, Namespace: OperatorNamespace}, odfSub)
+	if err != nil {
+		return nil, err
+	}
+
+	OdfSubscriptionObjectMeta = &odfSub.ObjectMeta
+
+	return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
 }
 
 // GetStorageClusterSubscription return subscription for StorageCluster
