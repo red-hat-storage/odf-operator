@@ -79,6 +79,7 @@ type StorageSystemStatus struct {
 //+kubebuilder:resource:shortName=storsys
 //+kubebuilder:printcolumn:JSONPath=".spec.kind",name=storage-system-kind,type=string
 //+kubebuilder:printcolumn:JSONPath=".spec.name",name=storage-system-name,type=string
+//+operator-sdk:csv:customresourcedefinitions:resources={{StorageCluster,v1,storageclusters.ocs.openshift.io},{FlashSystemCluster,v1alpha1,flashsystemclusters.odf.ibm.com}}
 
 // StorageSystem is the Schema for the storagesystems API
 type StorageSystem struct {
