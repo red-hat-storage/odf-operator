@@ -71,6 +71,13 @@ spec:
       displayName: Storage System
       kind: StorageSystem
       name: storagesystems.odf.openshift.io
+      resources:
+      - kind: FlashSystemCluster
+        name: flashsystemclusters.odf.ibm.com
+        version: v1alpha1
+      - kind: StorageCluster
+        name: storageclusters.ocs.openshift.io
+        version: v1
       version: v1alpha1
   description: |
     ## Red Hat OpenShift Data Foundation
