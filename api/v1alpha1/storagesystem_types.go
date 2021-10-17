@@ -19,8 +19,11 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/reference"
 
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
+	objectreferencesv1 "github.com/openshift/custom-resource-status/objectreferences/v1"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -96,6 +99,21 @@ type StorageSystemList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []StorageSystem `json:"items"`
+}
+
+func (ss *StorageSystem) AddReferenceToRelatedObjects(scheme *runtime.Scheme, object runtime.Object) error {
+
+	objectRef, err := reference.GetReference(scheme, object)
+	if err != nil {
+		return err
+	}
+
+	err = objectreferencesv1.SetObjectReference(&ss.Status.RelatedObjects, *objectRef)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func init() {
