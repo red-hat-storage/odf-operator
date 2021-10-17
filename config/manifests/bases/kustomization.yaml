@@ -5,3 +5,10 @@ resources:
 patchesStrategicMerge:
 - odf-operator.csv.icon.yaml
 - odf-operator.csv.card-description.yaml
+commonAnnotations:
+  olm.skipRange: ""
+patches:
+- patch: '[{"op": "replace", "path": "/spec/replaces", "value": ""}]'
+  target:
+    kind: ClusterServiceVersion
+    name: odf-operator.v0.0.0
