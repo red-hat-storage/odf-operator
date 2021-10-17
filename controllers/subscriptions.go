@@ -20,8 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -57,31 +55,6 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 				return fmt.Errorf("found conflicting Subscription found for package '%s': %s", pkgName, sub.Name)
 			}
 			actualSub = &subsList.Items[i]
-		}
-	}
-
-	return nil
-}
-
-func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
-
-	var err error
-
-	subs := GetSubscriptions(instance.Spec.Kind)
-	if len(subs) == 0 {
-		return fmt.Errorf("no subscriptions defined for kind: %v", instance.Spec.Kind)
-	}
-
-	for _, desiredSubscription := range subs {
-		err = EnsureDesiredSubscription(r.Client, desiredSubscription)
-		if err != nil && !errors.IsAlreadyExists(err) {
-			logger.Error(err, "failed to ensure subscription", "Subscription", desiredSubscription.Name)
-			return err
-		}
-
-		err = instance.AddReferenceToRelatedObjects(r.Scheme, desiredSubscription)
-		if err != nil {
-			return err
 		}
 	}
 
@@ -151,45 +124,6 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 	}
 
 	return csvObj, err
-}
-
-func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
-
-	csvNames := GetVendorCsvNames(instance.Spec.Kind)
-
-	var errs []error
-	for _, csvName := range csvNames {
-
-		csvObj, err := EnsureVendorCsv(r.Client, csvName)
-		if err != nil {
-			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvObj.Name)
-			errs = append(errs, err)
-			continue
-		}
-
-		err = instance.AddReferenceToRelatedObjects(r.Scheme, csvObj)
-		if err != nil {
-			logger.Error(err, "failed to add CSV to RelatedObjects", "ClusterServiceVersion", csvObj.Name)
-			errs = append(errs, err)
-			continue
-		}
-
-		logger.Info("vendor CSV is installed and ready", "ClusterServiceVersion", csvObj.Name)
-
-	}
-
-	if len(errs) != 0 {
-		returnErr := fmt.Errorf("CSV for %v is not successfully installed yet", instance.Spec.Kind)
-		for _, err := range errs {
-			returnErr = fmt.Errorf("%v\n%v", returnErr, err)
-		}
-		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", returnErr.Error())
-		return returnErr
-	} else {
-		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
-	}
-
-	return nil
 }
 
 func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
