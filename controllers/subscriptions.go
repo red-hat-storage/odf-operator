@@ -95,7 +95,7 @@ func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.Stora
 			return err
 		}
 
-		err = r.addReferenceToRelatedObjects(instance, logger, desiredSubscription)
+		err = instance.AddReferenceToRelatedObjects(r.Scheme, sub)
 		if err != nil {
 			return err
 		}
@@ -124,8 +124,7 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 			SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
 			return err
 		}
-
-		err = r.addReferenceToRelatedObjects(instance, logger, csvObj)
+		err = instance.AddReferenceToRelatedObjects(r.Scheme, csvObj)
 		if err != nil {
 			return err
 		}
