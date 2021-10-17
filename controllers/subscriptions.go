@@ -63,7 +63,7 @@ func (r *StorageSystemReconciler) CheckExistingSubscriptions(desiredSubscription
 	return nil
 }
 
-func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
 	var err error
 
