@@ -37,10 +37,10 @@ import (
 //
 // NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
 // because fake.Client does not support them.
-func (r *StorageSystemReconciler) CheckExistingSubscriptions(desiredSubscription *operatorv1alpha1.Subscription) error {
+func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
-	err := r.Client.List(context.TODO(), subsList)
+	err := cli.List(context.TODO(), subsList)
 	if err != nil {
 		return err
 	}
@@ -73,29 +73,13 @@ func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.Stor
 	}
 
 	for _, desiredSubscription := range subs {
-		err = r.CheckExistingSubscriptions(desiredSubscription)
-		if err != nil {
-			return err
-		}
-
-		odfSub, err := GetOdfSubscription(r.Client)
-		if err != nil {
-			return err
-		}
-
-		// create/update subscription
-		sub := &operatorv1alpha1.Subscription{}
-		sub.ObjectMeta = desiredSubscription.ObjectMeta
-		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, sub, func() error {
-			sub.Spec = desiredSubscription.Spec
-			return controllerutil.SetControllerReference(odfSub, sub, r.Scheme)
-		})
+		err = EnsureDesiredSubscription(r.Client, desiredSubscription)
 		if err != nil && !errors.IsAlreadyExists(err) {
-			logger.Error(err, "failed to create subscription")
+			logger.Error(err, "failed to ensure subscription", "Subscription", desiredSubscription.Name)
 			return err
 		}
 
-		err = instance.AddReferenceToRelatedObjects(r.Scheme, sub)
+		err = instance.AddReferenceToRelatedObjects(r.Scheme, desiredSubscription)
 		if err != nil {
 			return err
 		}
@@ -104,64 +88,118 @@ func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.Stor
 	return nil
 }
 
-func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
 
-	var csvNames []string
+	var err error
 
-	if instance.Spec.Kind == VendorFlashSystemCluster() {
-		csvNames = []string{IbmSubscriptionStartingCSV}
-	} else if instance.Spec.Kind == VendorStorageCluster() {
-		csvNames = []string{NoobaaSubscriptionStartingCSV, OcsSubscriptionStartingCSV}
-	}
-
-	for _, csvName := range csvNames {
-
-		csvObj := &operatorv1alpha1.ClusterServiceVersion{}
-		err := r.Client.Get(context.TODO(), types.NamespacedName{
-			Name: csvName, Namespace: instance.Spec.Namespace}, csvObj)
-
-		if err != nil {
-			SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
-			return err
-		}
-		err = instance.AddReferenceToRelatedObjects(r.Scheme, csvObj)
-		if err != nil {
-			return err
-		}
-
-		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, csvObj, func() error {
-			return r.setOdfSubControllerReference(csvObj)
-		})
-		if err != nil && !errors.IsAlreadyExists(err) {
-			logger.Error(err, "failed to set ownership on vendor CSV")
-			return err
-		}
-
-		if csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
-			csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful {
-
-			logger.Info("Vendor csv is in ready state")
-			SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
-		} else {
-			err = fmt.Errorf("Vendor CSV %s is not ready", csvName)
-			logger.Error(err, "Vendor csv is not ready")
-			SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", err.Error())
-			return err
-		}
-
-	}
-
-	return nil
-}
-
-func (r *StorageSystemReconciler) setOdfSubControllerReference(obj client.Object) error {
-
-	odfSub, err := GetOdfSubscription(r.Client)
+	err = CheckExistingSubscriptions(cli, desiredSubscription)
 	if err != nil {
 		return err
 	}
 
-	err = controllerutil.SetControllerReference(odfSub, obj, r.Scheme)
+	// create/update subscription
+	sub := &operatorv1alpha1.Subscription{}
+	sub.ObjectMeta = desiredSubscription.ObjectMeta
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, sub, func() error {
+		sub.Spec = desiredSubscription.Spec
+		return SetOdfSubControllerReference(cli, sub)
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+
+	return nil
+}
+
+func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
+
+	var csvNames []string
+
+	if kind == VendorFlashSystemCluster() {
+		csvNames = []string{IbmSubscriptionStartingCSV}
+	} else if kind == VendorStorageCluster() {
+		csvNames = []string{NoobaaSubscriptionStartingCSV, OcsSubscriptionStartingCSV}
+	}
+
+	return csvNames
+}
+
+func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.ClusterServiceVersion, error) {
+
+	var err error
+
+	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
+	err = cli.Get(context.TODO(), types.NamespacedName{
+		Name: csvName, Namespace: OperatorNamespace}, csvObj)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
+		return SetOdfSubControllerReference(cli, csvObj)
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return nil, err
+	}
+
+	isReady := csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
+		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful
+
+	if !isReady {
+		err = fmt.Errorf("CSV is not successfully installed")
+		return nil, err
+	}
+
+	return csvObj, err
+}
+
+func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+
+	csvNames := GetVendorCsvNames(instance.Spec.Kind)
+
+	var errs []error
+	for _, csvName := range csvNames {
+
+		csvObj, err := EnsureVendorCsv(r.Client, csvName)
+		if err != nil {
+			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvObj.Name)
+			errs = append(errs, err)
+			continue
+		}
+
+		err = instance.AddReferenceToRelatedObjects(r.Scheme, csvObj)
+		if err != nil {
+			logger.Error(err, "failed to add CSV to RelatedObjects", "ClusterServiceVersion", csvObj.Name)
+			errs = append(errs, err)
+			continue
+		}
+
+		logger.Info("vendor CSV is installed and ready", "ClusterServiceVersion", csvObj.Name)
+
+	}
+
+	if len(errs) != 0 {
+		returnErr := fmt.Errorf("CSV for %v is not successfully installed yet", instance.Spec.Kind)
+		for _, err := range errs {
+			returnErr = fmt.Errorf("%v\n%v", returnErr, err)
+		}
+		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", returnErr.Error())
+		return returnErr
+	} else {
+		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
+	}
+
+	return nil
+}
+
+func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
+
+	odfSub, err := GetOdfSubscription(cli)
+	if err != nil {
+		return err
+	}
+
+	err = controllerutil.SetControllerReference(odfSub, obj, cli.Scheme())
 	if err != nil {
 		return err
 	}
