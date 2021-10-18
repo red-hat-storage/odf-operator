@@ -18,11 +18,15 @@ package controllers
 
 import (
 	"os"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
 	DefaultValMap = map[string]string{
 		"OPERATOR_NAMESPACE": "openshift-storage",
+
+		"ODF_SUBSCRIPTION_NAME": "odf-operator",
 
 		"NOOBAA_SUBSCRIPTION_NAME":                    "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_PACKAGE":                 "noobaa-operator",
@@ -48,6 +52,8 @@ var (
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
 
+	OdfSubscriptionName = GetEnvOrDefault("ODF_SUBSCRIPTION_NAME")
+
 	OcsSubscriptionName                   = GetEnvOrDefault("OCS_SUBSCRIPTION_NAME")
 	OcsSubscriptionPackage                = GetEnvOrDefault("OCS_SUBSCRIPTION_PACKAGE")
 	OcsSubscriptionChannel                = GetEnvOrDefault("OCS_SUBSCRIPTION_CHANNEL")
@@ -68,6 +74,11 @@ var (
 	IbmSubscriptionStartingCSV            = GetEnvOrDefault("IBM_SUBSCRIPTION_STARTINGCSV")
 	IbmSubscriptionCatalogSource          = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE")
 	IbmSubscriptionCatalogSourceNamespace = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+)
+
+var (
+	// Will be fetched only once and used the same again and again
+	OdfSubscriptionObjectMeta *metav1.ObjectMeta
 )
 
 func GetEnvOrDefault(env string) string {

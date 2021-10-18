@@ -19,23 +19,20 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-logr/logr"
+	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/reference"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	objectreferencesv1 "github.com/openshift/custom-resource-status/objectreferences/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/red-hat-data-services/odf-operator/metrics"
@@ -62,6 +59,7 @@ type StorageSystemReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=catalogsources,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=*
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;create;update
 
@@ -157,7 +155,7 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		return ctrl.Result{}, err
 	}
 
-	err = r.ensureSubscription(instance, true, logger)
+	err = r.ensureSubscriptions(instance, logger)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -191,65 +189,67 @@ func (r *StorageSystemReconciler) validateStorageSystemSpec(instance *odfv1alpha
 	return nil
 }
 
-func (r *StorageSystemReconciler) addReferenceToRelatedObjects(instance *odfv1alpha1.StorageSystem, logger logr.Logger, object runtime.Object) error {
+func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
-	objectRef, err := reference.GetReference(r.Scheme, object)
-	if err != nil {
-		logger.Error(err, "Failed to get reference of object.")
-		return err
+	var err error
+
+	subs := GetSubscriptions(instance.Spec.Kind)
+	if len(subs) == 0 {
+		return fmt.Errorf("no subscriptions defined for kind: %v", instance.Spec.Kind)
 	}
 
-	err = objectreferencesv1.SetObjectReference(&instance.Status.RelatedObjects, *objectRef)
-	if err != nil {
-		logger.Error(err, "Failed to set reference of object into RelatedObjects.")
-		return err
+	for _, desiredSubscription := range subs {
+		err = EnsureDesiredSubscription(r.Client, desiredSubscription)
+		if err != nil && !errors.IsAlreadyExists(err) {
+			logger.Error(err, "failed to ensure subscription", "Subscription", desiredSubscription.Name)
+			return err
+		}
+
+		err = instance.AddReferenceToRelatedObjects(r.Scheme, desiredSubscription)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
+func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+
+	csvNames := GetVendorCsvNames(instance.Spec.Kind)
+
+	var returnErr error
+	for _, csvName := range csvNames {
+
+		csvObj, err := EnsureVendorCsv(r.Client, csvName)
+		if err != nil {
+			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvObj.Name)
+			multierr.AppendInto(&returnErr, err)
+			continue
+		}
+
+		err = instance.AddReferenceToRelatedObjects(r.Scheme, csvObj)
+		if err != nil {
+			logger.Error(err, "failed to add CSV to RelatedObjects", "ClusterServiceVersion", csvObj.Name)
+			multierr.AppendInto(&returnErr, err)
+			continue
+		}
+
+		logger.Info("vendor CSV is installed and ready", "ClusterServiceVersion", csvObj.Name)
+
+	}
+
+	if returnErr != nil {
+		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", returnErr.Error())
+	} else {
+		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
+	}
+
+	return returnErr
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *StorageSystemReconciler) SetupWithManager(mgr ctrl.Manager) error {
-
-	// ========== START HACK ==========
-	// TODO: This is a hack to work around the absence of StorageCluster CRs.
-	// A better fix should come in ASAP.
-	//
-	// At this point, r.Client (from the manager) is using a cache that is not
-	// initialized, so we create a temporary client that skips the cache for
-	// Subscriptions.
-	mgrClient := r.Client
-	cliOpts := client.Options{Scheme: mgrClient.Scheme(), Mapper: mgrClient.RESTMapper()}
-	tmpClient, cliErr := cluster.NewClientBuilder().
-		WithUncached(&operatorv1alpha1.Subscription{}).
-		Build(nil, ctrl.GetConfigOrDie(), cliOpts)
-	if cliErr != nil {
-		return cliErr
-	}
-	r.Client = tmpClient
-
-	// Here we create a fake StorageSystem so we can reuse r.ensureSubscription()
-	// without further modification.
-	ss := &odfv1alpha1.StorageSystem{
-		Spec: odfv1alpha1.StorageSystemSpec{
-			Kind: StorageClusterKind,
-		},
-	}
-
-	ocsSubsAbsent := true
-	for ocsSubsAbsent {
-		// Don't set Subscription owner since StorageSystem doesn't exist
-		err := r.ensureSubscription(ss, false, r.Log)
-		if err == nil {
-			ocsSubsAbsent = false
-		} else {
-			r.Log.Error(err, "failed to create OCS subscriptions, retrying after 5 seconds")
-			time.Sleep(5 * time.Second)
-		}
-	}
-
-	r.Client = mgrClient
-	// ========== END HACK ==========
 
 	generationChangedPredicate := predicate.GenerationChangedPredicate{}
 
