@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -217,20 +218,20 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 
 	csvNames := GetVendorCsvNames(instance.Spec.Kind)
 
-	var errs []error
+	var returnErr error
 	for _, csvName := range csvNames {
 
 		csvObj, err := EnsureVendorCsv(r.Client, csvName)
 		if err != nil {
 			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvObj.Name)
-			errs = append(errs, err)
+			multierr.AppendInto(&returnErr, err)
 			continue
 		}
 
 		err = instance.AddReferenceToRelatedObjects(r.Scheme, csvObj)
 		if err != nil {
 			logger.Error(err, "failed to add CSV to RelatedObjects", "ClusterServiceVersion", csvObj.Name)
-			errs = append(errs, err)
+			multierr.AppendInto(&returnErr, err)
 			continue
 		}
 
@@ -238,18 +239,13 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 
 	}
 
-	if len(errs) != 0 {
-		returnErr := fmt.Errorf("CSV for %v is not successfully installed yet", instance.Spec.Kind)
-		for _, err := range errs {
-			returnErr = fmt.Errorf("%v\n%v", returnErr, err)
-		}
+	if returnErr != nil {
 		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", returnErr.Error())
-		return returnErr
 	} else {
 		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
 	}
 
-	return nil
+	return returnErr
 }
 
 // SetupWithManager sets up the controller with the Manager.
