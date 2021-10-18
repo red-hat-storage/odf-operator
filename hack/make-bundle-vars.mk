@@ -23,6 +23,16 @@ BUNDLE_CHANNELS := --channels=$(CHANNELS)
 
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
+# Each CSV has a replaces parameter that indicates which Operator it replaces.
+# This builds a graph of CSVs that can be queried by OLM, and updates can be
+# shared between channels. Channels can be thought of as entry points into
+# the graph of updates:
+REPLACES ?=
+
+# Creating the New CatalogSource requires publishing CSVs that replace one Operator,
+# but can skip several. This can be accomplished using the skipRange annotation:
+SKIP_RANGE ?=
+
 # Image URL to use all building/pushing image targets
 IMAGE_REGISTRY ?= quay.io
 REGISTRY_NAMESPACE ?= ocs-dev
