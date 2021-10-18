@@ -37,14 +37,16 @@ import (
 
 	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	ocsv1 "github.com/openshift/ocs-operator/api/v1"
+
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
 	"github.com/red-hat-data-services/odf-operator/controllers"
 
 	//+kubebuilder:scaffold:imports
 	consolev1 "github.com/openshift/api/console/v1"
 	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
-	console "github.com/red-hat-data-services/odf-operator/console"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	console "github.com/red-hat-data-services/odf-operator/console"
 )
 
 var (
@@ -124,6 +126,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	subscriptionReconciler := &controllers.SubscriptionReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}
+	if err = subscriptionReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Subscription")
+		os.Exit(1)
+	}
+
 	storageClusterReconciler := &controllers.StorageClusterReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -133,7 +144,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageCluster")
 		os.Exit(1)
 	}
-
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -148,12 +158,6 @@ func main() {
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
-	}
-
-	setupLog.Info("removing managed subscriptions")
-	if err := storageSystemReconciler.RemoveSubscriptions(); err != nil {
-		setupLog.Error(err, "problem removing subscriptions")
 		os.Exit(1)
 	}
 }

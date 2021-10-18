@@ -21,4 +21,9 @@ resources:
   group: ocs
   kind: StorageCluster
   version: v1
+- controller: true
+  domain: coreos.com
+  group: operators
+  kind: Subscription
+  version: v1alpha1
 version: "3"

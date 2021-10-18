@@ -20,11 +20,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -36,10 +35,10 @@ import (
 //
 // NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
 // because fake.Client does not support them.
-func (r *StorageSystemReconciler) CheckExistingSubscriptions(desiredSubscription *operatorv1alpha1.Subscription) error {
+func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
-	err := r.Client.List(context.TODO(), subsList)
+	err := cli.List(context.TODO(), subsList)
 	if err != nil {
 		return err
 	}
@@ -62,103 +61,84 @@ func (r *StorageSystemReconciler) CheckExistingSubscriptions(desiredSubscription
 	return nil
 }
 
-func (r *StorageSystemReconciler) ensureSubscription(instance *odfv1alpha1.StorageSystem, setOwnership bool, logger logr.Logger) error {
+func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
 
 	var err error
 
-	subs := GetSubscriptions(instance.Spec.Kind)
-	if len(subs) == 0 {
-		return fmt.Errorf("no subscriptions defined for kind: %v", instance.Spec.Kind)
+	err = CheckExistingSubscriptions(cli, desiredSubscription)
+	if err != nil {
+		return err
 	}
 
-	for _, desiredSubscription := range subs {
-		err = r.CheckExistingSubscriptions(desiredSubscription)
-		if err != nil {
-			return err
-		}
-
-		// create/update subscription
-		sub := &operatorv1alpha1.Subscription{}
-		sub.ObjectMeta = desiredSubscription.ObjectMeta
-		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, sub, func() error {
-			var ownErr error
-			if setOwnership {
-				ownErr = controllerutil.SetControllerReference(instance, sub, r.Scheme)
-			}
-			sub.Spec = desiredSubscription.Spec
-			return ownErr
-		})
-		if err != nil && !errors.IsAlreadyExists(err) {
-			logger.Error(err, "failed to create subscription")
-			return err
-		}
-
-		err = r.addReferenceToRelatedObjects(instance, logger, desiredSubscription)
-		if err != nil {
-			return err
-		}
+	// create/update subscription
+	sub := &operatorv1alpha1.Subscription{}
+	sub.ObjectMeta = desiredSubscription.ObjectMeta
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, sub, func() error {
+		sub.Spec = desiredSubscription.Spec
+		return SetOdfSubControllerReference(cli, sub)
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
 	}
 
 	return nil
 }
 
-func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
 
-	var csvName string
+	var csvNames []string
 
-	if instance.Spec.Kind == VendorFlashSystemCluster() {
-		csvName = IbmSubscriptionStartingCSV
-	} else if instance.Spec.Kind == VendorStorageCluster() {
-		csvName = OcsSubscriptionStartingCSV
+	if kind == VendorFlashSystemCluster() {
+		csvNames = []string{IbmSubscriptionStartingCSV}
+	} else if kind == VendorStorageCluster() {
+		csvNames = []string{NoobaaSubscriptionStartingCSV, OcsSubscriptionStartingCSV}
 	}
 
-	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
-	err := r.Client.Get(context.TODO(), types.NamespacedName{
-		Name: csvName, Namespace: instance.Spec.Namespace}, csvObj)
-
-	if err != nil {
-		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
-		return err
-	}
-
-	err = r.addReferenceToRelatedObjects(instance, logger, csvObj)
-	if err != nil {
-		return err
-	}
-
-	if csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
-		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful {
-
-		logger.Info("Vendor csv is in ready state")
-		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Ready", "")
-		return nil
-	} else {
-		err = fmt.Errorf("Vendor CSV %s is not ready", csvName)
-		logger.Error(err, "Vendor csv is not ready")
-		SetVendorCsvReadyCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotReady", err.Error())
-		return err
-	}
+	return csvNames
 }
 
-// RemoveSubscriptions deletes any managed Subscriptions that do not have any
-// existing CRs that their operators reconcile.
-func (r *StorageSystemReconciler) RemoveSubscriptions() error {
+func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.ClusterServiceVersion, error) {
+
 	var err error
 
-	for _, kind := range KnownKinds {
-		subs := GetSubscriptions(kind)
-		for _, sub := range subs {
-			if clientErr := r.Client.Delete(context.TODO(), sub); clientErr != nil {
-				if err == nil {
-					err = clientErr
-				} else {
-					err = fmt.Errorf("%w; ", clientErr)
-				}
-			}
-		}
+	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
+	err = cli.Get(context.TODO(), types.NamespacedName{
+		Name: csvName, Namespace: OperatorNamespace}, csvObj)
+	if err != nil {
+		return nil, err
 	}
 
-	return err
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
+		return SetOdfSubControllerReference(cli, csvObj)
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return nil, err
+	}
+
+	isReady := csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
+		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful
+
+	if !isReady {
+		err = fmt.Errorf("CSV is not successfully installed")
+		return nil, err
+	}
+
+	return csvObj, err
+}
+
+func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
+
+	odfSub, err := GetOdfSubscription(cli)
+	if err != nil {
+		return err
+	}
+
+	err = controllerutil.SetControllerReference(odfSub, obj, cli.Scheme())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetSubscriptions returns all required Subscriptions for the given StorageKind
@@ -172,6 +152,27 @@ func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscriptio
 	}
 
 	return subscriptions
+}
+
+// GetOdfSubscription return subscription for odf-operator and store it in cache
+// It fetch once and use the same again and again from cache
+func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, error) {
+
+	if OdfSubscriptionObjectMeta != nil {
+		return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
+	}
+
+	odfSub := &operatorv1alpha1.Subscription{}
+
+	err := cli.Get(context.TODO(), types.NamespacedName{
+		Name: OdfSubscriptionName, Namespace: OperatorNamespace}, odfSub)
+	if err != nil {
+		return nil, err
+	}
+
+	OdfSubscriptionObjectMeta = &odfSub.ObjectMeta
+
+	return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
 }
 
 // GetStorageClusterSubscription return subscription for StorageCluster
@@ -206,7 +207,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{noobaaSubscription, ocsSubscription}
+	return []*operatorv1alpha1.Subscription{ocsSubscription, noobaaSubscription}
 }
 
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
