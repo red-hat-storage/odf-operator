@@ -20,9 +20,6 @@ COPY config/ config/
 COPY metrics/ metrics/
 COPY console/ console/
 
-# Run tests and linting
-RUN make test
-
 # Build
 RUN make go-build
 
