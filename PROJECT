@@ -26,4 +26,9 @@ resources:
   group: operators
   kind: Subscription
   version: v1alpha1
+- controller: true
+  domain: openshift.io
+  group: config
+  kind: ClusterVersion
+  version: v1
 version: "3"
