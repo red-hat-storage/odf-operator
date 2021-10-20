@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"flag"
 	"os"
 
@@ -31,7 +30,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -42,11 +40,10 @@ import (
 	"github.com/red-hat-data-services/odf-operator/controllers"
 
 	//+kubebuilder:scaffold:imports
+	configv1 "github.com/openshift/api/config/v1"
 	consolev1 "github.com/openshift/api/console/v1"
 	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-
-	console "github.com/red-hat-data-services/odf-operator/console"
 )
 
 var (
@@ -67,6 +64,7 @@ func init() {
 	utilruntime.Must(consolev1.AddToScheme(scheme))
 	utilruntime.Must(consolev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(extv1.AddToScheme(scheme))
+	utilruntime.Must(configv1.AddToScheme(scheme))
 
 }
 
@@ -102,19 +100,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting console")
-	if err := mgr.Add(manager.RunnableFunc(func(context.Context) error {
-		err = console.InitConsole(mgr.GetClient(), odfConsolePort)
-		if err != nil {
-			setupLog.Error(err, "unable to Initialize ODF Console")
-			os.Exit(1)
-		}
-		return nil
-	})); err != nil {
-		setupLog.Error(err, "unable to Initialize ODF Console")
-		os.Exit(1)
-	}
-
 	storageSystemReconciler := &controllers.StorageSystemReconciler{
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
@@ -146,8 +131,9 @@ func main() {
 	}
 
 	if err = (&controllers.ClusterVersionReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:      mgr.GetClient(),
+		Scheme:      mgr.GetScheme(),
+		ConsolePort: odfConsolePort,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterVersion")
 		os.Exit(1)
