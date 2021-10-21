@@ -17,38 +17,37 @@ limitations under the License.
 package console
 
 import (
-	"context"
+	"strings"
 
 	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const DEPLOYMENT_NAMESPACE = "openshift-storage"
+const MAIN_BASE_PATH = ""
+const COMPATIBILITY_BASE_PATH = "compatibility"
 
-func GetService(serviceName string, port int, owner metav1.ObjectMeta) apiv1.Service {
-	return apiv1.Service{
+func GetDeployment(namespace string) *appsv1.Deployment {
+	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      serviceName + "-service",
-			Namespace: DEPLOYMENT_NAMESPACE,
+			Name:      "odf-console",
+			Namespace: namespace,
+		},
+	}
+}
+
+func GetService(port int, namespace string) *apiv1.Service {
+	return &apiv1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "odf-console-service",
+			Namespace: namespace,
 			Annotations: map[string]string{
-				"service.alpha.openshift.io/serving-cert-secret-name": serviceName + "-serving-cert",
+				"service.alpha.openshift.io/serving-cert-secret-name": "odf-console-serving-cert",
 			},
 			Labels: map[string]string{
 				"app": "odf-console",
-			},
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: "apps/v1",
-					Kind:       "Deployment",
-					Name:       "odf-console",
-					UID:        owner.UID,
-				},
 			},
 		},
 		Spec: apiv1.ServiceSpec{
@@ -67,51 +66,27 @@ func GetService(serviceName string, port int, owner metav1.ObjectMeta) apiv1.Ser
 	}
 }
 
-func GetConsolePluginCR(pluginName string, displayName string, consolePort int, serviceName string, owner metav1.ObjectMeta) consolev1alpha1.ConsolePlugin {
-	return consolev1alpha1.ConsolePlugin{
+func GetConsolePluginCR(consolePort int, basePath string, serviceNamespace string) *consolev1alpha1.ConsolePlugin {
+	return &consolev1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: pluginName,
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: "apps/v1",
-					Kind:       "Deployment",
-					Name:       "odf-console",
-					UID:        owner.UID,
-				},
-			},
+			Name: "odf-console",
 		},
 		Spec: consolev1alpha1.ConsolePluginSpec{
-			DisplayName: displayName,
+			DisplayName: "ODF Plugin",
 			Service: consolev1alpha1.ConsolePluginService{
-				Name:      serviceName,
-				Namespace: DEPLOYMENT_NAMESPACE,
+				Name:      "odf-console-service",
+				Namespace: serviceNamespace,
 				Port:      int32(consolePort),
+				BasePath:  basePath,
 			},
 		},
 	}
 }
 
-//+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=*
+func GetBasePath(clusterVersion string) string {
+	if strings.Contains(clusterVersion, "4.10") {
+		return COMPATIBILITY_BASE_PATH
+	}
 
-func InitConsole(client client.Client, odfPort int) error {
-	deployment := appsv1.Deployment{}
-	if err := client.Get(context.TODO(), types.NamespacedName{
-		Name:      "odf-console",
-		Namespace: DEPLOYMENT_NAMESPACE,
-	}, &deployment); err != nil {
-		return err
-	}
-	// Create core ODF console Service
-	odfService := GetService("odf-console", odfPort, deployment.ObjectMeta)
-	if err := client.Create(context.TODO(), &odfService); err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-	// Create core ODF Plugin
-	odfConsolePlugin := GetConsolePluginCR("odf-console", "ODF Plugin", odfPort, odfService.ObjectMeta.Name, deployment.ObjectMeta)
-	if err := client.Create(context.TODO(), &odfConsolePlugin); err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-	return nil
+	return MAIN_BASE_PATH
 }

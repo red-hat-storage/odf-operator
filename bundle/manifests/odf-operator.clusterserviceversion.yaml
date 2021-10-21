@@ -144,6 +144,38 @@ spec:
           - update
           - watch
         - apiGroups:
+          - apps
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - config.openshift.io
+          resources:
+          - clusterversions
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - config.openshift.io
+          resources:
+          - clusterversions/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - config.openshift.io
+          resources:
+          - clusterversions/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
           - console.openshift.io
           resources:
           - consoleplugins
@@ -356,9 +388,7 @@ spec:
                 app: odf-console
             spec:
               containers:
-              - args:
-                - --ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key
-                image: quay.io/ocs-dev/odf-console:latest
+              - image: quay.io/ocs-dev/odf-console:latest
                 name: odf-console
                 ports:
                 - containerPort: 9001
