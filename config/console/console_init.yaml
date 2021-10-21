@@ -21,8 +21,6 @@ spec:
           ports:
             - containerPort: 9001
               protocol: TCP
-          args:
-            - "--ssl --cert=/var/serving-cert/tls.crt --key=/var/serving-cert/tls.key"
           volumeMounts:
             - name: odf-console-serving-cert
               mountPath: /var/serving-cert
