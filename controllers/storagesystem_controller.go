@@ -204,11 +204,6 @@ func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.Stor
 			logger.Error(err, "failed to ensure subscription", "Subscription", desiredSubscription.Name)
 			return err
 		}
-
-		err = instance.AddReferenceToRelatedObjects(r.Scheme, desiredSubscription)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -223,14 +218,7 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 
 		csvObj, err := EnsureVendorCsv(r.Client, csvName)
 		if err != nil {
-			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvObj.Name)
-			multierr.AppendInto(&returnErr, err)
-			continue
-		}
-
-		err = instance.AddReferenceToRelatedObjects(r.Scheme, csvObj)
-		if err != nil {
-			logger.Error(err, "failed to add CSV to RelatedObjects", "ClusterServiceVersion", csvObj.Name)
+			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvName)
 			multierr.AppendInto(&returnErr, err)
 			continue
 		}
