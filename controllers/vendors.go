@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	ocsv1 "github.com/openshift/ocs-operator/api/v1"
@@ -72,6 +73,12 @@ func (r *StorageSystemReconciler) isVendorSystemPresent(instance *odfv1alpha1.St
 	if err == nil {
 		logger.Info("Vendor system found", "Name", instance.Spec.Name)
 		SetVendorSystemPresentCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Found", "")
+		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, vendorSystem, func() error {
+			return controllerutil.SetControllerReference(instance, vendorSystem, r.Scheme)
+		})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
 		err = instance.AddReferenceToRelatedObjects(r.Scheme, vendorSystem)
 	} else if errors.IsNotFound(err) {
 		logger.Error(err, "Vendor system not found", "Name", instance.Spec.Name)
