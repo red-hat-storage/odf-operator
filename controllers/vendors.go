@@ -79,7 +79,6 @@ func (r *StorageSystemReconciler) isVendorSystemPresent(instance *odfv1alpha1.St
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
-		err = instance.AddReferenceToRelatedObjects(r.Scheme, vendorSystem)
 	} else if errors.IsNotFound(err) {
 		logger.Error(err, "Vendor system not found", "Name", instance.Spec.Name)
 		SetVendorSystemPresentCondition(&instance.Status.Conditions, corev1.ConditionFalse, "NotFound", err.Error())
