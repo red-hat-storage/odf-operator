@@ -218,7 +218,7 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 
 		csvObj, err := EnsureVendorCsv(r.Client, csvName)
 		if err != nil {
-			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvObj.Name)
+			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvName)
 			multierr.AppendInto(&returnErr, err)
 			continue
 		}
