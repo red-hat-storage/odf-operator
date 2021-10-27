@@ -31,16 +31,17 @@ import (
 )
 
 // CheckForExistingSubscription looks for any existing Subscriptions that
-// reference the given package.
+// reference the given package. If one does exist, use its ObjectMeta for the
+// desiredSubscription.
 //
 // NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
 // because fake.Client does not support them.
-func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
+func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) (*operatorv1alpha1.Subscription, error) {
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
 	err := cli.List(context.TODO(), subsList)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var actualSub *operatorv1alpha1.Subscription
@@ -49,23 +50,22 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 		if sub.Spec.Package == pkgName {
 			if actualSub != nil {
 				foundSubs := []string{actualSub.Name, sub.Name}
-				return fmt.Errorf("multiple Subscriptions found for package '%s': %v", pkgName, foundSubs)
-			}
-			if sub.Name != desiredSubscription.Name {
-				return fmt.Errorf("found conflicting Subscription found for package '%s': %s", pkgName, sub.Name)
+				return nil, fmt.Errorf("multiple Subscriptions found for package '%s': %v", pkgName, foundSubs)
 			}
 			actualSub = &subsList.Items[i]
+			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
+			desiredSubscription = actualSub
 		}
 	}
 
-	return nil
+	return desiredSubscription, nil
 }
 
 func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
 
 	var err error
 
-	err = CheckExistingSubscriptions(cli, desiredSubscription)
+	desiredSubscription, err = CheckExistingSubscriptions(cli, desiredSubscription)
 	if err != nil {
 		return err
 	}
