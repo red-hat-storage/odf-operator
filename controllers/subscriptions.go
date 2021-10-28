@@ -31,16 +31,17 @@ import (
 )
 
 // CheckForExistingSubscription looks for any existing Subscriptions that
-// reference the given package.
+// reference the given package. If one does exist, use its ObjectMeta for the
+// desiredSubscription.
 //
 // NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
 // because fake.Client does not support them.
-func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
+func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) (*operatorv1alpha1.Subscription, error) {
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
 	err := cli.List(context.TODO(), subsList)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var actualSub *operatorv1alpha1.Subscription
@@ -49,23 +50,22 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 		if sub.Spec.Package == pkgName {
 			if actualSub != nil {
 				foundSubs := []string{actualSub.Name, sub.Name}
-				return fmt.Errorf("multiple Subscriptions found for package '%s': %v", pkgName, foundSubs)
-			}
-			if sub.Name != desiredSubscription.Name {
-				return fmt.Errorf("found conflicting Subscription found for package '%s': %s", pkgName, sub.Name)
+				return nil, fmt.Errorf("multiple Subscriptions found for package '%s': %v", pkgName, foundSubs)
 			}
 			actualSub = &subsList.Items[i]
+			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
+			desiredSubscription = actualSub
 		}
 	}
 
-	return nil
+	return desiredSubscription, nil
 }
 
 func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
 
 	var err error
 
-	err = CheckExistingSubscriptions(cli, desiredSubscription)
+	desiredSubscription, err = CheckExistingSubscriptions(cli, desiredSubscription)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, sub, func() error {
 		sub.Spec = desiredSubscription.Spec
-		return SetOdfSubControllerReference(cli, sub)
+		return nil
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -108,13 +108,6 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 		return nil, err
 	}
 
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
-		return SetOdfSubControllerReference(cli, csvObj)
-	})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		return nil, err
-	}
-
 	isReady := csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
 		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful
 
@@ -124,21 +117,6 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 	}
 
 	return csvObj, err
-}
-
-func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
-
-	odfSub, err := GetOdfSubscription(cli)
-	if err != nil {
-		return err
-	}
-
-	err = controllerutil.SetControllerReference(odfSub, obj, cli.Scheme())
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // GetSubscriptions returns all required Subscriptions for the given StorageKind
@@ -152,27 +130,6 @@ func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscriptio
 	}
 
 	return subscriptions
-}
-
-// GetOdfSubscription return subscription for odf-operator and store it in cache
-// It fetch once and use the same again and again from cache
-func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, error) {
-
-	if OdfSubscriptionObjectMeta != nil {
-		return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
-	}
-
-	odfSub := &operatorv1alpha1.Subscription{}
-
-	err := cli.Get(context.TODO(), types.NamespacedName{
-		Name: OdfSubscriptionName, Namespace: OperatorNamespace}, odfSub)
-	if err != nil {
-		return nil, err
-	}
-
-	OdfSubscriptionObjectMeta = &odfSub.ObjectMeta
-
-	return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
 }
 
 // GetStorageClusterSubscription return subscription for StorageCluster
