@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,6 +29,7 @@ import (
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	"github.com/red-hat-data-services/odf-operator/pkg/util"
 )
 
 // CheckForExistingSubscription looks for any existing Subscriptions that
@@ -105,6 +107,12 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 	err = cli.Get(context.TODO(), types.NamespacedName{
 		Name: csvName, Namespace: OperatorNamespace}, csvObj)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			approvalErr := ApproveInstallPlanForCsv(cli, csvName)
+			if approvalErr != nil {
+				return nil, approvalErr
+			}
+		}
 		return nil, err
 	}
 
@@ -117,6 +125,45 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 	}
 
 	return csvObj, err
+}
+
+// ApproveInstallPlanForCsv approve the manual approval installPlan for the given CSV
+// and returns an error if none found
+func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
+
+	var finalError error
+	var foundInstallPlan bool
+
+	installPlans := &operatorv1alpha1.InstallPlanList{}
+	err := cli.List(context.TODO(), installPlans, &client.ListOptions{Namespace: OperatorNamespace})
+
+	if err != nil {
+		return err
+	}
+
+	for i, installPlan := range installPlans.Items {
+		if util.FindInSlice(installPlan.Spec.ClusterServiceVersionNames, csvName) {
+			foundInstallPlan = true
+			if installPlan.Spec.Approval == operatorv1alpha1.ApprovalManual &&
+				!installPlan.Spec.Approved {
+
+				installPlans.Items[i].Spec.Approved = true
+				err = cli.Update(context.TODO(), &installPlans.Items[i])
+				if err != nil {
+					multierr.AppendInto(&finalError, fmt.Errorf(
+						"Failed to approve installplan %s", installPlan.Name))
+					multierr.AppendInto(&finalError, err)
+				}
+			}
+		}
+	}
+
+	if !foundInstallPlan {
+		err = fmt.Errorf("InstallPlan not found for CSV %s", csvName)
+		multierr.AppendInto(&finalError, err)
+	}
+
+	return finalError
 }
 
 // GetSubscriptions returns all required Subscriptions for the given StorageKind
