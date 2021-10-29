@@ -1,5 +1,7 @@
 # Build the manager binary
-FROM golang:1.16 as builder
+# use our own copy of the official golang image to boost the openshift-ci
+# and stop exhausting the docker pull limits.
+FROM quay.io/ocs-dev/golang:1.16 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
