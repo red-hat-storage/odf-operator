@@ -1,5 +1,5 @@
 ---
-name: mirror-noobaa-upstream-images
+name: mirror-upstream-images
 
 on:
   schedule:
@@ -23,3 +23,28 @@ jobs:
 
       - name: mirror images
         run: hack/mirror-noobaa-images.sh
+
+  mirror-golang-images:
+    runs-on: ubuntu-latest
+    if: >
+      github.repository == 'red-hat-storage/odf-operator' &&
+      github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.15", "1.16", "1.17"]
+    steps:
+      - name: log into quay
+        uses: docker/login-action@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+
+      - name: mirror images
+        env:
+          VER: ${{ matrix.go }}
+        run: |
+          docker pull golang:$VER
+          docker tag golang:$VER quay.io/ocs-dev/golang:$VER
+          docker push quay.io/ocs-dev/golang:$VER
