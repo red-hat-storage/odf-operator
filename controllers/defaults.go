@@ -18,13 +18,16 @@ package controllers
 
 import (
 	"os"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
 	DefaultValMap = map[string]string{
 		"OPERATOR_NAMESPACE": "openshift-storage",
 
-		"ODF_SUBSCRIPTION_NAME": "odf-operator",
+		"ODF_SUBSCRIPTION_NAME":        "odf-operator",
+		"ODF_SUBSCRIPTION_STARTINGCSV": "odf-operator.v4.9.0",
 
 		"NOOBAA_SUBSCRIPTION_NAME":                    "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_PACKAGE":                 "noobaa-operator",
@@ -46,11 +49,14 @@ var (
 		"IBM_SUBSCRIPTION_STARTINGCSV":             "ibm-storage-odf-operator.v1.0.0",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
+
+		"IBM_CSI_SUBSCRIPTION_STARTINGCSV": "ibm-block-csi-operator.v1.6.0",
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
 
-	OdfSubscriptionName = GetEnvOrDefault("ODF_SUBSCRIPTION_NAME")
+	OdfSubscriptionName        = GetEnvOrDefault("ODF_SUBSCRIPTION_NAME")
+	OdfSubscriptionStartingCSV = GetEnvOrDefault("ODF_SUBSCRIPTION_STARTINGCSV")
 
 	OcsSubscriptionName                   = GetEnvOrDefault("OCS_SUBSCRIPTION_NAME")
 	OcsSubscriptionPackage                = GetEnvOrDefault("OCS_SUBSCRIPTION_PACKAGE")
@@ -72,6 +78,16 @@ var (
 	IbmSubscriptionStartingCSV            = GetEnvOrDefault("IBM_SUBSCRIPTION_STARTINGCSV")
 	IbmSubscriptionCatalogSource          = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE")
 	IbmSubscriptionCatalogSourceNamespace = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	IbmCsiSubscriptionStartingCSV = GetEnvOrDefault("IBM_CSI_SUBSCRIPTION_STARTINGCSV")
+)
+
+var (
+	// It will be fetched only once and used the same always
+	OdfSubscriptionObjectMeta *metav1.ObjectMeta
+
+	// It will be fetched only once and used the same always
+	OdfCsvObjectMeta *metav1.ObjectMeta
 )
 
 func GetEnvOrDefault(env string) string {
