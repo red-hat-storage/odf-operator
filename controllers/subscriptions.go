@@ -77,7 +77,7 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, sub, func() error {
 		sub.Spec = desiredSubscription.Spec
-		return nil
+		return SetOdfSubControllerReference(cli, sub)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -86,12 +86,84 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 	return nil
 }
 
+func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
+
+	odfSub, err := GetOdfSubscription(cli)
+	if err != nil {
+		return err
+	}
+
+	err = controllerutil.SetControllerReference(odfSub, obj, cli.Scheme())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetOdfSubscription returns the subscription for odf-operator and stores it in a global variable
+// for later use.
+func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, error) {
+
+	if OdfSubscriptionObjectMeta != nil {
+		return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
+	}
+
+	odfSub := &operatorv1alpha1.Subscription{}
+
+	err := cli.Get(context.TODO(), types.NamespacedName{
+		Name: OdfSubscriptionName, Namespace: OperatorNamespace}, odfSub)
+	if err != nil {
+		return nil, err
+	}
+
+	OdfSubscriptionObjectMeta = &odfSub.ObjectMeta
+
+	return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
+}
+
+func SetOdfCsvControllerReference(cli client.Client, obj client.Object) error {
+
+	odfcsv, err := GetOdfCsv(cli)
+	if err != nil {
+		return err
+	}
+
+	err = controllerutil.SetControllerReference(odfcsv, obj, cli.Scheme())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetOdfCsv returns the CSV for odf-operator and stores it in a global variable
+// for later use.
+func GetOdfCsv(cli client.Client) (*operatorv1alpha1.ClusterServiceVersion, error) {
+
+	if OdfCsvObjectMeta != nil {
+		return &operatorv1alpha1.ClusterServiceVersion{ObjectMeta: *OdfCsvObjectMeta}, nil
+	}
+
+	odfCsv := &operatorv1alpha1.ClusterServiceVersion{}
+
+	err := cli.Get(context.TODO(), types.NamespacedName{
+		Name: OdfSubscriptionStartingCSV, Namespace: OperatorNamespace}, odfCsv)
+	if err != nil {
+		return nil, err
+	}
+
+	OdfCsvObjectMeta = &odfCsv.ObjectMeta
+
+	return &operatorv1alpha1.ClusterServiceVersion{ObjectMeta: *OdfCsvObjectMeta}, nil
+}
+
 func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
 
 	var csvNames []string
 
 	if kind == VendorFlashSystemCluster() {
-		csvNames = []string{IbmSubscriptionStartingCSV}
+		csvNames = []string{IbmCsiSubscriptionStartingCSV, IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
 		csvNames = []string{NoobaaSubscriptionStartingCSV, OcsSubscriptionStartingCSV}
 	}
@@ -113,6 +185,12 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 				return nil, approvalErr
 			}
 		}
+		return nil, err
+	}
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
+		return SetOdfCsvControllerReference(cli, csvObj)
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
 		return nil, err
 	}
 
