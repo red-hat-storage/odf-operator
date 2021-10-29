@@ -296,6 +296,24 @@ spec:
         - apiGroups:
           - operators.coreos.com
           resources:
+          - clusterserviceversions/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - operators.coreos.com
+          resources:
+          - installplans
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - operators.coreos.com
+          resources:
           - subscriptions
           verbs:
           - create
