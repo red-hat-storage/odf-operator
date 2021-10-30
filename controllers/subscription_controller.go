@@ -45,6 +45,8 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions/finalizers,verbs=update
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -95,6 +97,19 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger) error {
 				logger.Error(errSub, "failed to ensure Subscription", "Subscription", sub.Name)
 				err = fmt.Errorf("failed to ensure Subscriptions")
 				multierr.AppendInto(&err, fmt.Errorf("failed to ensure Subscriptions"))
+			}
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	for kind := range subsList {
+		for _, csvName := range GetVendorCsvNames(kind) {
+			_, csvErr := EnsureVendorCsv(r.Client, csvName)
+			if csvErr != nil {
+				multierr.AppendInto(&err, csvErr)
 			}
 		}
 	}
