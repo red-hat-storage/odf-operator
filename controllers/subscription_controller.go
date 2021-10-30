@@ -122,13 +122,6 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	generationChangedPredicate := predicate.GenerationChangedPredicate{}
 
-	ignoreCreatePredicate := predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			// Ignore create events as owned subscriptions are created by us
-			return false
-		},
-	}
-
 	predicateFunc := func(obj runtime.Object) bool {
 		instance, ok := obj.(*operatorv1alpha1.Subscription)
 		if !ok {
@@ -148,7 +141,7 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return predicateFunc(e.Object)
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-			return false
+			return predicateFunc(e.Object)
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			return predicateFunc(e.ObjectNew)
@@ -162,8 +155,6 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&operatorv1alpha1.Subscription{},
 			builder.WithPredicates(generationChangedPredicate, subscriptionPredicate)).
 		Owns(&operatorv1alpha1.Subscription{},
-			builder.WithPredicates(generationChangedPredicate, ignoreCreatePredicate)).
-		Owns(&operatorv1alpha1.ClusterServiceVersion{},
-			builder.WithPredicates(generationChangedPredicate, ignoreCreatePredicate)).
+			builder.WithPredicates(generationChangedPredicate)).
 		Complete(r)
 }
