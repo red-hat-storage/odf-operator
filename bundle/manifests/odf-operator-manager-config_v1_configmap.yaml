@@ -1,5 +1,6 @@
 apiVersion: v1
 data:
+  IBM_CSI_SUBSCRIPTION_STARTINGCSV: ibm-block-csi-operator.v1.6.0
   IBM_SUBSCRIPTION_CATALOGSOURCE: odf-catalogsource
   IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE: openshift-storage
   IBM_SUBSCRIPTION_CHANNEL: stable-v1
@@ -19,6 +20,7 @@ data:
   OCS_SUBSCRIPTION_PACKAGE: ocs-operator
   OCS_SUBSCRIPTION_STARTINGCSV: ocs-operator.v4.9.0
   ODF_SUBSCRIPTION_NAME: odf-operator
+  ODF_SUBSCRIPTION_STARTINGCSV: odf-operator.v4.9.0
   OPERATOR_NAMESPACE: openshift-storage
   controller_manager_config.yaml: |
     apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
