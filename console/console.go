@@ -26,8 +26,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-const MAIN_BASE_PATH = ""
-const COMPATIBILITY_BASE_PATH = "compatibility"
+const MAIN_BASE_PATH = "/"
+const COMPATIBILITY_BASE_PATH = "/compatibility/"
 
 func GetDeployment(namespace string) *appsv1.Deployment {
 	return &appsv1.Deployment{
