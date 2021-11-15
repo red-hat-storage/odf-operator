@@ -81,26 +81,44 @@ spec:
         version: v1
       version: v1alpha1
   description: |
-    ## Red Hat OpenShift Data Foundation
+    **Red Hat OpenShift Data Foundation** deploys three operators.
 
     ### OpenShift Data Foundation operator
+    The OpenShift Data Foundation operator is the primary operator for
+    OpenShift Data Foundation. It serves to facilitate the other operators in
+    OpenShift Data Foundation by performing administrative tasks outside their
+    scope as well as watching and configuring their CustomResources.
 
-    This is the primary operator for Red Hat OpenShift Data Foundation (ODF).
-      It is a "meta" operator, meaning it serves to facilitate the other
-      operators in ODF by providing dependencies and performing administrative
-      tasks outside their scope.
+    ### Rook
+    [Rook][1] deploys and manages Ceph on OpenShift, which provides block and
+    file storage.
 
-    ### OpenShift Data Foundation console
+    # Core Capabilities
+    * **Self-managing service:** No matter which supported storage technologies
+    you choose, OpenShift Data Foundation ensures that resources can be
+    deployed and managed automatically.
 
-    ODF Console is the UI plugin for Openshift Data Foundation Operator. It
-    works as a remote module for OpenShift Container Platform console.
+    * **Hyper-scale or hyper-converged:** With OpenShift Data Foundation you
+    can either build dedicated storage clusters or hyper-converged clusters
+    where your apps run alongside storage.
 
-    ## Core Capabilities
+    * **File, Block, and Object provided by OpenShift Data Foundation:**
+    OpenShift Data Foundation integrates Ceph with multiple storage
+    presentations including object storage (compatible with S3), block storage,
+    and POSIX-compliant shared file system.
 
-    * **Vendors** ODF manages multiple vendors for you eg. Openshift Container
-      Storage and IBM FlashSystem Cluster.
+    * **Your data, protected:** OpenShift Data Foundation efficiently
+    distributes and replicates your data across your cluster to minimize the
+    risk of data loss. With snapshots, cloning, and versioning, no more losing
+    sleep over your data.
 
-    * **Subscription** It manages subscription for the IBM FlashSystem Cluster.
+    * **Elastic storage in your datacenter:** Scale is now possible in your
+    datacenter. Get started with a few terabytes, and easily scale up.
+
+    * **Simplified data management:** Easily create hybrid and multi-cloud data
+    storage for your workloads, using a single namespace.
+
+    [1]: https://rook.io
   displayName: OpenShift Data Foundation
   icon:
   - base64data: PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTQ1Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2UwMDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPlJlZEhhdC1Mb2dvLUhhdC1Db2xvcjwvdGl0bGU+PHBhdGggZD0iTTE1Ny43Nyw2Mi42MWExNCwxNCwwLDAsMSwuMzEsMy40MmMwLDE0Ljg4LTE4LjEsMTcuNDYtMzAuNjEsMTcuNDZDNzguODMsODMuNDksNDIuNTMsNTMuMjYsNDIuNTMsNDRhNi40Myw2LjQzLDAsMCwxLC4yMi0xLjk0bC0zLjY2LDkuMDZhMTguNDUsMTguNDUsMCwwLDAtMS41MSw3LjMzYzAsMTguMTEsNDEsNDUuNDgsODcuNzQsNDUuNDgsMjAuNjksMCwzNi40My03Ljc2LDM2LjQzLTIxLjc3LDAtMS4wOCwwLTEuOTQtMS43My0xMC4xM1oiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMjcuNDcsODMuNDljMTIuNTEsMCwzMC42MS0yLjU4LDMwLjYxLTE3LjQ2YTE0LDE0LDAsMCwwLS4zMS0zLjQybC03LjQ1LTMyLjM2Yy0xLjcyLTcuMTItMy4yMy0xMC4zNS0xNS43My0xNi42QzEyNC44OSw4LjY5LDEwMy43Ni41LDk3LjUxLjUsOTEuNjkuNSw5MCw4LDgzLjA2LDhjLTYuNjgsMC0xMS42NC01LjYtMTcuODktNS42LTYsMC05LjkxLDQuMDktMTIuOTMsMTIuNSwwLDAtOC40MSwyMy43Mi05LjQ5LDI3LjE2QTYuNDMsNi40MywwLDAsMCw0Mi41Myw0NGMwLDkuMjIsMzYuMywzOS40NSw4NC45NCwzOS40NU0xNjAsNzIuMDdjMS43Myw4LjE5LDEuNzMsOS4wNSwxLjczLDEwLjEzLDAsMTQtMTUuNzQsMjEuNzctMzYuNDMsMjEuNzdDNzguNTQsMTA0LDM3LjU4LDc2LjYsMzcuNTgsNTguNDlhMTguNDUsMTguNDUsMCwwLDEsMS41MS03LjMzQzIyLjI3LDUyLC41LDU1LC41LDc0LjIyYzAsMzEuNDgsNzQuNTksNzAuMjgsMTMzLjY1LDcwLjI4LDQ1LjI4LDAsNTYuNy0yMC40OCw1Ni43LTM2LjY1LDAtMTIuNzItMTEtMjcuMTYtMzAuODMtMzUuNzgiLz48L3N2Zz4=
