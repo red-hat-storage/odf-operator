@@ -394,6 +394,11 @@ spec:
                 runAsNonRoot: true
               serviceAccountName: odf-operator-controller-manager
               terminationGracePeriodSeconds: 10
+              tolerations:
+              - effect: NoSchedule
+                key: node.ocs.openshift.io/storage
+                operator: Equal
+                value: "true"
       - name: odf-console
         spec:
           selector:
@@ -419,6 +424,11 @@ spec:
                 - mountPath: /var/serving-cert
                   name: odf-console-serving-cert
                   readOnly: true
+              tolerations:
+              - effect: NoSchedule
+                key: node.ocs.openshift.io/storage
+                operator: Equal
+                value: "true"
               volumes:
               - name: odf-console-serving-cert
                 secret:

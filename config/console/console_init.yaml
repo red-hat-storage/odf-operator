@@ -25,6 +25,11 @@ spec:
             - name: odf-console-serving-cert
               mountPath: /var/serving-cert
               readOnly: true
+      tolerations:
+      - effect: NoSchedule
+        key: node.ocs.openshift.io/storage
+        operator: Equal
+        value: "true"
       volumes:
         - name: odf-console-serving-cert
           secret:
