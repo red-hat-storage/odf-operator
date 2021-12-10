@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build operator docker image
-        run: make docker-build
+        run: make test docker-build
 
   bundle-build:
     name: bundle-build
