@@ -18,9 +18,11 @@ package v1
 
 import (
 	nbv1 "github.com/noobaa/noobaa-operator/v2/pkg/apis/noobaa/v1alpha1"
+	quotav1 "github.com/openshift/api/quota/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
-	rook "github.com/rook/rook/pkg/apis/rook.io/v1"
+	rookCephv1 "github.com/rook/rook/pkg/apis/ceph.rook.io/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -36,7 +38,7 @@ type StorageClusterSpec struct {
 	// HostNetwork defaults to false
 	HostNetwork bool `json:"hostNetwork,omitempty"`
 	// Placement is optional and used to specify placements of OCS components explicitly
-	Placement rook.PlacementSpec `json:"placement,omitempty"`
+	Placement rookCephv1.PlacementSpec `json:"placement,omitempty"`
 	// Resources follows the conventions of and is mapped to CephCluster.Spec.Resources
 	Resources          map[string]corev1.ResourceRequirements `json:"resources,omitempty"`
 	Encryption         EncryptionSpec                         `json:"encryption,omitempty"`
@@ -49,7 +51,7 @@ type StorageClusterSpec struct {
 	// Version specifies the version of StorageCluster
 	Version string `json:"version,omitempty"`
 	// Network represents cluster network settings
-	Network *rook.NetworkSpec `json:"network,omitempty"`
+	Network *rookCephv1.NetworkSpec `json:"network,omitempty"`
 	// ManagedResources specifies how to deal with auxiliary resources reconciled
 	// with the StorageCluster
 	ManagedResources ManagedResourcesSpec `json:"managedResources,omitempty"`
@@ -67,6 +69,12 @@ type StorageClusterSpec struct {
 	// ArbiterSpec specifies the storage cluster options related to arbiter.
 	// If Arbiter is enabled, ArbiterLocation in the NodeTopologies must be specified.
 	Arbiter ArbiterSpec `json:"arbiter,omitempty"`
+	// Mirroring specifies data mirroring configuration for the storage cluster.
+	// This configuration will only be applied to resources managed by the operator.
+	Mirroring MirroringSpec `json:"mirroring,omitempty"`
+	// OverprovisionControl specifies the allowed hard-limit PVs overprovisioning relative to
+	// the effective usable storage capacity.
+	OverprovisionControl []OverprovisionControlSpec `json:"overprovisionControl,omitempty"`
 }
 
 // KeyManagementServiceSpec provides a way to enable KMS
@@ -185,8 +193,8 @@ type StorageDeviceSet struct {
 
 	Name                string                        `json:"name"`
 	Resources           corev1.ResourceRequirements   `json:"resources,omitempty"`
-	PreparePlacement    rook.Placement                `json:"preparePlacement,omitempty"`
-	Placement           rook.Placement                `json:"placement,omitempty"`
+	PreparePlacement    rookCephv1.Placement          `json:"preparePlacement,omitempty"`
+	Placement           rookCephv1.Placement          `json:"placement,omitempty"`
 	Config              StorageDeviceSetConfig        `json:"config,omitempty"`
 	DataPVCTemplate     corev1.PersistentVolumeClaim  `json:"dataPVCTemplate"`
 	MetadataPVCTemplate *corev1.PersistentVolumeClaim `json:"metadataPVCTemplate,omitempty"`
@@ -212,6 +220,10 @@ type MultiCloudGatewaySpec struct {
 	// and "" (same as "manage").
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
 
+	// DbStorageClassName specifies the default storage class
+	// for nooba-db pods
+	// +optional
+	DbStorageClassName string `json:"dbStorageClassName,omitempty"`
 	// Endpoints (optional) sets configuration info for the noobaa endpoint
 	// deployment.
 	// +optional
@@ -232,6 +244,19 @@ type EncryptionSpec struct {
 	// +optional
 	Enable               bool                     `json:"enable,omitempty"`
 	KeyManagementService KeyManagementServiceSpec `json:"kms,omitempty"`
+}
+
+type MirroringSpec struct {
+	// If true, data mirroring is enabled for the StorageCluster.
+	// This configuration will only be applied to resources (such as CephBlockPool)
+	// managed by the operator.
+	// It is optional and defaults to false.
+	// +optional
+	Enabled bool `json:"enabled,omitempty"`
+
+	// PeerSecretNames represents the Kubernetes Secret names of rbd-mirror peers tokens
+	// +optional
+	PeerSecretNames []string `json:"peerSecretNames,omitempty"`
 }
 
 // StorageClusterStatus defines the observed state of StorageCluster
@@ -374,4 +399,15 @@ type ArbiterSpec struct {
 
 func init() {
 	SchemeBuilder.Register(&StorageCluster{}, &StorageClusterList{})
+}
+
+// OverprovisionControlSpec defines the allowed overprovisioning PVC consumption from the underlying cluster.
+// This may be an absolute value or as a percentage of the overall effective capacity.
+// One, and only one of those two (Capacity and Percentage) may be defined.
+type OverprovisionControlSpec struct {
+	StorageClassName string                               `json:"storageClassName,omitempty"`
+	QuotaName        string                               `json:"quotaName,omitempty"`
+	Capacity         *resource.Quantity                   `json:"capacity,omitempty"`
+	Percentage       uint                                 `json:"percentage,omitempty"`
+	Selector         quotav1.ClusterResourceQuotaSelector `json:"selector,omitempty"`
 }
