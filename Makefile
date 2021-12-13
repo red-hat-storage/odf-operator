@@ -10,6 +10,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .DEFAULT_GOAL := help
+.EXPORT_ALL_VARIABLES:
 
 all: build
 
@@ -43,27 +44,21 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-godeps-update:
+godeps-update: ## Run go mod tidy and go mod vendor.
 	go mod tidy && go mod vendor
 
-test: manifests generate fmt vet ## Run tests.
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo \
-		${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); \
-		go test -coverprofile cover.out `go list ./... | grep -v "e2e"`
+test-setup: generate fmt vet godeps-update ## Run setup targets for tests
+
+go-test: ## Run go test against code.
+	./hack/go-test.sh
+
+test: test-setup go-test ## Run go unit tests.
 
 ODF_OPERATOR_INSTALL ?= true
 ODF_OPERATOR_UNINSTALL ?= true
 e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
-	cd e2e/odf && $(GINKGO) build && ./odf.test \
-		--odf-catalog-image=$(CATALOG_IMG) --odf-subscription-channel=$(CHANNELS) \
-		--odf-operator-install=$(ODF_OPERATOR_INSTALL) --odf-operator-uninstall=$(ODF_OPERATOR_UNINSTALL) \
-		--odf-cluster-service-version=odf-operator.v${VERSION} \
-		--ocs-cluster-service-version=${OCS_SUBSCRIPTION_STARTINGCSV} \
-		--nooba-cluster-service-version=${NOOBAA_SUBSCRIPTION_STARTINGCSV} \
-		--csiaddons-cluster-service-version=${CSIADDONS_SUBSCRIPTION_STARTINGCSV}
+	./hack/e2e-test.sh
 
 define MANAGER_ENV_VARS
 OPERATOR_NAMESPACE=$(OPERATOR_NAMESPACE)
@@ -108,7 +103,7 @@ go-build: ## Run go build against code.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-docker-build: godeps-update ## Build docker image with the manager.
+docker-build: godeps-update test-setup ## Build docker image with the manager.
 	docker build -t ${IMG} .
 
 docker-push: ## Push docker image with the manager.

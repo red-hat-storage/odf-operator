@@ -2,26 +2,25 @@
 FROM golang:1.17 as builder
 
 WORKDIR /workspace
+
 # Copy the Go Modules manifests
-COPY go.mod go.mod
-COPY go.sum go.sum
+COPY go.mod go.sum ./
 # cache deps before building and copying source so that we don't need to re-build as much
 # and so that source changes don't invalidate our built layer
 COPY vendor/ vendor/
 
 # Copy the project source
-COPY main.go main.go
-COPY Makefile Makefile
-COPY hack/ hack/
 COPY api/ api/
 COPY controllers/ controllers/
 COPY pkg/ pkg/
 COPY config/ config/
 COPY metrics/ metrics/
 COPY console/ console/
+COPY hack/ hack/
+COPY main.go Makefile ./
 
 # Run tests and linting
-RUN make test
+RUN make go-test
 
 # Build
 RUN make go-build
