@@ -44,12 +44,14 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 vendor-update: ## Run go mod vendor against code.
-	go mod vendor
+	go mod tidy && go mod vendor
 
-test: manifests generate fmt vet vendor-update ## Run tests.
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+test-setup: generate fmt vet vendor-update ## Run setup targets for tests
+
+go-test: ## Run go test against code.
+	./hack/go-test.sh
+
+test: test-setup go-test ## Run tests.
 
 define MANAGER_ENV_VARS
 OPERATOR_NAMESPACE=$(OPERATOR_NAMESPACE)
@@ -90,7 +92,7 @@ go-build: ## Run go build against code.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-docker-build: vendor-update ## Build docker image with the manager.
+docker-build: test-setup ## Build docker image with the manager.
 	docker build -t ${IMG} .
 
 docker-push: ## Push docker image with the manager.
