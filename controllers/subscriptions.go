@@ -289,7 +289,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{ocsSubscription, noobaaSubscription}
+	return []*operatorv1alpha1.Subscription{noobaaSubscription, ocsSubscription}
 }
 
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
