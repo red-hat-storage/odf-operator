@@ -238,54 +238,6 @@ spec:
         failedTaskHelp: This task isn’t verified yet. Try the task again.
       summary:
         success: You have successfully created BucketClass
-        failed: Try the steps again. 
-    - title: Encrypt your StorageClass
-      description: |-
-
-          StorageClass encryption enables you to provide individual keys to each of your StorageClusters.
-
-
-          You can create an encrypted StorageClass while configuring your StorageCluster, or when creating a new StorageClass.
-
-
-          **To create an encrypted StorageClass while setting up your cluster:**
-
-          1. In the navigation menu, select [Operators]{{highlight qs-nav-operators}} and select **Installed Operators**, then select **Create StorageSystem**.
-
-          2. In the creation wizard, go to **Security and network** step.
-
-          3. Check the **StorageClass encryption** box.
-
-          4. Select your **Key management service provider**.
-
-          5. Provide your connection details.
-
-
-          **To create a new encrypted StorageClass:**
-
-          1. In the navigation menu, select [Storage]{{highlight qs-nav-storage}} and select **StorageClasses**, then select **Create StorageClass**.
-
-          2. In the **Provisioner** field, select **openshift-storage.rbd.csi.ceph.com**.
-
-          3. Check the **Enable Encryption** box.
-
-          4. Select your **Key management service provider**.
-
-          5. Provide your connection details.
-      review:
-        instructions: |-
-          ####  To verify that the StorageClass is encrypted:
-          1. Go to **Storage > StorageClasses**.
-          If you encrypted the StorageClass while setting up your cluster, check that a new **ocs-storagecluster-ceph-rbd-encrypted** StorageClass is created.
-
-          2. Select the newly created StorageClass and select the **YAML** tab.
-
-          Does the value of the parameter **encrypted** equal to **true**?
-
-          Is the value of the parameter **encryptionKMSID** equal to the KMS connection's service name?
-        failedTaskHelp: This task isn’t verified yet. Try the task again.
-      summary:
-        success: You have successfully encrypted StorageClass
         failed: Try the steps again.
 
   conclusion: You're ready to go! Now you can customize your StorageSystems in OpenShift Data Foundation.
