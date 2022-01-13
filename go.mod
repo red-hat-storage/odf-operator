@@ -10,9 +10,9 @@ require (
 	github.com/onsi/gomega v1.14.0
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/custom-resource-status v1.1.0
-	github.com/openshift/ocs-operator v0.0.1-master
 	github.com/operator-framework/api v0.10.0
 	github.com/prometheus/client_golang v1.11.0
+	github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20220110084649-8d36063127c4
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/multierr v1.6.0
 	k8s.io/api v0.21.3
