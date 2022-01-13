@@ -24,8 +24,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
-	ocsv1 "github.com/openshift/ocs-operator/api/v1"
 	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v1"
 )
 
 func TestIsVendorSystemPresent(t *testing.T) {
