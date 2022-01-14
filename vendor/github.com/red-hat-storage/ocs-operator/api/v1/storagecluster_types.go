@@ -17,7 +17,7 @@ limitations under the License.
 package v1
 
 import (
-	nbv1 "github.com/noobaa/noobaa-operator/v2/pkg/apis/noobaa/v1alpha1"
+	nbv1 "github.com/noobaa/noobaa-operator/v5/pkg/apis/noobaa/v1alpha1"
 	quotav1 "github.com/openshift/api/quota/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	rookCephv1 "github.com/rook/rook/pkg/apis/ceph.rook.io/v1"
@@ -32,7 +32,7 @@ type StorageClusterSpec struct {
 	InstanceType string `json:"instanceType,omitempty"`
 	// LabelSelector is used to specify custom labels of nodes to run OCS on
 	LabelSelector *metav1.LabelSelector `json:"labelSelector,omitempty"`
-	// External Storage is optional and defaults to false. When set to true, OCS will
+	// ExternalStorage is optional and defaults to false. When set to true, OCS will
 	// connect to an external OCS Storage Cluster instead of provisioning one locally.
 	ExternalStorage ExternalStorageClusterSpec `json:"externalStorage,omitempty"`
 	// HostNetwork defaults to false
@@ -75,6 +75,10 @@ type StorageClusterSpec struct {
 	// OverprovisionControl specifies the allowed hard-limit PVs overprovisioning relative to
 	// the effective usable storage capacity.
 	OverprovisionControl []OverprovisionControlSpec `json:"overprovisionControl,omitempty"`
+
+	// AllowRemoteStorageConsumers Indicates that the OCS cluster should deploy the needed
+	// components to enable connections from remote consumers.
+	AllowRemoteStorageConsumers bool `json:"allowRemoteStorageConsumers,omitempty"`
 }
 
 // KeyManagementServiceSpec provides a way to enable KMS
@@ -85,12 +89,18 @@ type KeyManagementServiceSpec struct {
 
 // ManagedResourcesSpec defines how to reconcile auxiliary resources
 type ManagedResourcesSpec struct {
+	CephCluster          ManageCephCluster          `json:"cephCluster,omitempty"`
 	CephConfig           ManageCephConfig           `json:"cephConfig,omitempty"`
 	CephDashboard        ManageCephDashboard        `json:"cephDashboard,omitempty"`
 	CephBlockPools       ManageCephBlockPools       `json:"cephBlockPools,omitempty"`
 	CephFilesystems      ManageCephFilesystems      `json:"cephFilesystems,omitempty"`
 	CephObjectStores     ManageCephObjectStores     `json:"cephObjectStores,omitempty"`
 	CephObjectStoreUsers ManageCephObjectStoreUsers `json:"cephObjectStoreUsers,omitempty"`
+}
+
+// ManageCephCluster defines how to reconcile the Ceph cluster definition
+type ManageCephCluster struct {
+	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
 }
 
 // ManageCephConfig defines how to reconcile the Ceph configuration
@@ -131,11 +141,44 @@ type ManageCephObjectStoreUsers struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
 }
 
+// ExternalStorageKind specifies a kind of the external storage
+type ExternalStorageKind string
+
+const (
+	// KindOCS specifies a "ocs" kind of the external storage
+	KindOCS ExternalStorageKind = "ocs"
+
+	// KindRHCS specifies a "rhcs" kind of the external storage
+	KindRHCS ExternalStorageKind = "rhcs"
+)
+
 // ExternalStorageClusterSpec defines the spec of the external Storage Cluster
 // to be connected to the local cluster
 type ExternalStorageClusterSpec struct {
 	// +optional
 	Enable bool `json:"enable,omitempty"`
+
+	//+kubebuilder:validation:Enum=ocs;rhcs
+	// StorageProviderKind Identify the type of storage provider cluster this consumer cluster is going to connect to.
+	StorageProviderKind ExternalStorageKind `json:"storageProviderKind,omitempty"`
+
+	// ConnectionString An encoded string holding connection and identity information
+	// that is needed in order to establish connection with the storage providing cluster.
+	ConnectionString string `json:"connectionString,omitempty"`
+
+	// RequestedCapacity Will define the desired capacity requested by a consumer cluster.
+	RequestedCapacity *resource.Quantity `json:"requestedCapacity,omitempty"`
+}
+
+// ExternalStorageClusterStatus defines the status of the external Storage Cluster
+// to be connected to the local cluster
+type ExternalStorageClusterStatus struct {
+	// GrantedCapacity Will report the actual capacity
+	// granted to the consumer cluster by the provider cluster.
+	GrantedCapacity resource.Quantity `json:"grantedCapacity,omitempty"`
+
+	// ConsumerID will hold the identity of this cluster inside the attached provider cluster
+	ConsumerID string `json:"id,omitempty"`
 }
 
 // StorageDeviceSet defines a set of storage devices.
@@ -241,8 +284,14 @@ type MonitoringSpec struct {
 // EncryptionSpec defines if encryption should be enabled for the Storage Cluster
 // It is optional and defaults to false.
 type EncryptionSpec struct {
+	// deprecated from OCS 4.10 onwards, acting as a dummy,
+	// UI will keep sending this flag for backward compatibility (OCP 4.10 + OCS 4.9)
 	// +optional
-	Enable               bool                     `json:"enable,omitempty"`
+	Enable bool `json:"enable,omitempty"`
+	// +optional
+	ClusterWide bool `json:"clusterWide,omitempty"`
+	// +optional
+	StorageClass         bool                     `json:"storageClass,omitempty"`
 	KeyManagementService KeyManagementServiceSpec `json:"kms,omitempty"`
 }
 
@@ -298,6 +347,9 @@ type StorageClusterStatus struct {
 
 	// ExternalSecretHash holds the checksum value of external secret data.
 	ExternalSecretHash string `json:"externalSecretHash,omitempty"`
+
+	// ExternalStorage shows the status of the external cluster
+	ExternalStorage ExternalStorageClusterStatus `json:"externalStorage,omitempty"`
 
 	// Images holds the image reconcile status for all images reconciled by the operator
 	Images ImagesStatus `json:"images,omitempty"`
@@ -407,7 +459,6 @@ func init() {
 type OverprovisionControlSpec struct {
 	StorageClassName string                               `json:"storageClassName,omitempty"`
 	QuotaName        string                               `json:"quotaName,omitempty"`
-	Capacity         *resource.Quantity                   `json:"capacity,omitempty"`
-	Percentage       uint                                 `json:"percentage,omitempty"`
+	Capacity         resource.Quantity                    `json:"capacity,omitempty"`
 	Selector         quotav1.ClusterResourceQuotaSelector `json:"selector,omitempty"`
 }
