@@ -165,7 +165,7 @@ func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
 	if kind == VendorFlashSystemCluster() {
 		csvNames = []string{IbmCsiSubscriptionStartingCSV, IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
-		csvNames = []string{NoobaaSubscriptionStartingCSV, OcsSubscriptionStartingCSV}
+		csvNames = []string{NoobaaSubscriptionStartingCSV, OcsSubscriptionStartingCSV, CSIAddonsSubscriptionStartingCSV}
 	}
 
 	return csvNames
@@ -289,7 +289,22 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{noobaaSubscription, ocsSubscription}
+	csiAddonsSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      CSIAddonsSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          CSIAddonsSubscriptionCatalogSource,
+			CatalogSourceNamespace: CSIAddonsSubscriptionCatalogSourceNamespace,
+			Package:                CSIAddonsSubscriptionPackage,
+			Channel:                CSIAddonsSubscriptionChannel,
+			StartingCSV:            CSIAddonsSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
+	return []*operatorv1alpha1.Subscription{noobaaSubscription, ocsSubscription, csiAddonsSubscription}
 }
 
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
