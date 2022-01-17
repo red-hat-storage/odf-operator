@@ -43,6 +43,13 @@ var (
 		"OCS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
 
+		"CSIADDONS_SUBSCRIPTION_NAME":                    "csi-addons",
+		"CSIADDONS_SUBSCRIPTION_PACKAGE":                 "csi-addons",
+		"CSIADDONS_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"CSIADDONS_SUBSCRIPTION_STARTINGCSV":             "csi-addons.v0.0.1",
+		"CSIADDONS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"CSIADDONS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
+
 		"IBM_SUBSCRIPTION_NAME":                    "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_PACKAGE":                 "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_CHANNEL":                 "stable-v1",
@@ -71,6 +78,13 @@ var (
 	NoobaaSubscriptionStartingCSV            = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_STARTINGCSV")
 	NoobaaSubscriptionCatalogSource          = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_CATALOGSOURCE")
 	NoobaaSubscriptionCatalogSourceNamespace = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	CSIAddonsSubscriptionName                   = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_NAME")
+	CSIAddonsSubscriptionPackage                = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_PACKAGE")
+	CSIAddonsSubscriptionChannel                = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_CHANNEL")
+	CSIAddonsSubscriptionStartingCSV            = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_STARTINGCSV")
+	CSIAddonsSubscriptionCatalogSource          = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_CATALOGSOURCE")
+	CSIAddonsSubscriptionCatalogSourceNamespace = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 
 	IbmSubscriptionName                   = GetEnvOrDefault("IBM_SUBSCRIPTION_NAME")
 	IbmSubscriptionPackage                = GetEnvOrDefault("IBM_SUBSCRIPTION_PACKAGE")
