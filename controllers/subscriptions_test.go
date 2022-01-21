@@ -66,11 +66,13 @@ func TestEnsureSubscription(t *testing.T) {
 
 			odfSub := &operatorv1alpha1.Subscription{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      OdfSubscriptionName,
+					Name:      "odf-operator",
 					Namespace: OperatorNamespace,
 				},
 
-				Spec: &operatorv1alpha1.SubscriptionSpec{},
+				Spec: &operatorv1alpha1.SubscriptionSpec{
+					Package: OdfSubscriptionPackage,
+				},
 			}
 			err = fakeReconciler.Client.Create(context.TODO(), odfSub)
 			assert.NoError(t, err)

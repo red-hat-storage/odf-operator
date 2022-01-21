@@ -26,9 +26,6 @@ var (
 	DefaultValMap = map[string]string{
 		"OPERATOR_NAMESPACE": "openshift-storage",
 
-		"ODF_SUBSCRIPTION_NAME":        "odf-operator",
-		"ODF_SUBSCRIPTION_STARTINGCSV": "odf-operator.v4.9.0",
-
 		"NOOBAA_SUBSCRIPTION_NAME":                    "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_PACKAGE":                 "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_CHANNEL":                 "alpha",
@@ -61,9 +58,6 @@ var (
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
-
-	OdfSubscriptionName        = GetEnvOrDefault("ODF_SUBSCRIPTION_NAME")
-	OdfSubscriptionStartingCSV = GetEnvOrDefault("ODF_SUBSCRIPTION_STARTINGCSV")
 
 	OcsSubscriptionName                   = GetEnvOrDefault("OCS_SUBSCRIPTION_NAME")
 	OcsSubscriptionPackage                = GetEnvOrDefault("OCS_SUBSCRIPTION_PACKAGE")
@@ -99,9 +93,10 @@ var (
 var (
 	// It will be fetched only once and used the same always
 	OdfSubscriptionObjectMeta *metav1.ObjectMeta
+)
 
-	// It will be fetched only once and used the same always
-	OdfCsvObjectMeta *metav1.ObjectMeta
+const (
+	OdfSubscriptionPackage = "odf-operator"
 )
 
 func GetEnvOrDefault(env string) string {
