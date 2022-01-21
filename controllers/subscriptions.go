@@ -109,15 +109,22 @@ func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, erro
 		return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
 	}
 
-	odfSub := &operatorv1alpha1.Subscription{}
-
-	err := cli.Get(context.TODO(), types.NamespacedName{
-		Name: OdfSubscriptionName, Namespace: OperatorNamespace}, odfSub)
+	subsList := &operatorv1alpha1.SubscriptionList{}
+	err := cli.List(context.TODO(), subsList)
 	if err != nil {
 		return nil, err
 	}
 
-	OdfSubscriptionObjectMeta = &odfSub.ObjectMeta
+	for _, sub := range subsList.Items {
+		if sub.Spec.Package == OdfSubscriptionPackage {
+			OdfSubscriptionObjectMeta = &sub.ObjectMeta
+			break
+		}
+	}
+
+	if OdfSubscriptionObjectMeta == nil {
+		return nil, fmt.Errorf("odf-operator subscription not found")
+	}
 
 	return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
 }

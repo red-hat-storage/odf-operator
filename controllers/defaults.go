@@ -104,6 +104,10 @@ var (
 	OdfCsvObjectMeta *metav1.ObjectMeta
 )
 
+const (
+	OdfSubscriptionPackage = "odf-operator"
+)
+
 func GetEnvOrDefault(env string) string {
 	if val := os.Getenv(env); val != "" {
 		return val
