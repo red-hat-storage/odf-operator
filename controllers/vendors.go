@@ -74,7 +74,7 @@ func (r *StorageSystemReconciler) isVendorSystemPresent(instance *odfv1alpha1.St
 		logger.Info("Vendor system found", "Name", instance.Spec.Name)
 		SetVendorSystemPresentCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Found", "")
 		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, vendorSystem, func() error {
-			return controllerutil.SetControllerReference(instance, vendorSystem, r.Scheme)
+			return controllerutil.SetOwnerReference(instance, vendorSystem, r.Scheme)
 		})
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
