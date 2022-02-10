@@ -57,4 +57,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build catalog docker image
-        run: make catalog-build
+        env:
+          IMAGE_REGISTRY: localhost:5000
+        run: |
+          docker run -d -p 5000:5000 --name registry registry:2
+          make bundle-build bundle-push catalog-build
