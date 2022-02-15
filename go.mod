@@ -7,19 +7,19 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-logr/logr v0.4.0
 	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.14.0
+	github.com/onsi/gomega v1.15.0
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/custom-resource-status v1.1.0
 	github.com/operator-framework/api v0.10.0
 	github.com/prometheus/client_golang v1.11.0
-	github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20220110084649-8d36063127c4
+	github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20220215090036-3c94fc94d3f5
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/multierr v1.6.0
-	k8s.io/api v0.21.3
-	k8s.io/apiextensions-apiserver v0.21.3
-	k8s.io/apimachinery v0.21.3
+	k8s.io/api v0.22.2
+	k8s.io/apiextensions-apiserver v0.22.2
+	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v12.0.0+incompatible
-	sigs.k8s.io/controller-runtime v0.9.5
+	sigs.k8s.io/controller-runtime v0.10.2
 )
 
 replace (
@@ -50,6 +50,7 @@ replace (
 	k8s.io/metrics => k8s.io/metrics v0.20.2
 	k8s.io/mount-utils => k8s.io/mount-utils v0.20.2
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.20.2
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.9.5
 )
 
 // This tag doesn't exist, but is imported by github.com/portworx/sched-ops.
