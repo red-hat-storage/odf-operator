@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: controller-manager
+    app.kubernetes.io/name: odf-operator
   name: odf-operator-controller-manager-metrics-monitor
 spec:
   endpoints:
@@ -14,4 +14,4 @@ spec:
       insecureSkipVerify: true
   selector:
     matchLabels:
-      control-plane: controller-manager
+      app.kubernetes.io/name: odf-operator

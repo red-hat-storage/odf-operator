@@ -356,12 +356,12 @@ spec:
           replicas: 1
           selector:
             matchLabels:
-              control-plane: controller-manager
+              app.kubernetes.io/name: odf-operator
           strategy: {}
           template:
             metadata:
               labels:
-                control-plane: controller-manager
+                app.kubernetes.io/name: odf-operator
             spec:
               containers:
               - args:
