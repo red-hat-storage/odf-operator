@@ -45,7 +45,7 @@ spec:
       title: Connect applications to block or file storage (PersistentVolumeClaims)
       description: >-
 
-        PersistentVolumes (PVs) allow your data to exist beyond the pod's lifecycle, even after you restart, rescheduled, or delete it.
+        PersistentVolumes (PVs) allow your data to exist beyond the pod's lifecycle, even after you restart, reschedule, or delete it.
 
 
         After an administrator sets up an OpenShift Data Foundation StorageSystem, developers can use PersistentVolumeClaims (PVCs) to request PV resources without needing to know anything specific about their underlying storage infrastructure.
@@ -78,9 +78,9 @@ spec:
 
             - Select the name of the Deployment that you assigned storage to.
 
-            - On the Deployment details page, look at Type in the Volumes section to verify the type of the PVC you attached.
+            - On the **Deployment details** page, look at Type in the Volumes section to verify the type of the PVC you attached.
 
-            - Select the PVC name and verify the StorageClass name in the PersistentVolumeClaim Overview page.
+            - Select the PVC name and verify the StorageClass name in the PersistentVolumeClaim Details page.
 
         failedTaskHelp: Try the steps again.
     -
@@ -90,7 +90,7 @@ spec:
         Object Bucket Claims provide an easy way to consume object storage across OpenShift Data Foundation. 
         
         
-        Use your object service endpoint, access key, and secret key to add your object service provider to OpenShift Data Foundation as a BackingStore. See: Learn how to add storage resources for hybrid or multicloud docs.
+        Use your object service endpoint, access key, and secret key to add your object service provider to OpenShift Data Foundation as a BackingStore.
 
        
         **To create an Object Bucket Claim and connect it to your application:**
@@ -123,7 +123,7 @@ spec:
 
             - Select the name of the Deployment that you assigned storage to.
 
-            - On the Deployment details page, select the **Environment** tab and check if a new **Secret** and **ConfigMap** were added.
+            - On the **Deployment details** page, select the **Environment** tab and check if a new **Secret** and **ConfigMap** were added.
 
         failedTaskHelp: Try the steps again.
     -
@@ -179,7 +179,7 @@ spec:
         - Created StorageClasses.
         
 
-        These installation actions enable you to easily provision and consume your deployed storage services.
+        Now, you’re ready to easily provision and consume your deployed storage services.
 
 
         Monitor your storage regularly so that you don't run out of storage space.
