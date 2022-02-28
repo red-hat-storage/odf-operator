@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"go.uber.org/multierr"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -273,6 +274,16 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 			Channel:                CSIAddonsSubscriptionChannel,
 			StartingCSV:            CSIAddonsSubscriptionStartingCSV,
 			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+			Config: &operatorv1alpha1.SubscriptionConfig{
+				Tolerations: []corev1.Toleration{
+					{
+						Key:      "node.ocs.openshift.io/storage",
+						Operator: "Equal",
+						Value:    "true",
+						Effect:   "NoSchedule",
+					},
+				},
+			},
 		},
 	}
 
