@@ -7,7 +7,7 @@ spec:
   description: |
     **Red Hat OpenShift Data Foundation** deploys three operators.
 
-    ### OpenShift Data Foundation operator
+    ### OpenShift Data Foundation
     The OpenShift Data Foundation operator is the primary operator for
     OpenShift Data Foundation. It serves to facilitate the other operators in
     OpenShift Data Foundation by performing administrative tasks outside their
@@ -16,6 +16,10 @@ spec:
     ### Rook
     [Rook][1] deploys and manages Ceph on OpenShift, which provides block and
     file storage.
+
+    ### NooBaa operator
+    The NooBaa operator deploys and manages the [NooBaa][2] Multi-Cloud Gateway
+    on OpenShift, which provides object storage.
 
     # Core Capabilities
     * **Self-managing service:** No matter which supported storage technologies
@@ -43,3 +47,4 @@ spec:
     storage for your workloads, using a single namespace.
 
     [1]: https://rook.io
+    [2]: https://www.noobaa.io
