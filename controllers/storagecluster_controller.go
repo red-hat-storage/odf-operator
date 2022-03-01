@@ -106,14 +106,6 @@ func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		logger.Info("StorageSystem is already present for the StorageCluster.", "StorageSystem", storageSystem.Name)
 	}
 
-	// update Annotation for the storageCluster
-	metav1.SetMetaDataAnnotation(&instance.ObjectMeta, string(HasStorageSystemAnnotation), storageSystem.Name)
-	err = r.Client.Update(context.TODO(), instance)
-	if err != nil {
-		logger.Error(err, "Failed to update the StorageCluster Annotation.")
-		return ctrl.Result{}, err
-	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -131,32 +123,18 @@ func filterStorageSystem(storageSystemList *odfv1alpha1.StorageSystemList, stora
 // SetupWithManager sets up the controller with the Manager.
 func (r *StorageClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
-	predicateFunc := func(obj runtime.Object) bool {
-		instance, ok := obj.(*ocsv1.StorageCluster)
-		if !ok {
-			return false
-		}
-
-		// ignore if Annotation is present
-		if _, ok = instance.ObjectMeta.Annotations[HasStorageSystemAnnotation]; ok {
-			return false
-		}
-
-		return true
-	}
-
 	storageClusterPredicate := predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
-			return predicateFunc(e.Object)
+			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
 			return false
 		},
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			return predicateFunc(e.ObjectNew)
+			return false
 		},
 		GenericFunc: func(e event.GenericEvent) bool {
-			return predicateFunc(e.Object)
+			return false
 		},
 	}
 
