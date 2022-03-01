@@ -77,8 +77,5 @@ func TestReconcile(t *testing.T) {
 		err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
 			Name: fakeStorageCluster.Name, Namespace: fakeStorageCluster.Namespace}, foundStorageCluster)
 		assert.NoError(t, err)
-
-		_, ok := foundStorageCluster.ObjectMeta.Annotations[HasStorageSystemAnnotation]
-		assert.True(t, ok)
 	}
 }
