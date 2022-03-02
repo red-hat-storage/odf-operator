@@ -53,6 +53,7 @@ metadata:
         }
       }
     operatorframework.io/suggested-namespace: openshift-storage
+    operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.operatorframework.io/builder: operator-sdk-v1.13.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/red-hat-storage/odf-operator
