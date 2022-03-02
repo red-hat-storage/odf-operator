@@ -24,6 +24,7 @@ metadata:
         }
       }
     operatorframework.io/suggested-namespace: openshift-storage
+    operators.openshift.io/infrastructure-features: '["disconnected"]'
     repository: https://github.com/red-hat-storage/odf-operator
     support: Red Hat
     vendors.odf.openshift.io/kind: '["storagecluster.ocs.openshift.io/v1", "flashsystemcluster.odf.ibm.com/v1alpha1"]'
