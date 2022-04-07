@@ -5,7 +5,7 @@ plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: odf-operator
-repo: github.com/red-hat-data-services/odf-operator
+repo: github.com/red-hat-storage/odf-operator
 resources:
 - api:
     crdVersion: v1
@@ -14,7 +14,7 @@ resources:
   domain: openshift.io
   group: odf
   kind: StorageSystem
-  path: github.com/red-hat-data-services/odf-operator/api/v1alpha1
+  path: github.com/red-hat-storage/odf-operator/api/v1alpha1
   version: v1alpha1
 - controller: true
   domain: openshift.io

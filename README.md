@@ -115,7 +115,7 @@ make test
 To run a single test
 
 ```
-go test -v github.com/red-hat-data-services/odf-operator/controllers \
+go test -v github.com/red-hat-storage/odf-operator/controllers \
     -run TestIsVendorSystemPresent
 ```
 

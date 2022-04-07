@@ -1,4 +1,4 @@
-module github.com/red-hat-data-services/odf-operator
+module github.com/red-hat-storage/odf-operator
 
 go 1.17
 
