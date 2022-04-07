@@ -29,8 +29,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/red-hat-data-services/odf-operator/console"
-	"github.com/red-hat-data-services/odf-operator/pkg/util"
+	"github.com/red-hat-storage/odf-operator/console"
+	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
 // ClusterVersionReconciler reconciles a ClusterVersion object

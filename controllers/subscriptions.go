@@ -29,8 +29,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
-	"github.com/red-hat-data-services/odf-operator/pkg/util"
+	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
 // CheckForExistingSubscription looks for any existing Subscriptions that

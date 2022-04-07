@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 )
 
 // SubscriptionReconciler reconciles a Subscription object

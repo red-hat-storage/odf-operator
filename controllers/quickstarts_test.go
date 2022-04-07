@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	consolev1 "github.com/openshift/api/console/v1"
-	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 )
 
 var (
