@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 )
 
 func TestEnsureSubscription(t *testing.T) {

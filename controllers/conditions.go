@@ -20,7 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
-	odfv1alpha1 "github.com/red-hat-data-services/odf-operator/api/v1alpha1"
+	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 )
 
 func SetAvailableCondition(conditions *[]conditionsv1.Condition,
