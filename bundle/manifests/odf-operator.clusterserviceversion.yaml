@@ -125,6 +125,13 @@ spec:
     * **Simplified data management:** Easily create hybrid and multi-cloud data
     storage for your workloads, using a single namespace.
 
+    # Subscriptions
+    OpenShift Data Foundation requires a matching 1:1 ratio with the OpenShift
+    subscription used. The Essential subscription is included in the OpenShift
+    Platform Plus subscription. Disaster Recovery features, external mode, and
+    KMS integration for encryption at rest require a bundle of OpenShift
+    Platform Plus with OpenShift Data Foundation Advanced subscription.
+
     [1]: https://rook.io
     [2]: https://www.noobaa.io
   displayName: OpenShift Data Foundation
