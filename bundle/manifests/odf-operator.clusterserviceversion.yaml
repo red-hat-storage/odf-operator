@@ -93,8 +93,8 @@ spec:
     scope as well as watching and configuring their CustomResources.
 
     ### Rook
-    [Rook][1] deploys and manages Ceph on OpenShift, which provides block and
-    file storage.
+    [Rook][1] deploys and manages Ceph on OpenShift, which provides block,
+    file and object storage.
 
     ### NooBaa operator
     The NooBaa operator deploys and manages the [NooBaa][2] Multi-Cloud Gateway
