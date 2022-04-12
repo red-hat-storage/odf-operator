@@ -54,6 +54,8 @@ metadata:
       }
     operatorframework.io/suggested-namespace: openshift-storage
     operators.openshift.io/infrastructure-features: '["disconnected"]'
+    operators.openshift.io/valid-subscription: '["OpenShift Platform Plus",“OpenShift
+      Data Foundation Essentials”,”OpenShift Data Foundation Advanced”]'
     operators.operatorframework.io/builder: operator-sdk-v1.13.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/red-hat-storage/odf-operator
@@ -122,6 +124,13 @@ spec:
 
     * **Simplified data management:** Easily create hybrid and multi-cloud data
     storage for your workloads, using a single namespace.
+
+    # Subscriptions
+    OpenShift Data Foundation requires a matching 1:1 ratio with the OpenShift
+    subscription used. The Essential subscription is included in the OpenShift
+    Platform Plus subscription. Disaster Recovery features, external mode, and
+    KMS integration for encryption at rest require a bundle of OpenShift
+    Platform Plus with OpenShift Data Foundation Advanced subscription.
 
     [1]: https://rook.io
     [2]: https://www.noobaa.io
