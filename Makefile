@@ -48,8 +48,18 @@ godeps-update:
 
 test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo \
+		${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); \
+		go test -coverprofile cover.out `go list ./... | grep -v "e2e"`
+
+ODF_OPERATOR_INSTALL ?= true
+ODF_OPERATOR_UNINSTALL ?= true
+e2e-test: ginkgo ## Run end to end functional tests.
+	@echo "build and run e2e tests"
+	cd e2e/odf && $(GINKGO) build && ./odf.test \
+		--odf-catalog-image=$(CATALOG_IMG) --odf-subscription-channel=$(CHANNELS) --odf-cluster-service-version=odf-operator.v${VERSION} \
+		--odf-operator-install=$(ODF_OPERATOR_INSTALL) --odf-operator-uninstall=$(ODF_OPERATOR_UNINSTALL)
 
 define MANAGER_ENV_VARS
 OPERATOR_NAMESPACE=$(OPERATOR_NAMESPACE)
