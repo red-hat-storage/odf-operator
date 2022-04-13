@@ -29,3 +29,10 @@ operator-sdk: ## Download operator-sdk locally if necessary.
 OPM = $(BIN_DIR)/opm
 opm: ## Download opm locally if necessary.
 	@./hack/get-tool.sh $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.15.1/$(GOOS)-$(GOARCH)-opm
+
+
+GINKGO = $(BIN_DIR)/ginkgo
+GOMEGA = $(BIN_DIR)/gomega
+ginkgo: ## Download ginkgo and gomega locally if necessary.
+	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@latest)
+	$(call go-get-tool,$(GOMEGA),github.com/onsi/gomega/...)

@@ -276,6 +276,7 @@ github.com/openshift/custom-resource-status/conditions/v1
 ## explicit; go 1.17
 github.com/operator-framework/api/pkg/lib/version
 github.com/operator-framework/api/pkg/operators
+github.com/operator-framework/api/pkg/operators/v1
 github.com/operator-framework/api/pkg/operators/v1alpha1
 # github.com/pierrec/lz4 v2.5.2+incompatible
 ## explicit
