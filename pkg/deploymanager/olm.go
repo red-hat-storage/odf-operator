@@ -210,7 +210,7 @@ func (d *DeployManager) WaitForCsv() error {
 
 		existingcsv := &operatorsv1alpha1.ClusterServiceVersionList{}
 		err = d.Client.List(d.Ctx, existingcsv, &client.ListOptions{Namespace: InstallNamespace})
-		if err != nil {
+		if err != nil || len(existingcsv.Items) == 0 {
 			lastReason = "Some error in csv"
 			return false, err
 		}
