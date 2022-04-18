@@ -3,3 +3,7 @@ dependencies:
   value:
     packageName: ocs-operator
     version: ">=4.10.0 <4.11.0 || 4.11.0"
+- type: olm.package
+  value:
+    packageName: noobaa-operator
+    version: "5.9.0"
