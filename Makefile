@@ -58,7 +58,7 @@ ODF_OPERATOR_UNINSTALL ?= true
 e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
 	cd e2e/odf && $(GINKGO) build && ./odf.test \
-		--odf-catalog-image=$(CATALOG_IMG) --odf-subscription-channel=$(CHANNELS) --odf-cluster-service-version=odf-operator.v${VERSION} \
+		--odf-catalog-image=$(CATALOG_IMG) --odf-subscription-channel=$(CHANNELS) \
 		--odf-operator-install=$(ODF_OPERATOR_INSTALL) --odf-operator-uninstall=$(ODF_OPERATOR_UNINSTALL)
 
 define MANAGER_ENV_VARS

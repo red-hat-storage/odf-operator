@@ -31,7 +31,6 @@ var (
 func init() {
 	flag.StringVar(&OdfCatalogSourceImage, "odf-catalog-image", "", "The ODF CatalogSource container image to use in the deployment")
 	flag.StringVar(&OdfSubscriptionChannel, "odf-subscription-channel", "", "The subscription channel to receive updates from")
-	flag.StringVar(&OdfClusterServiceVersion, "odf-cluster-service-version", "", "The CSV name which needs to verified")
 	flag.BoolVar(&OdfOperatorInstall, "odf-operator-install", true, "Install the ODF operator before starting tests")
 	flag.BoolVar(&OdfClusterUninstall, "odf-operator-uninstall", true, "Uninstall the ODF operator after test completion")
 	flag.Parse()
@@ -53,9 +52,5 @@ func verifyFlags() {
 
 	if OdfSubscriptionChannel == "" {
 		panic("odf-subscription-channel is not provided")
-	}
-
-	if OdfClusterServiceVersion == "" {
-		panic("odf-cluster-service-version is not provided")
 	}
 }
