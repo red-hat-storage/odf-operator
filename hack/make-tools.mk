@@ -32,7 +32,5 @@ opm: ## Download opm locally if necessary.
 
 
 GINKGO = $(BIN_DIR)/ginkgo
-GOMEGA = $(BIN_DIR)/gomega
-ginkgo: ## Download ginkgo and gomega locally if necessary.
+ginkgo: ## Download ginkgo locally if necessary.
 	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@latest)
-	$(call go-get-tool,$(GOMEGA),github.com/onsi/gomega/...)
