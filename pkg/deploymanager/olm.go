@@ -119,21 +119,26 @@ func (d *DeployManager) CreateOlmResources(olmResources *OlmResources) error {
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
+		err = d.WaitForCatalogSource(catalogSource)
+		if err != nil {
+			return err
+		}
 	}
-	err := d.WaitForCatalogSource()
-	if err != nil {
-		return err
-	}
-
 	for _, subscription := range olmResources.subscriptions {
 		err := d.Client.Create(d.Ctx, subscription)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
-	}
-	err = d.WaitForCsv()
-	if err != nil {
-		return err
+		csv := &operatorsv1alpha1.ClusterServiceVersion{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      subscription.Spec.StartingCSV,
+				Namespace: subscription.Namespace,
+			},
+		}
+		err = d.WaitForCsv(csv)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -167,7 +172,7 @@ func (d *DeployManager) DeleteOlmResources(olmResources *OlmResources) error {
 }
 
 // WaitForCatalogSource wait for catalogSource to become ready
-func (d *DeployManager) WaitForCatalogSource() error {
+func (d *DeployManager) WaitForCatalogSource(catalogsource *operatorsv1alpha1.CatalogSource) error {
 
 	timeout := 600 * time.Second
 	interval := 10 * time.Second
@@ -175,31 +180,30 @@ func (d *DeployManager) WaitForCatalogSource() error {
 	lastReason := ""
 
 	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
-
-		existingCatalogSource := &operatorsv1alpha1.CatalogSourceList{}
-		err = d.Client.List(d.Ctx, existingCatalogSource, &client.ListOptions{Namespace: InstallNamespace})
+		existingCatalogSource := &operatorsv1alpha1.CatalogSource{}
+		err = d.Client.Get(d.Ctx, client.ObjectKeyFromObject(catalogsource), existingCatalogSource)
 		if err != nil {
-			return false, err
+			lastReason = fmt.Sprintf("failed to get catalogsource: %v", err)
+			return false, nil
 		}
-		for _, catalogSource := range existingCatalogSource.Items {
-			if catalogSource.Status.GRPCConnectionState.LastObservedState != "READY" {
-				lastReason = "waiting on odf catalog source to reach ready state"
-				return false, nil
-			}
+		if existingCatalogSource.Status.GRPCConnectionState.LastObservedState != "READY" {
+			lastReason = fmt.Sprintf("waiting for catalog source to reach ready state, but stuck in %s state",
+				existingCatalogSource.Status.GRPCConnectionState.LastObservedState)
+			return false, nil
 		}
 
 		return true, nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, lastReason)
+		return fmt.Errorf(lastReason)
 	}
 
 	return nil
 }
 
 // WaitForCsv waits for the CSV to successfully installed
-func (d *DeployManager) WaitForCsv() error {
+func (d *DeployManager) WaitForCsv(csv *operatorsv1alpha1.ClusterServiceVersion) error {
 
 	timeout := 600 * time.Second
 	interval := 10 * time.Second
@@ -207,24 +211,21 @@ func (d *DeployManager) WaitForCsv() error {
 	lastReason := ""
 
 	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
-
-		existingcsv := &operatorsv1alpha1.ClusterServiceVersionList{}
-		err = d.Client.List(d.Ctx, existingcsv, &client.ListOptions{Namespace: InstallNamespace})
+		existingcsv := &operatorsv1alpha1.ClusterServiceVersion{}
+		err = d.Client.Get(d.Ctx, client.ObjectKeyFromObject(csv), existingcsv)
 		if err != nil {
-			lastReason = "Some error in csv"
-			return false, err
+			lastReason = fmt.Sprintf("failed to get CSV: %v", err)
+			return false, nil
 		}
-		for _, csv := range existingcsv.Items {
-			if csv.Status.Phase != operatorsv1alpha1.CSVPhaseSucceeded {
-				lastReason = "waiting for ClusterServiceVersion to be Succeeded"
-				return false, nil
-			}
+		if existingcsv.Status.Phase != operatorsv1alpha1.CSVPhaseSucceeded {
+			lastReason = fmt.Sprintf("waiting for CSV to succeed, but stuck in %s phase", existingcsv.Status.Phase)
+			return false, nil
 		}
 		return true, nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, lastReason)
+		return fmt.Errorf(lastReason)
 	}
 
 	return nil
