@@ -1,7 +1,7 @@
+ 
 package odf_test
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -22,10 +22,11 @@ var _ = AfterSuite(func() {
 	tests.TearDown()
 })
 
-var _ = Describe("odftest", func() {
-	Context("Run a dummy test", func() {
-		It("Should do nothing", func() {
-			fmt.Println("Just a test")
+// Test for the creation & deletion of storagesystem
+var _ = Describe("StorageSystem test", func() {
+	Context("Checking the StorageSystem", func() {
+		It("Should check the creation & deletion of storagesystem", func() {
+			tests.TestStorageSystem()
 		})
 	})
 })
