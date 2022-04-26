@@ -8,6 +8,7 @@ import (
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	utilwait "k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -19,15 +20,20 @@ type OlmResources struct {
 }
 
 // DeployODFWithOLM deploys odf operator via an olm subscription
-func (d *DeployManager) DeployODFWithOLM(odfCatalogImage, subscriptionChannel, odfcsv string) error {
+func (d *DeployManager) DeployODFWithOLM(odfCatalogImage string, subscriptionChannel string, csvNames []string) error {
 
 	err := d.CreateNamespace(InstallNamespace)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
-	olmResources := d.GetOlmResources(odfCatalogImage, subscriptionChannel, odfcsv)
-	err = d.CreateOlmResources(olmResources)
+	olmResources := d.GetOlmResources(odfCatalogImage, subscriptionChannel, csvNames)
+	err = d.CreateOlmResources(olmResources, csvNames)
+	if err != nil {
+		return err
+	}
+
+	err = d.CheckOdfCsvs(csvNames)
 	if err != nil {
 		return err
 	}
@@ -35,10 +41,21 @@ func (d *DeployManager) DeployODFWithOLM(odfCatalogImage, subscriptionChannel, o
 	return nil
 }
 
-// UndeployODFWithOLM uninstalls odf operator
-func (d *DeployManager) UndeployODFWithOLM(odfCatalogImage, subscriptionChannel, odfcsv string) error {
+// CheckOdfCsvs checks if all the required csvs are present & have succeded
+func (d *DeployManager) CheckOdfCsvs(csvNames []string) error {
+	for _, csvName := range csvNames {
+		err := d.WaitForCsv(csvName)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-	olmResources := d.GetOlmResources(odfCatalogImage, subscriptionChannel, odfcsv)
+// UndeployODFWithOLM uninstalls odf operator
+func (d *DeployManager) UndeployODFWithOLM(odfCatalogImage string, subscriptionChannel string, csvNames []string) error {
+
+	olmResources := d.GetOlmResources(odfCatalogImage, subscriptionChannel, csvNames)
 	err := d.DeleteOlmResources(olmResources)
 	if err != nil {
 		return err
@@ -53,7 +70,7 @@ func (d *DeployManager) UndeployODFWithOLM(odfCatalogImage, subscriptionChannel,
 }
 
 // GetOlmResources returns OLM resources required to deploy odf operator
-func (d *DeployManager) GetOlmResources(odfCatalogImage, subscriptionChannel, odfcsv string) *OlmResources {
+func (d *DeployManager) GetOlmResources(odfCatalogImage string, subscriptionChannel string, csvName []string) *OlmResources {
 
 	olmResources := &OlmResources{}
 
@@ -96,7 +113,7 @@ func (d *DeployManager) GetOlmResources(odfCatalogImage, subscriptionChannel, od
 			Package:                "odf-operator",
 			CatalogSource:          "odf-catalogsource",
 			CatalogSourceNamespace: InstallNamespace,
-			StartingCSV:            odfcsv,
+			StartingCSV:            csvName[0],
 		},
 	}
 	olmResources.subscriptions = append(olmResources.subscriptions, odfSubscription)
@@ -105,7 +122,7 @@ func (d *DeployManager) GetOlmResources(odfCatalogImage, subscriptionChannel, od
 }
 
 // CreateOlmResources create OLM resources required to deploy odf operator
-func (d *DeployManager) CreateOlmResources(olmResources *OlmResources) error {
+func (d *DeployManager) CreateOlmResources(olmResources *OlmResources, csvNames []string) error {
 
 	for _, operatorGroup := range olmResources.operatorGroups {
 		err := d.Client.Create(d.Ctx, operatorGroup)
@@ -119,10 +136,10 @@ func (d *DeployManager) CreateOlmResources(olmResources *OlmResources) error {
 		if err != nil && !errors.IsAlreadyExists(err) {
 			return err
 		}
-	}
-	err := d.WaitForCatalogSource()
-	if err != nil {
-		return err
+		err = d.WaitForCatalogSource(catalogSource)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, subscription := range olmResources.subscriptions {
@@ -131,11 +148,6 @@ func (d *DeployManager) CreateOlmResources(olmResources *OlmResources) error {
 			return err
 		}
 	}
-	err = d.WaitForCsv()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -167,7 +179,7 @@ func (d *DeployManager) DeleteOlmResources(olmResources *OlmResources) error {
 }
 
 // WaitForCatalogSource wait for catalogSource to become ready
-func (d *DeployManager) WaitForCatalogSource() error {
+func (d *DeployManager) WaitForCatalogSource(catalogsource *operatorsv1alpha1.CatalogSource) error {
 
 	timeout := 600 * time.Second
 	interval := 10 * time.Second
@@ -175,31 +187,30 @@ func (d *DeployManager) WaitForCatalogSource() error {
 	lastReason := ""
 
 	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
-
-		existingCatalogSource := &operatorsv1alpha1.CatalogSourceList{}
-		err = d.Client.List(d.Ctx, existingCatalogSource, &client.ListOptions{Namespace: InstallNamespace})
+		existingCatalogSource := &operatorsv1alpha1.CatalogSource{}
+		err = d.Client.Get(d.Ctx, client.ObjectKeyFromObject(catalogsource), existingCatalogSource)
 		if err != nil {
-			return false, err
+			lastReason = fmt.Sprintf("failed to get catalogsource: %v", err)
+			return false, nil
 		}
-		for _, catalogSource := range existingCatalogSource.Items {
-			if catalogSource.Status.GRPCConnectionState.LastObservedState != "READY" {
-				lastReason = "waiting on odf catalog source to reach ready state"
-				return false, nil
-			}
+		if existingCatalogSource.Status.GRPCConnectionState.LastObservedState != "READY" {
+			lastReason = fmt.Sprintf("waiting for catalog source to reach ready state, but stuck in %s state",
+				existingCatalogSource.Status.GRPCConnectionState.LastObservedState)
+			return false, nil
 		}
 
 		return true, nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, lastReason)
+		return fmt.Errorf(lastReason)
 	}
 
 	return nil
 }
 
 // WaitForCsv waits for the CSV to successfully installed
-func (d *DeployManager) WaitForCsv() error {
+func (d *DeployManager) WaitForCsv(csvName string) error {
 
 	timeout := 600 * time.Second
 	interval := 10 * time.Second
@@ -207,24 +218,24 @@ func (d *DeployManager) WaitForCsv() error {
 	lastReason := ""
 
 	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
-
-		existingcsv := &operatorsv1alpha1.ClusterServiceVersionList{}
-		err = d.Client.List(d.Ctx, existingcsv, &client.ListOptions{Namespace: InstallNamespace})
+		existingcsv := &operatorsv1alpha1.ClusterServiceVersion{}
+		err = d.Client.Get(d.Ctx, types.NamespacedName{
+			Name:      csvName,
+			Namespace: InstallNamespace,
+		}, existingcsv)
 		if err != nil {
-			lastReason = "Some error in csv"
-			return false, err
+			lastReason = fmt.Sprintf("failed to get CSV: %v", err)
+			return false, nil
 		}
-		for _, csv := range existingcsv.Items {
-			if csv.Status.Phase != operatorsv1alpha1.CSVPhaseSucceeded {
-				lastReason = "waiting for ClusterServiceVersion to be Succeeded"
-				return false, nil
-			}
+		if existingcsv.Status.Phase != operatorsv1alpha1.CSVPhaseSucceeded {
+			lastReason = fmt.Sprintf("waiting for CSV to succeed, but stuck in %s phase", existingcsv.Status.Phase)
+			return false, nil
 		}
 		return true, nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("%v: %s", err, lastReason)
+		return fmt.Errorf(lastReason)
 	}
 
 	return nil
