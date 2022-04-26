@@ -9,6 +9,7 @@ import (
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
+	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
@@ -24,6 +25,7 @@ var (
 func init() {
 	utilruntime.Must(k8sscheme.AddToScheme(scheme))
 	utilruntime.Must(odfv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(ocsv1.AddToScheme(scheme))
 	utilruntime.Must(operatorv1.AddToScheme(scheme))
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 }
