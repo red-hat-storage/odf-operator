@@ -58,8 +58,12 @@ ODF_OPERATOR_UNINSTALL ?= true
 e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
 	cd e2e/odf && $(GINKGO) build && ./odf.test \
-		--odf-catalog-image=$(CATALOG_IMG) --odf-subscription-channel=$(CHANNELS) --odf-cluster-service-version=odf-operator.v${VERSION} \
-		--odf-operator-install=$(ODF_OPERATOR_INSTALL) --odf-operator-uninstall=$(ODF_OPERATOR_UNINSTALL)
+		--odf-catalog-image=$(CATALOG_IMG) --odf-subscription-channel=$(CHANNELS) \
+		--odf-operator-install=$(ODF_OPERATOR_INSTALL) --odf-operator-uninstall=$(ODF_OPERATOR_UNINSTALL) \
+		--odf-cluster-service-version=odf-operator.v${VERSION} \
+		--ocs-cluster-service-version=${OCS_SUBSCRIPTION_STARTINGCSV} \
+		--nooba-cluster-service-version=${NOOBAA_SUBSCRIPTION_STARTINGCSV} \
+		--csiaddons-cluster-service-version=${CSIADDONS_SUBSCRIPTION_STARTINGCSV}
 
 define MANAGER_ENV_VARS
 OPERATOR_NAMESPACE=$(OPERATOR_NAMESPACE)
