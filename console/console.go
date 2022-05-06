@@ -84,7 +84,7 @@ func GetConsolePluginCR(consolePort int, basePath string, serviceNamespace strin
 }
 
 func GetBasePath(clusterVersion string) string {
-	if strings.Contains(clusterVersion, "4.11") {
+	if strings.Contains(clusterVersion, "4.12") {
 		return COMPATIBILITY_BASE_PATH
 	}
 
