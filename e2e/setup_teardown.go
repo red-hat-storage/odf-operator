@@ -19,6 +19,10 @@ func Setup() {
 		err := DeployManager.DeployODFWithOLM(OdfCatalogSourceImage, OdfSubscriptionChannel, OdfClusterServiceVersion)
 		gomega.Expect(err).To(gomega.BeNil())
 	}
+	
+	debug("Setup: Checking if all the CSVs have succeeded\n")
+	err := DeployManager.CheckAllCsvs(CsvNames)
+	gomega.Expect(err).To(gomega.BeNil())
 
 	SuiteFailed = false
 

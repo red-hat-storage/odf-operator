@@ -35,6 +35,23 @@ func (d *DeployManager) DeployODFWithOLM(odfCatalogImage, subscriptionChannel, o
 	return nil
 }
 
+// CheckAllCsvs checks if all the required csvs are present & have succeeded
+func (d *DeployManager) CheckAllCsvs(csvNames []string) error {
+	for _, csvName := range csvNames {
+		csv := &operatorsv1alpha1.ClusterServiceVersion{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      csvName,
+				Namespace: InstallNamespace,
+			},
+		}
+		err := d.WaitForCsv(csv)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // UndeployODFWithOLM uninstalls odf operator
 func (d *DeployManager) UndeployODFWithOLM(odfCatalogImage, subscriptionChannel, odfcsv string) error {
 
@@ -127,16 +144,6 @@ func (d *DeployManager) CreateOlmResources(olmResources *OlmResources) error {
 	for _, subscription := range olmResources.subscriptions {
 		err := d.Client.Create(d.Ctx, subscription)
 		if err != nil && !errors.IsAlreadyExists(err) {
-			return err
-		}
-		csv := &operatorsv1alpha1.ClusterServiceVersion{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      subscription.Spec.StartingCSV,
-				Namespace: subscription.Namespace,
-			},
-		}
-		err = d.WaitForCsv(csv)
-		if err != nil {
 			return err
 		}
 	}
