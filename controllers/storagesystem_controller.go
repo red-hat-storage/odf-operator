@@ -121,6 +121,12 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 	// add/remove finalizer
 	if instance.GetDeletionTimestamp().IsZero() {
 		if !util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
+
+			// update the status before the Update call, as update call does not update the status and we lost the status
+			if err = r.Client.Status().Update(context.TODO(), instance); err != nil {
+				logger.Error(err, "failed to update status")
+			}
+
 			logger.Info("finalizer not found Add finalizer", "Finalizer", storageSystemFinalizer)
 			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, storageSystemFinalizer)
 			if err = r.Client.Update(context.TODO(), instance); err != nil {
@@ -137,6 +143,11 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 			err = r.deleteResources(instance, logger)
 			if err != nil {
 				return ctrl.Result{}, err
+			}
+
+			// update the status before the Update call, as update call does not update the status and we lost the status
+			if err = r.Client.Status().Update(context.TODO(), instance); err != nil {
+				logger.Error(err, "failed to update status")
 			}
 
 			logger.Info("storagesystem is in deletion phase remove finalizer", "Finalizer", storageSystemFinalizer)
