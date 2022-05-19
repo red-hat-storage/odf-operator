@@ -16,14 +16,13 @@ func Setup() {
 
 	if OdfOperatorInstall {
 		debug("Setup: deploying ODF Operator\n")
-		err := DeployManager.DeployODFWithOLM(OdfCatalogSourceImage, OdfSubscriptionChannel, OdfClusterServiceVersion)
+		err := DeployManager.DeployODFWithOLM(OdfCatalogSourceImage, OdfSubscriptionChannel)
+		gomega.Expect(err).To(gomega.BeNil())
+
+		debug("Setup: Checking if all the CSVs have succeeded\n")
+		err = DeployManager.CheckAllCsvs(CsvNames)
 		gomega.Expect(err).To(gomega.BeNil())
 	}
-	
-	debug("Setup: Checking if all the CSVs have succeeded\n")
-	err := DeployManager.CheckAllCsvs(CsvNames)
-	gomega.Expect(err).To(gomega.BeNil())
-
 	SuiteFailed = false
 
 	debug("Setup: completed\n")
@@ -38,7 +37,7 @@ func TearDown() {
 
 	if OdfClusterUninstall {
 		debug("TearDown: uninstalling ODF Operator\n")
-		err := DeployManager.UndeployODFWithOLM(OdfCatalogSourceImage, OdfSubscriptionChannel, OdfClusterServiceVersion)
+		err := DeployManager.UndeployODFWithOLM(OdfCatalogSourceImage, OdfSubscriptionChannel)
 		gomega.Expect(err).To(gomega.BeNil())
 	}
 
