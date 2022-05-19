@@ -19,7 +19,7 @@ func TestStorageSystem() {
 
 	debug("Storagesystem Test: Checking Storage System Owner References\n")
 	err = DeployManager.CheckStorageSystemOwnerRef()
-	gomega.Expect(err).To(gomega.BeNil())	
+	gomega.Expect(err).To(gomega.BeNil())
 
 	debug("Storagesystem Test: Deleting Storage System\n")
 	err = DeployManager.DeleteStorageSystemAndWait()

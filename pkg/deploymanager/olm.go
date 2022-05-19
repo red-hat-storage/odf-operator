@@ -19,14 +19,14 @@ type OlmResources struct {
 }
 
 // DeployODFWithOLM deploys odf operator via an olm subscription
-func (d *DeployManager) DeployODFWithOLM(odfCatalogImage, subscriptionChannel, odfcsv string) error {
+func (d *DeployManager) DeployODFWithOLM(odfCatalogImage, subscriptionChannel string) error {
 
 	err := d.CreateNamespace(InstallNamespace)
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
 
-	olmResources := d.GetOlmResources(odfCatalogImage, subscriptionChannel, odfcsv)
+	olmResources := d.GetOlmResources(odfCatalogImage, subscriptionChannel)
 	err = d.CreateOlmResources(olmResources)
 	if err != nil {
 		return err
@@ -53,9 +53,9 @@ func (d *DeployManager) CheckAllCsvs(csvNames []string) error {
 }
 
 // UndeployODFWithOLM uninstalls odf operator
-func (d *DeployManager) UndeployODFWithOLM(odfCatalogImage, subscriptionChannel, odfcsv string) error {
+func (d *DeployManager) UndeployODFWithOLM(odfCatalogImage, subscriptionChannel string) error {
 
-	olmResources := d.GetOlmResources(odfCatalogImage, subscriptionChannel, odfcsv)
+	olmResources := d.GetOlmResources(odfCatalogImage, subscriptionChannel)
 	err := d.DeleteOlmResources(olmResources)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (d *DeployManager) UndeployODFWithOLM(odfCatalogImage, subscriptionChannel,
 }
 
 // GetOlmResources returns OLM resources required to deploy odf operator
-func (d *DeployManager) GetOlmResources(odfCatalogImage, subscriptionChannel, odfcsv string) *OlmResources {
+func (d *DeployManager) GetOlmResources(odfCatalogImage, subscriptionChannel string) *OlmResources {
 
 	olmResources := &OlmResources{}
 
@@ -113,7 +113,6 @@ func (d *DeployManager) GetOlmResources(odfCatalogImage, subscriptionChannel, od
 			Package:                "odf-operator",
 			CatalogSource:          "odf-catalogsource",
 			CatalogSourceNamespace: InstallNamespace,
-			StartingCSV:            odfcsv,
 		},
 	}
 	olmResources.subscriptions = append(olmResources.subscriptions, odfSubscription)
