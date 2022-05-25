@@ -118,19 +118,8 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		return reconcile.Result{}, err
 	}
 
-	// add/remove finalizer
-	if instance.GetDeletionTimestamp().IsZero() {
-		if !util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
-			logger.Info("finalizer not found Add finalizer", "Finalizer", storageSystemFinalizer)
-			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, storageSystemFinalizer)
-			if err = r.Client.Update(context.TODO(), instance); err != nil {
-				logger.Error(err, "failed to update storagesystem with finalizer", "Finalizer", storageSystemFinalizer)
-				return ctrl.Result{}, err
-			}
-		}
-	} else {
-		// deletion phase
-
+	// deletion phase
+	if !instance.GetDeletionTimestamp().IsZero() {
 		if util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
 			SetDeletionInProgressConditions(&instance.Status.Conditions, "Deleting", "Deletion is in progress")
 
@@ -141,13 +130,23 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 
 			logger.Info("storagesystem is in deletion phase remove finalizer", "Finalizer", storageSystemFinalizer)
 			instance.ObjectMeta.Finalizers = util.RemoveFromSlice(instance.ObjectMeta.Finalizers, storageSystemFinalizer)
-			if err := r.Client.Update(context.TODO(), instance); err != nil {
+			if err := r.updateStorageSystem(instance); err != nil {
 				logger.Error(err, "failed to remove finalizer from storagesystem", "Finalizer", storageSystemFinalizer)
 				return ctrl.Result{}, err
 			}
 		}
 		logger.Info("storagesystem object is terminated, skipping reconciliation")
 		return ctrl.Result{}, nil
+	}
+
+	// ensure finalizer
+	if !util.FindInSlice(instance.GetFinalizers(), storageSystemFinalizer) {
+		logger.Info("finalizer not found Add finalizer", "Finalizer", storageSystemFinalizer)
+		instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, storageSystemFinalizer)
+		if err = r.updateStorageSystem(instance); err != nil {
+			logger.Error(err, "failed to update storagesystem with finalizer", "Finalizer", storageSystemFinalizer)
+			return ctrl.Result{}, err
+		}
 	}
 
 	err = r.ensureQuickStarts(logger)
@@ -173,6 +172,15 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 	SetReconcileCompleteConditions(&instance.Status.Conditions, "ReconcileCompleted", "Reconcile is completed successfully")
 
 	return ctrl.Result{}, nil
+}
+
+func (r *StorageSystemReconciler) updateStorageSystem(instance *odfv1alpha1.StorageSystem) error {
+
+	// save the status locally before the Update call, as update call does not update the status and we lost it
+	instanceStatus := instance.Status.DeepCopy()
+	err := r.Client.Update(context.TODO(), instance)
+	instance.Status = *(instanceStatus)
+	return err
 }
 
 func (r *StorageSystemReconciler) validateStorageSystemSpec(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
