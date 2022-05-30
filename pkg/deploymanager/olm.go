@@ -192,7 +192,11 @@ func (d *DeployManager) WaitForCatalogSource(catalogsource *operatorsv1alpha1.Ca
 			lastReason = fmt.Sprintf("failed to get catalogsource: %v", err)
 			return false, nil
 		}
-		if existingCatalogSource.Status.GRPCConnectionState != nil && existingCatalogSource.Status.GRPCConnectionState.LastObservedState != "READY" {
+		if existingCatalogSource.Status.GRPCConnectionState == nil {
+			lastReason = "catalogsource connection state is nil"
+			return false, nil
+		}
+		if existingCatalogSource.Status.GRPCConnectionState.LastObservedState != "READY" {
 			lastReason = fmt.Sprintf("waiting for catalog source to reach ready state, but stuck in %s state",
 				existingCatalogSource.Status.GRPCConnectionState.LastObservedState)
 			return false, nil
