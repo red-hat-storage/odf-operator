@@ -57,6 +57,7 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 			}
 			actualSub = &subsList.Items[i]
 			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
+			actualSub.Spec.Config = desiredSubscription.Spec.Config
 			desiredSubscription = actualSub
 		}
 	}
