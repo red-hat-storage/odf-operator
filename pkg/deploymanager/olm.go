@@ -150,6 +150,43 @@ func (d *DeployManager) CreateOlmResources(olmResources *OlmResources) error {
 	return nil
 }
 
+// UpdateOlmResources updates OLM resources required to deploy odf operator
+func (d *DeployManager) UpdateOlmResources(olmResources *OlmResources) error {
+	for _, catalogSource := range olmResources.catalogSources {
+		cs := &operatorsv1alpha1.CatalogSource{}
+		err := d.Client.Get(d.Ctx, client.ObjectKeyFromObject(catalogSource), cs)
+		if err != nil {
+			return err
+		}
+		cs.Spec.Image = catalogSource.Spec.Image
+
+		err = d.Client.Update(d.Ctx, cs)
+		if err != nil {
+			return err
+		}
+
+		err = d.WaitForCatalogSource(cs)
+		if err != nil {
+			return err
+		}
+	}
+	for _, subscription := range olmResources.subscriptions {
+		sub := &operatorsv1alpha1.Subscription{}
+		err := d.Client.Get(d.Ctx, client.ObjectKeyFromObject(subscription), sub)
+		if err != nil {
+			return err
+		}
+		sub.Spec.Channel = subscription.Spec.Channel
+
+		err = d.Client.Update(d.Ctx, sub)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // DeleteOlmResources delete OLM resources required to deploy odf operator
 func (d *DeployManager) DeleteOlmResources(olmResources *OlmResources) error {
 
@@ -235,4 +272,35 @@ func (d *DeployManager) WaitForCsv(csv *operatorsv1alpha1.ClusterServiceVersion)
 	}
 
 	return nil
+}
+
+// GetCSVNames returns the CSV names of the installed operator
+func (d *DeployManager) GetCSVNames() ([]string, error) {
+	names := []string{}
+	timeout := 600 * time.Second
+	interval := 10 * time.Second
+
+	lastReason := ""
+
+	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		csvs := &operatorsv1alpha1.ClusterServiceVersionList{}
+		err = d.Client.List(d.Ctx, csvs, &client.ListOptions{Namespace: InstallNamespace})
+		if err != nil {
+			lastReason = fmt.Sprintf("failed to list CSVs: %v", err)
+			return false, nil
+		}
+		if len(csvs.Items) < 4 {
+			lastReason = "waiting for CSVs to be created"
+			return false, nil
+		}
+		for _, csv := range csvs.Items {
+			names = append(names, csv.GetName())
+		}
+		return true, nil
+	})
+
+	if err != nil {
+		return names, fmt.Errorf(lastReason)
+	}
+	return names, nil
 }

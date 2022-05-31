@@ -3,7 +3,7 @@ package e2e
 import "github.com/onsi/gomega"
 
 // TestStorageSystem tests the creation & deletion of storagesystem
-func TestStorageSystem() {
+func StorageSystemTest() {
 
 	debug("Storagesystem Test: started\n")
 
