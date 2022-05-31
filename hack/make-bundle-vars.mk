@@ -50,6 +50,11 @@ BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(BUNDLE_IMAGE_NAME):$(IMA
 # CATALOG_IMG defines the image used for the catalog.
 CATALOG_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CATALOG_IMAGE_NAME):$(IMAGE_TAG)
 
+# ENV Variables required for upgrade test in e2e tests
+UPGRADE_FROM_ODF_CATALOG_IMAGE ?= registry.redhat.io/redhat/redhat-operator-index:v4.10
+
+UPGRADE_FROM_ODF_SUBSCRIPTION_CHANNEL ?= stable-4.10
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
