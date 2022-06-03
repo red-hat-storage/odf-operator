@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -84,6 +85,7 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) error {
+	logger := log.FromContext(context.TODO())
 	// The base path to where the request are sent
 	basePath := console.GetBasePath(clusterVersion)
 
@@ -107,8 +109,12 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	}
 
 	// Create/Update ODF console ConsolePlugin
-	odfConsolePlugin := console.GetConsolePluginCR(r.ConsolePort, basePath, OperatorNamespace)
+	odfConsolePlugin := console.GetConsolePluginCR(r.ConsolePort, OperatorNamespace)
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsolePlugin, func() error {
+		if currentBasePath := odfConsolePlugin.Spec.Service.BasePath; currentBasePath != basePath {
+			logger.Info(fmt.Sprintf("Set the BasePath for odf-console plugin as '%s'", basePath))
+			odfConsolePlugin.Spec.Service.BasePath = basePath
+		}
 		return nil
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
