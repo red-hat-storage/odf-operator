@@ -17,10 +17,13 @@ limitations under the License.
 package v1
 
 import (
+	"os"
+
 	nbv1 "github.com/noobaa/noobaa-operator/v5/pkg/apis/noobaa/v1alpha1"
 	quotav1 "github.com/openshift/api/quota/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	rookCephv1 "github.com/rook/rook/pkg/apis/ceph.rook.io/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,6 +49,7 @@ type StorageClusterSpec struct {
 	MonPVCTemplate     *corev1.PersistentVolumeClaim          `json:"monPVCTemplate,omitempty"`
 	MonDataDirHostPath string                                 `json:"monDataDirHostPath,omitempty"`
 	MultiCloudGateway  *MultiCloudGatewaySpec                 `json:"multiCloudGateway,omitempty"`
+	NFS                *NFSSpec                               `json:"nfs,omitempty"`
 	// Monitoring controls the configuration of resources for exposing OCS metrics
 	Monitoring *MonitoringSpec `json:"monitoring,omitempty"`
 	// Version specifies the version of StorageCluster
@@ -79,6 +83,11 @@ type StorageClusterSpec struct {
 	// AllowRemoteStorageConsumers Indicates that the OCS cluster should deploy the needed
 	// components to enable connections from remote consumers.
 	AllowRemoteStorageConsumers bool `json:"allowRemoteStorageConsumers,omitempty"`
+	// EnableCephTools toggles on whether or not the ceph tools pod
+	// should be deployed.
+	// Defaults to false
+	// +optional
+	EnableCephTools bool `json:"enableCephTools,omitempty"`
 }
 
 // KeyManagementServiceSpec provides a way to enable KMS
@@ -96,6 +105,7 @@ type ManagedResourcesSpec struct {
 	CephFilesystems      ManageCephFilesystems      `json:"cephFilesystems,omitempty"`
 	CephObjectStores     ManageCephObjectStores     `json:"cephObjectStores,omitempty"`
 	CephObjectStoreUsers ManageCephObjectStoreUsers `json:"cephObjectStoreUsers,omitempty"`
+	CephToolbox          ManageCephToolbox          `json:"cephToolbox,omitempty"`
 }
 
 // ManageCephCluster defines how to reconcile the Ceph cluster definition
@@ -134,11 +144,21 @@ type ManageCephObjectStores struct {
 	ReconcileStrategy   string `json:"reconcileStrategy,omitempty"`
 	DisableStorageClass bool   `json:"disableStorageClass,omitempty"`
 	GatewayInstances    int32  `json:"gatewayInstances,omitempty"`
+	DisableRoute        bool   `json:"disableRoute,omitempty"`
 }
 
 // ManageCephObjectStoreUsers defines how to reconcile CephObjectStoreUsers
 type ManageCephObjectStoreUsers struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
+}
+
+type ManageCephToolbox struct {
+	ReconcileStrategy string `json:"reconcileStrategy,omitempty"` // default behavior here is effectively `ignore`
+
+	// Tolerations if specified set toolbox ceph tools pod tolerations
+	// Defaults to empty
+	// +optional
+	Tolerations []corev1.Toleration `json:"cephTolerations,omitempty"`
 }
 
 // ExternalStorageKind specifies a kind of the external storage
@@ -276,6 +296,13 @@ type MultiCloudGatewaySpec struct {
 	Endpoints *nbv1.EndpointsSpec `json:"endpoints,omitempty"`
 }
 
+// NFSSpec defines specific nfs configuration options
+type NFSSpec struct {
+	// Enable specifies whether to enable NFS.
+	// +optional
+	Enable bool `json:"enable,omitempty"`
+}
+
 // MonitoringSpec controls the configuration of resources for exposing OCS metrics
 type MonitoringSpec struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
@@ -309,6 +336,13 @@ type MirroringSpec struct {
 	// PeerSecretNames represents the Kubernetes Secret names of rbd-mirror peers tokens
 	// +optional
 	PeerSecretNames []string `json:"peerSecretNames,omitempty"`
+}
+
+// KMSServerConnectionStatus defines the observed connection state to the KMS
+// server.
+type KMSServerConnectionStatus struct {
+	KMSServerAddress         string `json:"kmsServerAddress,omitempty"`
+	KMSServerConnectionError string `json:"kmsServerConnectionError,omitempty"`
 }
 
 // StorageClusterStatus defines the observed state of StorageCluster
@@ -360,6 +394,9 @@ type StorageClusterStatus struct {
 
 	// Images holds the image reconcile status for all images reconciled by the operator
 	Images ImagesStatus `json:"images,omitempty"`
+
+	// KMSServerConnection holds the connection state to the KMS server.
+	KMSServerConnection KMSServerConnectionStatus `json:"kmsServerConnection,omitempty"`
 }
 
 // ImagesStatus maps every component image name it's reconciliation status information
@@ -468,4 +505,93 @@ type OverprovisionControlSpec struct {
 	QuotaName        string                               `json:"quotaName,omitempty"`
 	Capacity         resource.Quantity                    `json:"capacity,omitempty"`
 	Selector         quotav1.ClusterResourceQuotaSelector `json:"selector,omitempty"`
+}
+
+func (r *StorageCluster) NewToolsDeployment(tolerations []corev1.Toleration) *appsv1.Deployment {
+
+	var replicaOne int32 = 1
+
+	name := "rook-ceph-tools"
+	namespace := r.ObjectMeta.Namespace
+	rookImage := os.Getenv("ROOK_CEPH_IMAGE")
+	runAsNonRoot := true
+	var runAsUser, runAsGroup int64 = 2016, 2016
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicaOne,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "rook-ceph-tools",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": "rook-ceph-tools",
+					},
+				},
+				Spec: corev1.PodSpec{
+					DNSPolicy: corev1.DNSClusterFirstWithHostNet,
+					Containers: []corev1.Container{
+						{
+							Name:    name,
+							Image:   rookImage,
+							Command: []string{"/bin/bash"},
+							Args: []string{
+								"-m",
+								"-c",
+								"/usr/local/bin/toolbox.sh",
+							},
+							TTY: true,
+							Env: []corev1.EnvVar{
+								{
+									Name: "ROOK_CEPH_USERNAME",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{Name: "rook-ceph-mon"},
+											Key:                  "ceph-username",
+										},
+									},
+								},
+								{
+									Name: "ROOK_CEPH_SECRET",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{Name: "rook-ceph-mon"},
+											Key:                  "ceph-secret",
+										},
+									},
+								},
+							},
+							SecurityContext: &corev1.SecurityContext{
+								RunAsNonRoot: &runAsNonRoot,
+								RunAsUser:    &runAsUser,
+								RunAsGroup:   &runAsGroup,
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{Name: "ceph-config", MountPath: "/etc/ceph"},
+								{Name: "mon-endpoint-volume", MountPath: "/etc/rook"},
+							},
+						},
+					},
+					Tolerations: tolerations,
+					Volumes: []corev1.Volume{
+						{Name: "ceph-config", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
+						{Name: "mon-endpoint-volume", VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: "rook-ceph-mon-endpoints"},
+								Items: []corev1.KeyToPath{
+									{Key: "data", Path: "mon-endpoints"},
+								},
+							},
+						},
+						},
+					},
+				},
+			},
+		},
+	}
 }
