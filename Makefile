@@ -63,7 +63,9 @@ e2e-test: ginkgo ## Run end to end functional tests.
 		--odf-cluster-service-version=odf-operator.v${VERSION} \
 		--ocs-cluster-service-version=${OCS_SUBSCRIPTION_STARTINGCSV} \
 		--nooba-cluster-service-version=${NOOBAA_SUBSCRIPTION_STARTINGCSV} \
-		--csiaddons-cluster-service-version=${CSIADDONS_SUBSCRIPTION_STARTINGCSV}
+		--csiaddons-cluster-service-version=${CSIADDONS_SUBSCRIPTION_STARTINGCSV} \
+		--upgrade-from-odf-catalogsource-image=${UPGRADE_FROM_ODF_CATALOG_IMAGE} \
+		--upgrade-from-odf-subscription-channel=${UPGRADE_FROM_ODF_SUBSCRIPTION_CHANNEL}
 
 define MANAGER_ENV_VARS
 OPERATOR_NAMESPACE=$(OPERATOR_NAMESPACE)

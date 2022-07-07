@@ -22,10 +22,19 @@ var _ = AfterSuite(func() {
 })
 
 // Test for the creation & deletion of storagesystem
-var _ = Describe("StorageSystem test", func() {
-	Context("Checking the StorageSystem", func() {
-		It("Should check the creation & deletion of storagesystem", func() {
-			tests.TestStorageSystem()
+// var _ = Describe("StorageSystem test", func() {
+// 	Context("Checking the StorageSystem", func() {
+// 		It("Should check the creation & deletion of storagesystem", func() {
+// 			tests.StorageSystemTest()
+// 		})
+// 	})
+// })
+
+// Test for the upgrade of odf operator
+var _= Describe("Upgrade test", func() {
+	Context("Checking the upgrade of odf operator", func() {
+		It("Should check the upgrade of odf operator", func() {
+			tests.UpgradeTest()
 		})
 	})
 })

@@ -24,6 +24,10 @@ var (
 	NoobaClusterServiceVersion string
 	// CsiaddonsClusterServiceVersion is the name of Csiaddons csv
 	CsiaddonsClusterServiceVersion string
+	// UpgradeFromOdfCatalogSourceImage is the ODF CatalogSource container image to upgrade from in the deployment
+	UpgradeFromOdfCatalogSourceImage string
+	// UpgradeFromOdfSubscriptionChannel is the name of the ODF subscription channel to upgrade from
+	UpgradeFromOdfSubscriptionChannel string
 )
 
 var (
@@ -46,6 +50,8 @@ func init() {
 	flag.StringVar(&OcsClusterServiceVersion, "ocs-cluster-service-version", "", "The OCS CSV name which needs to verified")
 	flag.StringVar(&NoobaClusterServiceVersion, "nooba-cluster-service-version", "", "The Nooba CSV name which needs to verified")
 	flag.StringVar(&CsiaddonsClusterServiceVersion, "csiaddons-cluster-service-version", "", "The CSI Addon CSV name which needs to verified")
+	flag.StringVar(&UpgradeFromOdfCatalogSourceImage, "upgrade-from-odf-catalogsource-image", "", "The ODF CatalogSource image to upgrade from in the deployment")
+	flag.StringVar(&UpgradeFromOdfSubscriptionChannel, "upgrade-from-odf-subscription-channel", "", "The subscription channel to upgrade from")
 	flag.Parse()
 
 	verifyFlags()
@@ -85,5 +91,13 @@ func verifyFlags() {
 
 	if CsiaddonsClusterServiceVersion == "" {
 		panic("csiaddons-cluster-service-version is not provided")
+	}
+
+	if UpgradeFromOdfCatalogSourceImage == "" {
+		panic("upgrade-from-odf-catalogsource-image is not provided")
+	}
+
+	if UpgradeFromOdfSubscriptionChannel == "" {
+		panic("upgrade-from-odf-subscription-channel is not provided")
 	}
 }
