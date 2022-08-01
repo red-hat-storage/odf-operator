@@ -12,17 +12,12 @@
             1,
             "never"
         ],
-        "body-full-stop": [
-            1,
-            "always",
-            "."
-        ],
         "body-leading-blank": [
             2,
             "always"
         ],
         "body-max-line-length": [
-            2,
+            1,
             "always",
             72
         ],

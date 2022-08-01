@@ -7,6 +7,7 @@ patchesStrategicMerge:
 - odf-operator.csv.card-description.yaml
 commonAnnotations:
   olm.skipRange: ""
+  operators.operatorframework.io/operator-type: standalone
 patches:
 - patch: '[{"op": "replace", "path": "/spec/replaces", "value": ""}]'
   target:
