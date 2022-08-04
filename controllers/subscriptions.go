@@ -42,7 +42,7 @@ import (
 func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) (*operatorv1alpha1.Subscription, error) {
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
-	err := cli.List(context.TODO(), subsList)
+	err := cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, erro
 	}
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
-	err := cli.List(context.TODO(), subsList)
+	err := cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: OperatorNamespace})
 	if err != nil {
 		return nil, err
 	}

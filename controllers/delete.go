@@ -34,7 +34,7 @@ func (r *StorageSystemReconciler) deleteResources(instance *odfv1alpha1.StorageS
 
 	var backendStorage client.Object
 
-	r.deleteQuickStarts(logger)
+	r.deleteQuickStarts(logger, instance)
 	if instance.Spec.Kind == VendorStorageCluster() {
 		backendStorage = &ocsv1.StorageCluster{}
 	} else if instance.Spec.Kind == VendorFlashSystemCluster() {
@@ -64,10 +64,10 @@ func (r *StorageSystemReconciler) deleteResources(instance *odfv1alpha1.StorageS
 	return fmt.Errorf("Waiting for %s %s to be deleted", instance.Spec.Kind, instance.Spec.Name)
 }
 
-func (r *StorageSystemReconciler) areAllStorageSystemsMarkedForDeletion() (bool, error) {
+func (r *StorageSystemReconciler) areAllStorageSystemsMarkedForDeletion(namespace string) (bool, error) {
 
 	var storageSystems odfv1alpha1.StorageSystemList
-	err := r.Client.List(context.TODO(), &storageSystems)
+	err := r.Client.List(context.TODO(), &storageSystems, &client.ListOptions{Namespace: namespace})
 	if err != nil {
 		return false, err
 	}

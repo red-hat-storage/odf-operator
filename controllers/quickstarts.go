@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	consolev1 "github.com/openshift/api/console/v1"
+	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 )
 
 func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {
@@ -65,12 +66,12 @@ func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {
 	return nil
 }
 
-func (r *StorageSystemReconciler) deleteQuickStarts(logger logr.Logger) {
+func (r *StorageSystemReconciler) deleteQuickStarts(logger logr.Logger, instance *odfv1alpha1.StorageSystem) {
 	if len(AllQuickStarts) == 0 {
 		logger.Info("No quickstarts found.")
 	}
 
-	allSSDeleted, err := r.areAllStorageSystemsMarkedForDeletion()
+	allSSDeleted, err := r.areAllStorageSystemsMarkedForDeletion(instance.Namespace)
 	if err != nil {
 		// Log the error but not fail the operator
 		logger.Error(err, "Failed to List", "Kind", "StorageSystem")
