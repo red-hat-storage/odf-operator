@@ -65,7 +65,7 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	err = r.ensureSubscriptions(logger)
+	err = r.ensureSubscriptions(logger, req.NamespacedName.Namespace)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -73,7 +73,7 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return ctrl.Result{}, nil
 }
 
-func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger) error {
+func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespace string) error {
 
 	var err error
 
@@ -81,7 +81,7 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger) error {
 	subsList[StorageClusterKind] = GetSubscriptions(StorageClusterKind)
 
 	ssList := &odfv1alpha1.StorageSystemList{}
-	err = r.Client.List(context.TODO(), ssList)
+	err = r.Client.List(context.TODO(), ssList, &client.ListOptions{Namespace: namespace})
 	if err != nil {
 		return err
 	}
