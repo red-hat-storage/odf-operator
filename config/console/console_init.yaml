@@ -36,3 +36,5 @@ spec:
         - name: odf-console-serving-cert
           secret:
             secretName: odf-console-serving-cert
+      securityContext:
+        runAsNonRoot: true
