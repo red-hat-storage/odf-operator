@@ -21,6 +21,8 @@ spec:
           ports:
             - containerPort: 9001
               protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
           volumeMounts:
             - name: odf-console-serving-cert
               mountPath: /var/serving-cert
