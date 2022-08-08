@@ -392,6 +392,11 @@ spec:
                 - containerPort: 8443
                   name: https
                 resources: {}
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - all
               - args:
                 - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
@@ -425,6 +430,9 @@ spec:
                     memory: 200Mi
                 securityContext:
                   allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - all
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: odf-operator-controller-manager
@@ -455,10 +463,17 @@ spec:
                   limits:
                     cpu: 100m
                     memory: 512Mi
+                securityContext:
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                    - all
                 volumeMounts:
                 - mountPath: /var/serving-cert
                   name: odf-console-serving-cert
                   readOnly: true
+              securityContext:
+                runAsNonRoot: true
               tolerations:
               - effect: NoSchedule
                 key: node.ocs.openshift.io/storage
