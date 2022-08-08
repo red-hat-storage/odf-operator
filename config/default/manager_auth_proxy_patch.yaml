@@ -21,6 +21,9 @@ spec:
           name: https
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - all
       - name: manager
         args:
         - "--health-probe-bind-address=:8081"

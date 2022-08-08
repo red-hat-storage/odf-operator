@@ -39,6 +39,9 @@ spec:
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - all
         livenessProbe:
           httpGet:
             path: /healthz

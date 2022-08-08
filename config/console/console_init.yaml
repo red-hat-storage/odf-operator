@@ -23,6 +23,9 @@ spec:
               protocol: TCP
           securityContext:
             allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - all
           volumeMounts:
             - name: odf-console-serving-cert
               mountPath: /var/serving-cert

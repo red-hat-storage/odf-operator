@@ -14,6 +14,9 @@ spec:
           protocol: TCP
         securityContext:
           allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - all
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
