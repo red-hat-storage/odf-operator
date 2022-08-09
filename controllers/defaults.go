@@ -53,8 +53,6 @@ var (
 		"IBM_SUBSCRIPTION_STARTINGCSV":             "ibm-storage-odf-operator.v1.0.0",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
-
-		"IBM_CSI_SUBSCRIPTION_STARTINGCSV": "ibm-block-csi-operator.v1.6.0",
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
@@ -86,8 +84,6 @@ var (
 	IbmSubscriptionStartingCSV            = GetEnvOrDefault("IBM_SUBSCRIPTION_STARTINGCSV")
 	IbmSubscriptionCatalogSource          = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE")
 	IbmSubscriptionCatalogSourceNamespace = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
-
-	IbmCsiSubscriptionStartingCSV = GetEnvOrDefault("IBM_CSI_SUBSCRIPTION_STARTINGCSV")
 )
 
 var (
