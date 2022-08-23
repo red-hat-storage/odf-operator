@@ -44,6 +44,8 @@ import (
 	consolev1 "github.com/openshift/api/console/v1"
 	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	clusterv1alpha1 "open-cluster-management.io/api/cluster/v1alpha1"
 )
 
 var (
@@ -65,6 +67,8 @@ func init() {
 	utilruntime.Must(consolev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(extv1.AddToScheme(scheme))
 	utilruntime.Must(configv1.AddToScheme(scheme))
+
+	utilruntime.Must(clusterv1alpha1.AddToScheme(scheme))
 
 }
 

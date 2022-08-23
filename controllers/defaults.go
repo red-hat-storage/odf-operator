@@ -92,7 +92,8 @@ var (
 )
 
 const (
-	OdfSubscriptionPackage = "odf-operator"
+	OdfSubscriptionPackage        = "odf-operator"
+	OperatorNamePrefix     string = "odf-operator"
 )
 
 func GetEnvOrDefault(env string) string {
