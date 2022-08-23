@@ -49,8 +49,8 @@ var (
 
 		"IBM_SUBSCRIPTION_NAME":                    "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_PACKAGE":                 "ibm-storage-odf-operator",
-		"IBM_SUBSCRIPTION_CHANNEL":                 "stable-v1",
-		"IBM_SUBSCRIPTION_STARTINGCSV":             "ibm-storage-odf-operator.v1.0.0",
+		"IBM_SUBSCRIPTION_CHANNEL":                 "stable-v1.1",
+		"IBM_SUBSCRIPTION_STARTINGCSV":             "ibm-storage-odf-operator.v1.1.0",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
 	}
