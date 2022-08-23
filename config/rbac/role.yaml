@@ -47,6 +47,17 @@ rules:
   verbs:
   - update
 - apiGroups:
+  - cluster.open-cluster-management.io
+  resources:
+  - clusterclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
   - config.openshift.io
   resources:
   - clusterversions
@@ -84,6 +95,14 @@ rules:
   - consolequickstarts
   verbs:
   - '*'
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - ocs.openshift.io
   resources:
