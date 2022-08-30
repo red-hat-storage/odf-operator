@@ -8,5 +8,5 @@ GOARCH ?= amd64
 GOPROXY ?= https://proxy.golang.org/
 
 GO_LINT_IMG_LOCATION ?= golangci/golangci-lint
-GO_LINT_IMG_TAG ?= v1.29
+GO_LINT_IMG_TAG ?= v1.45.2
 GO_LINT_IMG ?= $(GO_LINT_IMG_LOCATION):$(GO_LINT_IMG_TAG)
