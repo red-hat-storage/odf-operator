@@ -12,10 +12,10 @@ jobs:
       github.repository == 'red-hat-storage/odf-operator' &&
       github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: log into quay
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
