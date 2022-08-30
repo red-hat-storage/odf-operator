@@ -12,12 +12,12 @@ jobs:
     name: commitlint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
     - name: run commitlint
-      uses: wagoid/commitlint-github-action@v4
+      uses: wagoid/commitlint-github-action@v5
       with:
         configFile: './.github/workflows/conf/commitlintrc.json'
         helpURL: |
