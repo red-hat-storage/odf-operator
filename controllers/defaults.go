@@ -36,7 +36,7 @@ var (
 		"OCS_SUBSCRIPTION_NAME":                    "ocs-operator",
 		"OCS_SUBSCRIPTION_PACKAGE":                 "ocs-operator",
 		"OCS_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"OCS_SUBSCRIPTION_STARTINGCSV":             "ocs-operator.v4.9.0",
+		"OCS_SUBSCRIPTION_STARTINGCSV":             "ocs-operator.v4.12.0",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-storage",
 
