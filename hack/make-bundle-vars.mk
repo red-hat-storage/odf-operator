@@ -62,7 +62,7 @@ CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
 OCS_BUNDLE_NAME ?= ocs-operator
 OCS_BUNDLE_IMG_NAME ?= $(OCS_BUNDLE_NAME)-bundle
-OCS_BUNDLE_IMG_TAG ?= v4.11.0
+OCS_BUNDLE_IMG_TAG ?= v4.12.0
 OCS_BUNDLE_IMG_LOCATION ?= quay.io/ocs-dev
 OCS_BUNDLE_IMG ?= $(OCS_BUNDLE_IMG_LOCATION)/$(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE_IMG_TAG)
 
