@@ -57,7 +57,12 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 			}
 			actualSub = &subsList.Items[i]
 			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
-			actualSub.Spec.Config = desiredSubscription.Spec.Config
+
+			// If the config is not set, only then set it to the desired value => allow user to override
+			if actualSub.Spec.Config == nil {
+				actualSub.Spec.Config = desiredSubscription.Spec.Config
+			}
+
 			desiredSubscription = actualSub
 		}
 	}
