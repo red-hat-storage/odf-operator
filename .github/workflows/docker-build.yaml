@@ -9,7 +9,6 @@ on:
 
 jobs:
   docker-build:
-    name: docker-build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -26,7 +25,6 @@ jobs:
         run: make docker-build
 
   bundle-build:
-    name: bundle-build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -43,7 +41,6 @@ jobs:
         run: make bundle-build
 
   catalog-build:
-    name: catalog-build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
