@@ -9,11 +9,11 @@ jobs:
   yamllint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - uses: ibiqlik/action-yamllint@v3
-        with:
-          config_file: ./.github/workflows/conf/yamllint.yaml
-          file_or_dir: .  # Recursive on all yaml files
+    - uses: ibiqlik/action-yamllint@v3
+      with:
+        config_file: ./.github/workflows/conf/yamllint.yaml
+        file_or_dir: .  # Recursive on all yaml files
