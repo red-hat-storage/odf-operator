@@ -3,7 +3,7 @@ name: image-builder
 
 on:
   push:
-    branches: ['*']
+    branches: ['main', 'release-*']
   pull_request:
     branches: ['*']
 

@@ -3,7 +3,7 @@ name: codespell
 
 on:
   push:
-    branches: ['*']
+    branches: ['main', 'release-*']
   pull_request:
     branches: ['*']
 
