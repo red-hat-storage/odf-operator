@@ -53,6 +53,7 @@ type StorageClusterSpec struct {
 	// Monitoring controls the configuration of resources for exposing OCS metrics
 	Monitoring *MonitoringSpec `json:"monitoring,omitempty"`
 	// Version specifies the version of StorageCluster
+	// +kubebuilder:deprecatedversion:warning="This field has been deprecated and will be removed in future versions. Use `StorageCluster.Status.Version` instead."
 	Version string `json:"version,omitempty"`
 	// Network represents cluster network settings
 	Network *rookCephv1.NetworkSpec `json:"network,omitempty"`
@@ -88,6 +89,56 @@ type StorageClusterSpec struct {
 	// Defaults to false
 	// +optional
 	EnableCephTools bool `json:"enableCephTools,omitempty"`
+
+	// Logging represents loggings settings
+	// +optional
+	// +nullable
+	LogCollector *rookCephv1.LogCollectorSpec `json:"logCollector,omitempty"`
+
+	// BackingStorageClasses is a list of storage classes that will be
+	// provisioned by the storagecluster controller to be used in
+	// storageDeviceSets section of the CR.
+	BackingStorageClasses []BackingStorageClass `json:"backingStorageClasses,omitempty"`
+	// DefaultStorageProfile is the default storage profile to use for
+	// the storageclassclaims as StorageProfile is optional.
+	DefaultStorageProfile string `json:"defaultStorageProfile,omitempty"`
+
+	StorageProfiles []StorageProfile `json:"storageProfiles,omitempty"`
+}
+
+// StorageProfile is the storage profile to use for the storageclassclaims.
+type StorageProfile struct {
+	// +kubebuilder:validation:Required
+	// Name of the storage profile.
+	Name string `json:"name"`
+	// +kubebuilder:validation:Required
+	// DeviceClass is the deviceclass name.
+	DeviceClass string `json:"deviceClass"`
+	// configurations to use for cephfilesystem.
+	SharedFilesystemConfiguration SharedFilesystemConfigurationSpec `json:"sharedFilesystemConfiguration,omitempty"`
+	// configurations to use for  profile specific blockpool.
+	BlockPoolConfiguration BlockPoolConfigurationSpec `json:"blockPoolConfiguration,omitempty"`
+}
+
+type SharedFilesystemConfigurationSpec struct {
+	Parameters map[string]string `json:"parameters,omitempty"`
+}
+
+type BlockPoolConfigurationSpec struct {
+	Parameters map[string]string `json:"parameters,omitempty"`
+}
+
+// BackingStorageClass defines the backing storageclass for StorageDeviceSet
+type BackingStorageClass struct {
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	// Provisioner indicates the type of the provisioner.
+	// +optional
+	Provisioner string `json:"provisioner,omitempty"`
+
+	// Parameters holds the parameters for the provisioner that should
+	// create volumes of this storage class.
+	// +optional
+	Parameters map[string]string `json:"parameters,omitempty"`
 }
 
 // KeyManagementServiceSpec provides a way to enable KMS
@@ -98,14 +149,15 @@ type KeyManagementServiceSpec struct {
 
 // ManagedResourcesSpec defines how to reconcile auxiliary resources
 type ManagedResourcesSpec struct {
-	CephCluster          ManageCephCluster          `json:"cephCluster,omitempty"`
-	CephConfig           ManageCephConfig           `json:"cephConfig,omitempty"`
-	CephDashboard        ManageCephDashboard        `json:"cephDashboard,omitempty"`
-	CephBlockPools       ManageCephBlockPools       `json:"cephBlockPools,omitempty"`
-	CephFilesystems      ManageCephFilesystems      `json:"cephFilesystems,omitempty"`
-	CephObjectStores     ManageCephObjectStores     `json:"cephObjectStores,omitempty"`
-	CephObjectStoreUsers ManageCephObjectStoreUsers `json:"cephObjectStoreUsers,omitempty"`
-	CephToolbox          ManageCephToolbox          `json:"cephToolbox,omitempty"`
+	CephCluster           ManageCephCluster           `json:"cephCluster,omitempty"`
+	CephConfig            ManageCephConfig            `json:"cephConfig,omitempty"`
+	CephDashboard         ManageCephDashboard         `json:"cephDashboard,omitempty"`
+	CephBlockPools        ManageCephBlockPools        `json:"cephBlockPools,omitempty"`
+	CephNonResilientPools ManageCephNonResilientPools `json:"cephNonResilientPools,omitempty"`
+	CephFilesystems       ManageCephFilesystems       `json:"cephFilesystems,omitempty"`
+	CephObjectStores      ManageCephObjectStores      `json:"cephObjectStores,omitempty"`
+	CephObjectStoreUsers  ManageCephObjectStoreUsers  `json:"cephObjectStoreUsers,omitempty"`
+	CephToolbox           ManageCephToolbox           `json:"cephToolbox,omitempty"`
 }
 
 // ManageCephCluster defines how to reconcile the Ceph cluster definition
@@ -130,6 +182,13 @@ type ManageCephBlockPools struct {
 	ReconcileStrategy    string `json:"reconcileStrategy,omitempty"`
 	DisableStorageClass  bool   `json:"disableStorageClass,omitempty"`
 	DisableSnapshotClass bool   `json:"disableSnapshotClass,omitempty"`
+}
+
+// ManageCephNonResilientPools defines how to reconcile ceph non-resilient pools
+type ManageCephNonResilientPools struct {
+	Enable bool `json:"enable,omitempty"`
+	// ReconcileStrategy and other related fields are not used for now
+	// They can be added once the feature goes to GA
 }
 
 // ManageCephFilesystems defines how to reconcile CephFilesystems
@@ -347,6 +406,9 @@ type KMSServerConnectionStatus struct {
 
 // StorageClusterStatus defines the observed state of StorageCluster
 type StorageClusterStatus struct {
+	// Version specifies the version of StorageCluster
+	Version string `json:"version,omitempty"`
+
 	// Phase describes the Phase of StorageCluster
 	// This is used by OLM UI to provide status information
 	// to the user
@@ -463,7 +525,7 @@ const (
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=.status.phase,description="Current Phase"
 // +kubebuilder:printcolumn:name="External",type=boolean,JSONPath=.spec.externalStorage.enable,description="External Storage Cluster"
 // +kubebuilder:printcolumn:name="Created At",type=string,JSONPath=.metadata.creationTimestamp
-// +kubebuilder:printcolumn:name="Version",type=string,JSONPath=.spec.version,description="Storage Cluster Version"
+// +kubebuilder:printcolumn:name="Version",type=string,JSONPath=.status.version,description="Storage Cluster Version"
 
 // StorageCluster is the Schema for the storageclusters API
 type StorageCluster struct {
