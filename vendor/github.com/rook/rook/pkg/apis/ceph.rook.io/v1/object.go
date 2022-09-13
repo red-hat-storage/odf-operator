@@ -49,6 +49,13 @@ func (s *ObjectStoreSpec) IsExternal() bool {
 	return len(s.Gateway.ExternalRgwEndpoints) != 0
 }
 
+func (s *ObjectStoreSpec) IsHostNetwork(c *ClusterSpec) bool {
+	if s.Gateway.HostNetwork != nil {
+		return *s.Gateway.HostNetwork
+	}
+	return c.Network.IsHost()
+}
+
 func (s *ObjectRealmSpec) IsPullRealm() bool {
 	return s.Pull.Endpoint != ""
 }
