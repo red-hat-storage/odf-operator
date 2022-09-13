@@ -3,62 +3,65 @@ name: image-builder
 
 on:
   push:
-    branches: ['*']
+    branches: ['main', 'release-*']
   pull_request:
     branches: ['*']
 
 jobs:
   docker-build:
-    name: docker-build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         go: ["1.16", "1.17"]
     steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go }}
+    - uses: actions/setup-go@v3
+      with:
+        go-version: ${{ matrix.go }}
 
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Build operator docker image
-        run: make docker-build
+    - name: Build operator docker image
+      run: make docker-build
 
   bundle-build:
-    name: bundle-build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         go: ["1.16", "1.17"]
     steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go }}
+    - uses: actions/setup-go@v3
+      with:
+        go-version: ${{ matrix.go }}
 
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Build operator bundle docker image
-        run: make bundle-build
+    - name: Build operator bundle docker image
+      run: make bundle-build
 
   catalog-build:
-    name: catalog-build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         go: ["1.16", "1.17"]
     steps:
-      - uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go }}
+    - uses: actions/setup-go@v3
+      with:
+        go-version: ${{ matrix.go }}
 
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Build catalog docker image
-        env:
-          IMAGE_REGISTRY: localhost:5000
-        run: |
-          docker run -d -p 5000:5000 --name registry registry:2
-          make bundle-build bundle-push catalog-build
+    - name: Build catalog docker image
+      env:
+        IMAGE_REGISTRY: localhost:5000
+      run: |
+        docker run -d -p 5000:5000 --name registry registry:2
+        make bundle-build bundle-push catalog-build
