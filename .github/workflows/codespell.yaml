@@ -3,21 +3,21 @@ name: codespell
 
 on:
   push:
-    branches: ['*']
+    branches: ['main', 'release-*']
   pull_request:
     branches: ['*']
 
 jobs:
   codespell:
-    name: codespell
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: codespell
-        uses: codespell-project/actions-codespell@master
-        with:
-          exclude_file: go.sum
-          check_filenames: true
-          check_hidden: true
-          skip: vendor
+    - uses: codespell-project/actions-codespell@master
+      with:
+        exclude_file: go.sum
+        check_filenames: true
+        check_hidden: true
+        skip: vendor
