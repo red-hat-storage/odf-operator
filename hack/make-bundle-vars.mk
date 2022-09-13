@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 4.11.0
+VERSION ?= 4.12.0
 
 # DEFAULT_CHANNEL defines the default channel used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g DEFAULT_CHANNEL = "stable")
@@ -62,7 +62,7 @@ CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
 OCS_BUNDLE_NAME ?= ocs-operator
 OCS_BUNDLE_IMG_NAME ?= $(OCS_BUNDLE_NAME)-bundle
-OCS_BUNDLE_IMG_TAG ?= v4.11.0
+OCS_BUNDLE_IMG_TAG ?= v4.12.0
 OCS_BUNDLE_IMG_LOCATION ?= quay.io/ocs-dev
 OCS_BUNDLE_IMG ?= $(OCS_BUNDLE_IMG_LOCATION)/$(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE_IMG_TAG)
 
@@ -74,7 +74,7 @@ NOOBAA_BUNDLE_IMG ?= $(NOOBAA_BUNDLE_IMG_LOCATION)/$(NOOBAA_BUNDLE_IMG_NAME):$(N
 
 CSIADDONS_BUNDLE_NAME ?= csi-addons
 CSIADDONS_BUNDLE_IMG_NAME ?= k8s-bundle
-CSIADDONS_BUNDLE_IMG_TAG ?= v0.2.0
+CSIADDONS_BUNDLE_IMG_TAG ?= v0.5.0
 CSIADDONS_BUNDLE_IMG_LOCATION ?= quay.io/csiaddons
 CSIADDONS_BUNDLE_IMG ?= $(CSIADDONS_BUNDLE_IMG_LOCATION)/$(CSIADDONS_BUNDLE_IMG_NAME):$(CSIADDONS_BUNDLE_IMG_TAG)
 
@@ -132,8 +132,8 @@ IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE ?= $(OPERATOR_NAMESPACE)
 
 # kube rbac proxy image variables
 CLUSTER_ENV ?= openshift
-KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
-OSE_KUBE_RBAC_PROXY_IMG ?= registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.9.0
+KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+OSE_KUBE_RBAC_PROXY_IMG ?= registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.11.0
 
 ifeq ($(CLUSTER_ENV), openshift)
 	RBAC_PROXY_IMG ?= $(OSE_KUBE_RBAC_PROXY_IMG)

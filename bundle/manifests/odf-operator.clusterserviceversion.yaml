@@ -66,7 +66,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: odf-operator.v4.11.0
+  name: odf-operator.v4.12.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -540,4 +540,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 4.11.0
+  version: 4.12.0
