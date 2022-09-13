@@ -1,23 +1,19 @@
 ---
-name: codespell
-
+name: yamllint
 on:
   push:
     branches: ['main', 'release-*']
   pull_request:
     branches: ['*']
-
 jobs:
-  codespell:
+  yamllint:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    - uses: codespell-project/actions-codespell@master
+    - uses: ibiqlik/action-yamllint@v3
       with:
-        exclude_file: go.sum
-        check_filenames: true
-        check_hidden: true
-        skip: vendor
+        config_file: ./.github/workflows/conf/yamllint.yaml
+        file_or_dir: .  # Recursive on all yaml files

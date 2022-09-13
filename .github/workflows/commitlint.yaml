@@ -1,27 +1,26 @@
+---
 name: commitlint
 
 on:
   push:
-    branches: [ '*' ]
+    branches: ['main', 'release-*']
   pull_request:
-    branches: [ '*' ]
+    branches: ['*']
 
 jobs:
   commitlint:
-    name: commitlint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    - name: run commitlint
-      uses: wagoid/commitlint-github-action@v3
+    - uses: wagoid/commitlint-github-action@v5
       with:
         configFile: './.github/workflows/conf/commitlintrc.json'
         helpURL: |
           Some helpful links
-          Contribution Guide -> https://github.com/red-hat-data-services/odf-operator/blob/main/CONTRIBUTING.md#commit-structure
+          Contribution Guide -> https://github.com/red-hat-storage/odf-operator/blob/main/CONTRIBUTING.md#commit-structure
           Naming Conventions -> https://commitlint.js.org/#/concepts-commit-conventions
           Rules -> https://commitlint.js.org/#/reference-rules
           How to Write a Good Git Commit Message -> https://chris.beams.io/posts/git-commit
