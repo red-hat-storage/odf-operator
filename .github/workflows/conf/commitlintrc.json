@@ -12,17 +12,12 @@
             1,
             "never"
         ],
-        "body-full-stop": [
-            1,
-            "always",
-            "."
-        ],
         "body-leading-blank": [
             2,
             "always"
         ],
         "body-max-line-length": [
-            2,
+            1,
             "always",
             72
         ],
@@ -47,7 +42,8 @@
         ],
         "signed-off-by": [
             2,
-            "always"
+            "always",
+            "Signed-off-by:"
         ],
         "subject-case": [
             0,
