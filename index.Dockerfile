@@ -1,4 +1,4 @@
-FROM quay.io/operator-framework/upstream-opm-builder:v1.19.5 AS builder
+FROM quay.io/operator-framework/upstream-opm-builder:v1.20.0 AS builder
 
 ARG BUNDLE_IMGS=quay.io/ocs-dev/odf-operator-bundle:latest
 
