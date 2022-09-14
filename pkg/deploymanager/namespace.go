@@ -17,7 +17,8 @@ func (d *DeployManager) CreateNamespace(name string) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 			Labels: map[string]string{
-				"openshift.io/cluster-monitoring": "true",
+				"openshift.io/cluster-monitoring":    "true",
+				"pod-security.kubernetes.io/enforce": "privileged",
 			},
 		},
 	}
