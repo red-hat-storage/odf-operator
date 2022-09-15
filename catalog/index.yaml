@@ -1,0 +1,54 @@
+---
+defaultChannel: alpha
+name: odf-operator
+schema: olm.package
+---
+schema: olm.channel
+package: odf-operator
+name: alpha
+entries:
+  - name: odf-operator.v4.12.0
+
+---
+defaultChannel: alpha
+name: ocs-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ocs-operator
+name: alpha
+entries:
+  - name: ocs-operator.v4.12.0
+
+---
+defaultChannel: alpha
+name: noobaa-operator
+schema: olm.package
+---
+schema: olm.channel
+package: noobaa-operator
+name: alpha
+entries:
+  - name: noobaa-operator.v5.9.0
+
+---
+defaultChannel: alpha
+name: csi-addons
+schema: olm.package
+---
+schema: olm.channel
+package: csi-addons
+name: alpha
+entries:
+  - name: csi-addons.v0.5.0
+
+---
+defaultChannel: stable-v1.2
+name: ibm-storage-odf-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ibm-storage-odf-operator
+name: stable-v1.2
+entries:
+  - name: ibm-storage-odf-operator.v1.2.0
