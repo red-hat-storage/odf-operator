@@ -161,7 +161,7 @@ bundle-push: ## Push the bundle image.
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: ## Build a catalog image.
-	docker build --build-arg BUNDLE_IMGS=${BUNDLE_IMGS} -f catalog.Dockerfile -t $(CATALOG_IMG) .
+	docker build --no-cache --build-arg BUNDLE_IMGS=${BUNDLE_IMGS} -f catalog.Dockerfile -t $(CATALOG_IMG) .
 
 # Push the catalog image.
 .PHONY: catalog-push
