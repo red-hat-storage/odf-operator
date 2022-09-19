@@ -70,6 +70,7 @@
                 "action",
                 "api",
                 "bundle",
+                "catalog",
                 "ci",
                 "console",
                 "controllers",
@@ -78,8 +79,7 @@
                 "hack",
                 "makefile",
                 "metrics",
-                "test",
-                "webhook"
+                "test"
             ]
         ]
     }
