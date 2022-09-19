@@ -96,6 +96,7 @@ Signed-off-by: First_Name Last_Name <email address>
 action
 api
 bundle
+catalog
 ci
 console
 controllers
@@ -105,7 +106,6 @@ hack
 makefile
 metrics
 test
-webhook
 ```
 
 Note: sometimes you will feel like there is not so much to say, for instance
