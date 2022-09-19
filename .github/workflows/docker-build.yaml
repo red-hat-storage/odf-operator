@@ -62,6 +62,7 @@ jobs:
     - name: Build catalog docker image
       env:
         IMAGE_REGISTRY: localhost:5000
+        OPM_RENDER_OPTS: --use-http
       run: |
         docker run -d -p 5000:5000 --name registry registry:2
         make bundle-build bundle-push catalog-build
