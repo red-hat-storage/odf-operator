@@ -3,8 +3,8 @@ BIN_DIR := $(PROJECT_DIR)/bin
 ENVTEST_ASSETS_DIR := $(PROJECT_DIR)/testbin
 
 GOBIN ?= $(BIN_DIR)
-GOOS ?= linux
-GOARCH ?= amd64
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
 GOPROXY ?= https://proxy.golang.org/
 
 GO_LINT_IMG_LOCATION ?= golangci/golangci-lint
