@@ -18,6 +18,8 @@ package util
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,4 +36,13 @@ func DetermineOpenShiftVersion(client client.Client) (string, error) {
 		clusterVersion = version.Status.Desired.Version
 	}
 	return clusterVersion, nil
+}
+
+// GetOperatorNamespace returns the namespace where the operator is deployed.
+func GetOperatorNamespace() (string, error) {
+	ns, found := os.LookupEnv("OPERATOR_NAMESPACE")
+	if !found {
+		return "", fmt.Errorf("OPERATOR_NAMESPACE must be set")
+	}
+	return ns, nil
 }
