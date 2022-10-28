@@ -23,7 +23,7 @@ BUNDLE_CHANNELS := --channels=$(CHANNELS)
 
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
-# OPM_RENDER_OPTS will be used while rendring bundle images
+# OPM_RENDER_OPTS will be used while rendering bundle images
 OPM_RENDER_OPTS ?=
 
 # Each CSV has the option to specify an annotation 'operators.operatorframework.io/operator-type',
