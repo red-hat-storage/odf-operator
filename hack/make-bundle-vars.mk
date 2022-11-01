@@ -23,7 +23,7 @@ BUNDLE_CHANNELS := --channels=$(CHANNELS)
 
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
-# OPM_RENDER_OPTS will be used while rendring bundle images
+# OPM_RENDER_OPTS will be used while rendering bundle images
 OPM_RENDER_OPTS ?=
 
 # Each CSV has the option to specify an annotation 'operators.operatorframework.io/operator-type',
@@ -71,7 +71,7 @@ OCS_BUNDLE_IMG ?= $(OCS_BUNDLE_IMG_LOCATION)/$(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE
 
 NOOBAA_BUNDLE_NAME ?= noobaa-operator
 NOOBAA_BUNDLE_IMG_NAME ?= $(NOOBAA_BUNDLE_NAME)-bundle
-NOOBAA_BUNDLE_IMG_TAG ?= v5.9.0
+NOOBAA_BUNDLE_IMG_TAG ?= v5.12.0
 NOOBAA_BUNDLE_IMG_LOCATION ?= quay.io/noobaa
 NOOBAA_BUNDLE_IMG ?= $(NOOBAA_BUNDLE_IMG_LOCATION)/$(NOOBAA_BUNDLE_IMG_NAME):$(NOOBAA_BUNDLE_IMG_TAG)
 
