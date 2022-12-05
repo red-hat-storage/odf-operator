@@ -129,7 +129,8 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 
 deploy-with-olm: kustomize ## Deploy controller to the K8s cluster via OLM
 	cd config/install && $(KUSTOMIZE) edit set image catalog-img=${CATALOG_IMG}
-	$(KUSTOMIZE) build config/install | sed "s/odf-operator.v.*/odf-operator.v${VERSION}/g" | kubectl create -f -
+	cd config/install/odf-resources && $(KUSTOMIZE) edit set namespace $(OPERATOR_NAMESPACE)
+	$(KUSTOMIZE) build config/install | kubectl create -f -
 
 undeploy-with-olm: ## Undeploy controller from the K8s cluster
 	$(KUSTOMIZE) build config/install | kubectl delete -f -
