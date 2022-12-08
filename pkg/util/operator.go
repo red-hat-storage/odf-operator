@@ -17,21 +17,15 @@ limitations under the License.
 package util
 
 import (
-	"context"
-
-	configv1 "github.com/openshift/api/config/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"fmt"
+	"os"
 )
 
-func DetermineOpenShiftVersion(client client.Client) (string, error) {
-	// Determine ocp version
-	clusterVersionList := configv1.ClusterVersionList{}
-	if err := client.List(context.TODO(), &clusterVersionList); err != nil {
-		return "", err
+// GetOperatorNamespace returns the namespace where the operator is deployed.
+func GetOperatorNamespace() (string, error) {
+	ns, found := os.LookupEnv("OPERATOR_NAMESPACE")
+	if !found {
+		return "", fmt.Errorf("OPERATOR_NAMESPACE must be set")
 	}
-	clusterVersion := ""
-	for _, version := range clusterVersionList.Items {
-		clusterVersion = version.Status.Desired.Version
-	}
-	return clusterVersion, nil
+	return ns, nil
 }
