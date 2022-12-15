@@ -8,5 +8,4 @@ spec:
   installPlanApproval: Automatic
   name: odf-operator
   source: odf-catalogsource
-  sourceNamespace: openshift-storage
-  startingCSV: odf-operator.v4.9.0
+  sourceNamespace: openshift-marketplace

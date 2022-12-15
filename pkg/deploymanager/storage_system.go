@@ -112,7 +112,7 @@ func (d *DeployManager) CheckStorageSystemCondition() error {
 	return nil
 }
 
-//  CheckStorageSystemOwnerRef checks the owner reference in the storagecluster
+// CheckStorageSystemOwnerRef checks the owner reference in the storagecluster
 func (d *DeployManager) CheckStorageSystemOwnerRef() error {
 	storageCluster := &ocsv1.StorageCluster{}
 	err := d.Client.Get(d.Ctx, types.NamespacedName{
