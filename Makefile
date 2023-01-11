@@ -141,16 +141,40 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cd config/default && $(KUSTOMIZE) edit set image rbac-proxy=$(RBAC_PROXY_IMG)
 	cd config/console && $(KUSTOMIZE) edit set image odf-console=$(ODF_CONSOLE_IMG)
+
+ifeq ($(FUSION) , true)
+	@echo -e "\nBuilding IBM Fusion Data Foundation bundle"
+	mv bundle.Dockerfile odf.bundle.Dockerfile
+	cd config/fusion/bases && $(KUSTOMIZE) edit add annotation --force 'olm.skipRange':"$(SKIP_RANGE)" && \
+	        $(KUSTOMIZE) edit add annotation --force 'operators.operatorframework.io/operator-type':"$(OPERATOR_TYPE)" && \
+		$(KUSTOMIZE) edit add patch --name fdf-operator.v0.0.0 --kind ClusterServiceVersion\
+		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
+	$(KUSTOMIZE) build config/fusion | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
+		--output-dir fusion/bundle --kustomize-dir config/fusion --package fdf-operator
+	cp bundle/metadata/dependencies.yaml fusion/bundle/metadata/dependencies.yaml
+	sed -i -e 's/ocs-operator/fcs-operator/g' fusion/bundle/metadata/dependencies.yaml
+	$(OPERATOR_SDK) bundle validate ./fusion/bundle
+	mv bundle.Dockerfile fusion.bundle.Dockerfile
+	mv odf.bundle.Dockerfile bundle.Dockerfile
+else
+	@echo -e "\nBuilding Red Hat OpenShift Data Foundation bundle"
 	cd config/manifests/bases && $(KUSTOMIZE) edit add annotation --force 'olm.skipRange':"$(SKIP_RANGE)" && \
 	        $(KUSTOMIZE) edit add annotation --force 'operators.operatorframework.io/operator-type':"$(OPERATOR_TYPE)" && \
 		$(KUSTOMIZE) edit add patch --name odf-operator.v0.0.0 --kind ClusterServiceVersion\
 		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	$(OPERATOR_SDK) bundle validate ./bundle
+endif
 
 .PHONY: bundle-build
 bundle-build: bundle ## Build the bundle image.
+ifeq ($(FUSION) , true)
+	@echo -e "\nBuilding IBM Fusion Data Foundation bundle"
+	docker build -f fusion.bundle.Dockerfile -t $(BUNDLE_IMG) .
+else
+	@echo -e "\nBuilding Red Hat OpenShift Data Foundation bundle"
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+endif
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
@@ -161,9 +185,21 @@ bundle-push: ## Push the bundle image.
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
+ifeq ($(FUSION) , true)
+	@echo -e "\nBuilding IBM Fusion Data Foundation catalog"
+	mkdir -p fusion/catalog
+	cp catalog/index.yaml fusion/catalog/index.yaml
+	sed -i -e 's/ odf-operator/ fdf-operator/g' -e 's/ocs-operator/fcs-operator/g' fusion/catalog/index.yaml
+	$(OPM) render --output=yaml $(BUNDLE_IMGS) $(OPM_RENDER_OPTS) > fusion/catalog/bundle.yaml
+	$(OPM) validate fusion/catalog
+	cp catalog.Dockerfile fusion/catalog.Dockerfile
+	docker build -f fusion/catalog.Dockerfile -t $(CATALOG_IMG) .
+else
+	@echo -e "\nBuilding Red Hat OpenShift Data Foundation catalog"
 	$(OPM) render --output=yaml $(BUNDLE_IMGS) $(OPM_RENDER_OPTS) > catalog/bundle.yaml
 	$(OPM) validate catalog
 	docker build -f catalog.Dockerfile -t $(CATALOG_IMG) .
+endif
 
 # Push the catalog image.
 .PHONY: catalog-push
