@@ -147,12 +147,11 @@ ifeq ($(FUSION) , true)
 	mv bundle.Dockerfile odf.bundle.Dockerfile
 	cd config/fusion/bases && $(KUSTOMIZE) edit add annotation --force 'olm.skipRange':"$(SKIP_RANGE)" && \
 	        $(KUSTOMIZE) edit add annotation --force 'operators.operatorframework.io/operator-type':"$(OPERATOR_TYPE)" && \
-		$(KUSTOMIZE) edit add patch --name fdf-operator.v0.0.0 --kind ClusterServiceVersion\
+		$(KUSTOMIZE) edit add patch --name odf-operator.v0.0.0 --kind ClusterServiceVersion\
 		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
 	$(KUSTOMIZE) build config/fusion | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
-		--output-dir fusion/bundle --kustomize-dir config/fusion --package fdf-operator
+		--output-dir fusion/bundle --kustomize-dir config/fusion --package odf-operator
 	cp bundle/metadata/dependencies.yaml fusion/bundle/metadata/dependencies.yaml
-	sed -i -e 's/ocs-operator/fcs-operator/g' fusion/bundle/metadata/dependencies.yaml
 	$(OPERATOR_SDK) bundle validate ./fusion/bundle
 	mv bundle.Dockerfile fusion.bundle.Dockerfile
 	mv odf.bundle.Dockerfile bundle.Dockerfile
@@ -189,11 +188,9 @@ ifeq ($(FUSION) , true)
 	@echo -e "\nBuilding IBM Fusion Data Foundation catalog"
 	mkdir -p fusion/catalog
 	cp catalog/index.yaml fusion/catalog/index.yaml
-	sed -i -e 's/ odf-operator/ fdf-operator/g' -e 's/ocs-operator/fcs-operator/g' fusion/catalog/index.yaml
 	$(OPM) render --output=yaml $(BUNDLE_IMGS) $(OPM_RENDER_OPTS) > fusion/catalog/bundle.yaml
 	$(OPM) validate fusion/catalog
-	cp catalog.Dockerfile fusion/catalog.Dockerfile
-	docker build -f fusion/catalog.Dockerfile -t $(CATALOG_IMG) .
+	docker build -f fusion.catalog.Dockerfile -t $(CATALOG_IMG) .
 else
 	@echo -e "\nBuilding Red Hat OpenShift Data Foundation catalog"
 	$(OPM) render --output=yaml $(BUNDLE_IMGS) $(OPM_RENDER_OPTS) > catalog/bundle.yaml
