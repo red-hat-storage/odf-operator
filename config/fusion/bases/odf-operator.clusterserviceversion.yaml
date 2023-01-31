@@ -7,7 +7,7 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     description: Fusion Data Foundation provides a common control plane for storage
-      solutions on IBM Spectrum Fusion.
+      solutions on OpenShift Container Platform.
     operatorframework.io/initialization-resource: |-
       {
         "apiVersion": "odf.openshift.io/v1alpha1",
@@ -24,14 +24,18 @@ metadata:
       }
     operatorframework.io/suggested-namespace: openshift-storage
     operators.openshift.io/infrastructure-features: '["disconnected"]'
-    repository: https://github.com/IBM
+    operators.openshift.io/valid-subscription: '["IBM Storage Fusion"]'
+    operators.operatorframework.io/builder: operator-sdk-v1.13.0+git
+    operators.operatorframework.io/operator-type: standalone
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    repository: https://github.com/red-hat-storage/odf-operator
     support: IBM
     vendors.odf.openshift.io/kind: '["storagecluster.ocs.openshift.io/v1", "flashsystemcluster.odf.ibm.com/v1alpha1"]'
   labels:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: fdf-operator.v0.0.0
+  name: odf-operator.v0.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -69,9 +73,9 @@ spec:
   - storage
   links:
   - name: Source Code
-    url: https://github.com/IBM
+    url: https://github.com/red-hat-storage/odf-operator
   maintainers:
-  - email: support@ibm.com
+  - email: mysphelp@us.ibm.com
     name: IBM Support
   maturity: alpha
   provider:

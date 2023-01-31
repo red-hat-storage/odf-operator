@@ -1,10 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- fdf-operator.clusterserviceversion.yaml
+- odf-operator.clusterserviceversion.yaml
 patchesStrategicMerge:
-- fdf-operator.csv.icon.yaml
-- fdf-operator.csv.card-description.yaml
+- odf-operator.csv.icon.yaml
+- odf-operator.csv.card-description.yaml
 commonAnnotations:
   olm.skipRange: ""
   operators.operatorframework.io/operator-type: standalone
@@ -12,8 +12,4 @@ patches:
 - patch: '[{"op": "replace", "path": "/spec/replaces", "value": ""}]'
   target:
     kind: ClusterServiceVersion
-    name: fdf-operator.v0.0.0
-- patch: '[{"op": "replace", "path": "/spec/replaces", "value": ""}]'
-  target:
-    kind: ClusterServiceVersion
-    name: fdf-operator.v0.0.0
+    name: odf-operator.v0.0.0

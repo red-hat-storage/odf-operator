@@ -1,8 +1,0 @@
-apiVersion: operators.coreos.com/v1alpha1
-kind: ClusterServiceVersion
-metadata:
-  name: fdf-operator.v0.0.0
-  namespace: placeholder
-spec:
-  description: |
-    Fusion Data Foundation provides a common control plane for storage solutions on IBM Spectrum Fusion.

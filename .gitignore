@@ -20,6 +20,7 @@ testbin/*
 
 # Skip fusion bundle files
 fusion*
+!config/fusion
 
 # editor and IDE paraphernalia
 .idea
