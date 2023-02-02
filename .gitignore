@@ -18,9 +18,6 @@ testbin/*
 
 !vendor/**/zz_generated.*
 
-# Skip fusion bundle files
-fusion*
-
 # editor and IDE paraphernalia
 .idea
 *.swp
