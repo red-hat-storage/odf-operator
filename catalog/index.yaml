@@ -7,7 +7,7 @@ schema: olm.channel
 package: odf-operator
 name: alpha
 entries:
-  - name: odf-operator.v4.12.0
+  - name: odf-operator.v4.13.0
 
 ---
 defaultChannel: alpha
@@ -18,7 +18,7 @@ schema: olm.channel
 package: ocs-operator
 name: alpha
 entries:
-  - name: ocs-operator.v4.12.0
+  - name: ocs-operator.v4.13.0
 
 ---
 defaultChannel: alpha
@@ -43,12 +43,12 @@ entries:
   - name: csi-addons.v0.5.0
 
 ---
-defaultChannel: stable-v1.3
+defaultChannel: stable-v1.4
 name: ibm-storage-odf-operator
 schema: olm.package
 ---
 schema: olm.channel
 package: ibm-storage-odf-operator
-name: stable-v1.3
+name: stable-v1.4
 entries:
-  - name: ibm-storage-odf-operator.v1.3.0
+  - name: ibm-storage-odf-operator.v1.4.0
