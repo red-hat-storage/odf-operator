@@ -470,9 +470,6 @@ spec:
                     memory: 512Mi
                 securityContext:
                   allowPrivilegeEscalation: false
-                  readOnlyRootFilesystem: true
-                  seccompProfile:
-                    type: RuntimeDefault
                   capabilities:
                     drop:
                     - all
@@ -482,7 +479,6 @@ spec:
                   readOnly: true
               securityContext:
                 runAsNonRoot: true
-                readOnlyRootFilesystem: true
               tolerations:
               - effect: NoSchedule
                 key: node.ocs.openshift.io/storage
