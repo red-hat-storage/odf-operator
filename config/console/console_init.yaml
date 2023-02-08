@@ -25,7 +25,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop:
-                - all
+                - ALL
           volumeMounts:
             - name: odf-console-serving-cert
               mountPath: /var/serving-cert
