@@ -46,7 +46,7 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-              - all
+              - ALL
         livenessProbe:
           httpGet:
             path: /healthz
