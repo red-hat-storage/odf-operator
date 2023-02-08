@@ -23,6 +23,9 @@ spec:
               protocol: TCP
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            seccompProfile:
+              type: RuntimeDefault
             capabilities:
               drop:
                 - all
@@ -41,3 +44,4 @@ spec:
             secretName: odf-console-serving-cert
       securityContext:
         runAsNonRoot: true
+        readOnlyRootFilesystem: true
