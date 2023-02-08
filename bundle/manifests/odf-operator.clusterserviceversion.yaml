@@ -473,6 +473,8 @@ spec:
                   capabilities:
                     drop:
                     - ALL
+                  seccompProfile:
+                    type: RuntimeDefault
                 volumeMounts:
                 - mountPath: /var/serving-cert
                   name: odf-console-serving-cert

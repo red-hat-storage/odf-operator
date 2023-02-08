@@ -23,6 +23,8 @@ spec:
               protocol: TCP
           securityContext:
             allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
             capabilities:
               drop:
                 - ALL
