@@ -25,8 +25,6 @@ const (
 	ResourcesKeyMon = "mon"
 	// ResourcesKeyMgr represents the name of resource in the CR for a mgr
 	ResourcesKeyMgr = "mgr"
-	// ResourcesKeyMgrSidecar represents the name of resource in the CR for a mgr
-	ResourcesKeyMgrSidecar = "mgr-sidecar"
 	// ResourcesKeyOSD represents the name of a resource in the CR for all OSDs
 	ResourcesKeyOSD = "osd"
 	// ResourcesKeyPrepareOSD represents the name of resource in the CR for the osd prepare job
@@ -43,16 +41,13 @@ const (
 	ResourcesKeyFilesystemMirror = "fsmirror"
 	// ResourcesKeyCleanup represents the name of resource in the CR for the cleanup
 	ResourcesKeyCleanup = "cleanup"
+	// ResourcesKeyCleanup represents the name of resource in the CR for ceph-exporter
+	ResourcesKeyCephExporter = "exporter"
 )
 
 // GetMgrResources returns the placement for the MGR service
 func GetMgrResources(p ResourceSpec) v1.ResourceRequirements {
 	return p[ResourcesKeyMgr]
-}
-
-// GetMgrSidecarResources returns the placement for the MGR sidecar container
-func GetMgrSidecarResources(p ResourceSpec) v1.ResourceRequirements {
-	return p[ResourcesKeyMgrSidecar]
 }
 
 // GetMonResources returns the placement for the monitors
@@ -96,4 +91,9 @@ func GetLogCollectorResources(p ResourceSpec) v1.ResourceRequirements {
 // GetCleanupResources returns the placement for the cleanup job
 func GetCleanupResources(p ResourceSpec) v1.ResourceRequirements {
 	return p[ResourcesKeyCleanup]
+}
+
+// GetCleanupResources returns the placement for the cleanup job
+func GetCephExporterResources(p ResourceSpec) v1.ResourceRequirements {
+	return p[ResourcesKeyCephExporter]
 }

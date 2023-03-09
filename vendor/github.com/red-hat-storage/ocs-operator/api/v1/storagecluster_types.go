@@ -48,6 +48,7 @@ type StorageClusterSpec struct {
 	StorageDeviceSets  []StorageDeviceSet                     `json:"storageDeviceSets,omitempty"`
 	MonPVCTemplate     *corev1.PersistentVolumeClaim          `json:"monPVCTemplate,omitempty"`
 	MonDataDirHostPath string                                 `json:"monDataDirHostPath,omitempty"`
+	Mgr                *MgrSpec                               `json:"mgr,omitempty"`
 	MultiCloudGateway  *MultiCloudGatewaySpec                 `json:"multiCloudGateway,omitempty"`
 	NFS                *NFSSpec                               `json:"nfs,omitempty"`
 	// Monitoring controls the configuration of resources for exposing OCS metrics
@@ -216,6 +217,13 @@ type ManageCephToolbox struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
 }
 
+// MgrSpec defines the settings for the Ceph Manager
+type MgrSpec struct {
+	// EnableActivePassive can be set as true to deploy 2 ceph manager pods, one active and one standby
+	// Ceph will promote the standby mgr when the active mgr goes down due to any reason
+	EnableActivePassive bool `json:"enableActivePassive,omitempty"`
+}
+
 // ExternalStorageKind specifies a kind of the external storage
 type ExternalStorageKind string
 
@@ -349,6 +357,11 @@ type MultiCloudGatewaySpec struct {
 	// deployment.
 	// +optional
 	Endpoints *nbv1.EndpointsSpec `json:"endpoints,omitempty"`
+
+	// DisableLoadBalancerService (optional) sets the service type to ClusterIP instead of LoadBalancer
+	// +nullable
+	// +optional
+	DisableLoadBalancerService bool `json:"disableLoadBalancerService,omitempty"`
 }
 
 // NFSSpec defines specific nfs configuration options
@@ -503,6 +516,10 @@ const (
 	// ConditionExternalClusterConnecting type indicates that rook is still trying for
 	// an external connection
 	ConditionExternalClusterConnecting conditionsv1.ConditionType = "ExternalClusterConnecting"
+
+	// ConditionVersionMismatch type indicates that there is a mismatch in the storagecluster
+	// and the operator version
+	ConditionVersionMismatch conditionsv1.ConditionType = "VersionMismatch"
 )
 
 // List of constants to show different different reconciliation messages and statuses.
@@ -522,8 +539,9 @@ const (
 // +kubebuilder:printcolumn:name="External",type=boolean,JSONPath=.spec.externalStorage.enable,description="External Storage Cluster"
 // +kubebuilder:printcolumn:name="Created At",type=string,JSONPath=.metadata.creationTimestamp
 // +kubebuilder:printcolumn:name="Version",type=string,JSONPath=.status.version,description="Storage Cluster Version"
+// +operator-sdk:csv:customresourcedefinitions:displayName="Storage Cluster",resources={{CephCluster,v1,cephclusters.ceph.rook.io},{NooBaa,v1alpha1,noobaas.noobaa.io}}
 
-// StorageCluster is the Schema for the storageclusters API
+// StorageCluster represents a cluster including Ceph Cluster, NooBaa and all the storage and compute resources required.
 type StorageCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

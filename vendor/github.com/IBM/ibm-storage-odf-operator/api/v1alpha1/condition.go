@@ -50,13 +50,13 @@ const (
 	ExporterCreated ConditionType = "ExporterCreated"
 	// ExporterReady is set from exporter and reason & message are provided if false condition
 	ExporterReady ConditionType = "ExporterReady"
-	// StorageClusterReady is set from exporter after query from flashsystem
+	// StorageClusterReady is set from exporter after query from FlashSystem
 	StorageClusterReady ConditionType = "StorageClusterReady"
-	// ProvisionerCreated indicts the flashsystem CSI CR is created
+	// ProvisionerCreated indicts the FlashSystem CSI CR is created
 	ProvisionerCreated ConditionType = "ProvisionerCreated"
-	// ProvisionerReused indicts the existing flashsystem CSI CR is reused
+	// ProvisionerReused indicts the existing FlashSystem CSI CR is reused
 	ProvisionerReused ConditionType = "ProvisionerReused"
-	// ProvisionerReady reflects the status of flashsystem CSI CR
+	// ProvisionerReady reflects the status of FlashSystem CSI CR
 	ProvisionerReady ConditionType = "ProvisionerReady"
 	// ConditionProgressing indicts the reconciling process is in progress
 	ConditionProgressing ConditionType = "ReconcileProgressing"

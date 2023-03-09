@@ -36,7 +36,7 @@ type StorageClassConfig struct {
 type FlashSystemClusterSpec struct {
 	// Name is the name of the flashsystem storage cluster
 	Name string `json:"name"`
-	// Secret refers to a secret that has the credentials for flashsystem csi storageclass
+	// Secret refers to a secret that has the credentials for FlashSystem csi StorageClass
 	Secret corev1.SecretReference `json:"secret"`
 	// InsecureSkipVerify disables target certificate validation if true
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
@@ -68,7 +68,7 @@ type FlashSystemClusterStatus struct {
 //+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=.status.phase,description="Current Phase"
 //+kubebuilder:printcolumn:name="Created At",type=string,JSONPath=.metadata.creationTimestamp
 
-// FlashSystemCluster is the Schema for the flashsystemclusters API
+// FlashSystemCluster is the Schema for the FlashSystemClusters API
 type FlashSystemCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -95,7 +95,7 @@ const (
 	PhaseReady = "Ready"
 	// PhaseNotReady is used if reconcile fails
 	PhaseNotReady = "Not Ready"
-	// PhaseDeleting is used if deleting flashsystemcluster is happening
+	// PhaseDeleting is used if deleting FlashSystemCluster is happening
 	PhaseDeleting = "Deleting"
 	// PhaseConnecting is reserved for later usage
 	PhaseConnecting = "Connecting"
