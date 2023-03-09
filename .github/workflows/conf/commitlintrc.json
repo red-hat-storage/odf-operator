@@ -75,6 +75,7 @@
                 "console",
                 "controllers",
                 "docs",
+                "dockerfile",
                 "godeps",
                 "hack",
                 "makefile",
