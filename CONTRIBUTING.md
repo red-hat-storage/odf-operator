@@ -100,6 +100,7 @@ catalog
 ci
 console
 controllers
+dockerfile
 docs
 godeps
 hack
