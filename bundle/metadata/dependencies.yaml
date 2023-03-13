@@ -6,7 +6,7 @@ dependencies:
 - type: olm.package
   value:
     packageName: noobaa-operator
-    version: "5.12.0"
+    version: "5.13.0"
 - type: olm.package
   value:
     packageName: csi-addons
