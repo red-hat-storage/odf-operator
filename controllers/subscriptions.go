@@ -108,13 +108,8 @@ func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
 	return nil
 }
 
-// GetOdfSubscription returns the subscription for odf-operator and stores it in a global variable
-// for later use.
+// GetOdfSubscription returns the subscription for odf-operator.
 func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, error) {
-
-	if OdfSubscriptionObjectMeta != nil {
-		return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
-	}
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
 	err := cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: OperatorNamespace})
@@ -124,16 +119,11 @@ func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, erro
 
 	for _, sub := range subsList.Items {
 		if sub.Spec.Package == OdfSubscriptionPackage {
-			OdfSubscriptionObjectMeta = &sub.ObjectMeta
-			break
+			return &sub, nil
 		}
 	}
 
-	if OdfSubscriptionObjectMeta == nil {
-		return nil, fmt.Errorf("odf-operator subscription not found")
-	}
-
-	return &operatorv1alpha1.Subscription{ObjectMeta: *OdfSubscriptionObjectMeta}, nil
+	return nil, fmt.Errorf("odf-operator subscription not found")
 }
 
 func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
