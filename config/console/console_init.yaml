@@ -32,6 +32,9 @@ spec:
             - name: odf-console-serving-cert
               mountPath: /var/serving-cert
               readOnly: true
+            - name: odf-console-nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
       tolerations:
       - effect: NoSchedule
         key: node.ocs.openshift.io/storage
@@ -41,5 +44,8 @@ spec:
         - name: odf-console-serving-cert
           secret:
             secretName: odf-console-serving-cert
+        - name: odf-console-nginx-conf
+          configMap:
+            name: odf-console-nginx-conf
       securityContext:
         runAsNonRoot: true

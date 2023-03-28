@@ -479,6 +479,9 @@ spec:
                 - mountPath: /var/serving-cert
                   name: odf-console-serving-cert
                   readOnly: true
+                - mountPath: /etc/nginx/nginx.conf
+                  name: odf-console-nginx-conf
+                  subPath: nginx.conf
               securityContext:
                 runAsNonRoot: true
               tolerations:
@@ -490,6 +493,9 @@ spec:
               - name: odf-console-serving-cert
                 secret:
                   secretName: odf-console-serving-cert
+              - configMap:
+                  name: odf-console-nginx-conf
+                name: odf-console-nginx-conf
       permissions:
       - rules:
         - apiGroups:

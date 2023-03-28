@@ -99,6 +99,15 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 		return err
 	}
 
+	// Create/Update ODF console ConfigMap (nginx configuration)
+	odfConsoleConfigMap := console.GetNginxConfConfigMap(OperatorNamespace)
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsoleConfigMap, func() error {
+		return controllerutil.SetControllerReference(odfConsoleDeployment, odfConsoleConfigMap, r.Scheme)
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+
 	// Create/Update ODF console Service
 	odfConsoleService := console.GetService(r.ConsolePort, OperatorNamespace)
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsoleService, func() error {
