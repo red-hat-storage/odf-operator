@@ -66,7 +66,7 @@ func GetService(port int, namespace string) *apiv1.Service {
 	}
 }
 
-func GetConsolePluginCR(consolePort int, basePath string, serviceNamespace string) *consolev1alpha1.ConsolePlugin {
+func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1alpha1.ConsolePlugin {
 	return &consolev1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "odf-console",
@@ -77,7 +77,6 @@ func GetConsolePluginCR(consolePort int, basePath string, serviceNamespace strin
 				Name:      "odf-console-service",
 				Namespace: serviceNamespace,
 				Port:      int32(consolePort),
-				BasePath:  basePath,
 			},
 		},
 	}
