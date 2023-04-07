@@ -12,7 +12,7 @@ require (
 	github.com/openshift/custom-resource-status v1.1.2
 	github.com/operator-framework/api v0.17.3
 	github.com/prometheus/client_golang v1.14.0
-	github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230307133941-5f17f2b0437e
+	github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230406103321-5d897ccd5cb5
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/multierr v1.9.0
 	k8s.io/api v0.26.1
@@ -24,9 +24,7 @@ require (
 
 require (
 	cloud.google.com/go/compute v1.18.0 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.11.0 // indirect
-	github.com/Azure/go-autorest/autorest v0.11.28 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.21 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -47,7 +45,6 @@ require (
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -68,10 +65,10 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-5 // indirect
-	github.com/hashicorp/vault v1.12.3 // indirect
+	github.com/hashicorp/vault v1.13.1 // indirect
 	github.com/hashicorp/vault/api v1.9.0 // indirect
 	github.com/hashicorp/vault/api/auth/approle v0.4.0 // indirect
-	github.com/hashicorp/vault/sdk v0.7.0 // indirect
+	github.com/hashicorp/vault/sdk v0.8.1 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -93,7 +90,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.40.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/rook/rook v1.11.0 // indirect
+	github.com/rook/rook v1.11.3 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
