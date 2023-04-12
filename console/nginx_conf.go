@@ -22,7 +22,7 @@ var NginxConf = `
 
 worker_processes auto;
 error_log /var/log/nginx/error.log;
-pid /run/nginx.pid;
+pid /var/lib/nginx/tmp/nginx.pid;
 
 # Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
 include /usr/share/nginx/modules/*.conf;
@@ -32,6 +32,13 @@ events {
 }
 
 http {
+    # Use directories writable by unprivileged users.
+    client_body_temp_path /var/lib/nginx/tmp/client_temp;
+    proxy_temp_path       /var/lib/nginx/tmp/proxy_temp_path;
+    fastcgi_temp_path     /var/lib/nginx/tmp/fastcgi_temp;
+    uwsgi_temp_path       /var/lib/nginx/tmp/uwsgi_temp;
+    scgi_temp_path        /var/lib/nginx/tmp/scgi_temp;
+
     log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
                       '$status $body_bytes_sent "$http_referer" '
                       '"$http_user_agent" "$http_x_forwarded_for"';

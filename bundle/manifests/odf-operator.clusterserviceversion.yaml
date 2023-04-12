@@ -473,6 +473,7 @@ spec:
                   capabilities:
                     drop:
                     - ALL
+                  readOnlyRootFilesystem: true
                   seccompProfile:
                     type: RuntimeDefault
                 volumeMounts:
@@ -482,6 +483,10 @@ spec:
                 - mountPath: /etc/nginx/nginx.conf
                   name: odf-console-nginx-conf
                   subPath: nginx.conf
+                - mountPath: /var/log/nginx
+                  name: odf-console-nginx-log
+                - mountPath: /var/lib/nginx/tmp
+                  name: odf-console-nginx-tmp
               securityContext:
                 runAsNonRoot: true
               tolerations:
@@ -496,6 +501,10 @@ spec:
               - configMap:
                   name: odf-console-nginx-conf
                 name: odf-console-nginx-conf
+              - emptyDir: {}
+                name: odf-console-nginx-log
+              - emptyDir: {}
+                name: odf-console-nginx-tmp
       permissions:
       - rules:
         - apiGroups:

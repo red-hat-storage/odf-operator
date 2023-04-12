@@ -25,6 +25,7 @@ spec:
             allowPrivilegeEscalation: false
             seccompProfile:
               type: RuntimeDefault
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
@@ -35,6 +36,10 @@ spec:
             - name: odf-console-nginx-conf
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+            - name: odf-console-nginx-log
+              mountPath: /var/log/nginx
+            - name: odf-console-nginx-tmp
+              mountPath: /var/lib/nginx/tmp
       tolerations:
       - effect: NoSchedule
         key: node.ocs.openshift.io/storage
@@ -47,5 +52,9 @@ spec:
         - name: odf-console-nginx-conf
           configMap:
             name: odf-console-nginx-conf
+        - name: odf-console-nginx-log
+          emptyDir: {}
+        - name: odf-console-nginx-tmp
+          emptyDir: {}
       securityContext:
         runAsNonRoot: true
