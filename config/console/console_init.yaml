@@ -18,6 +18,13 @@ spec:
             limits:
               cpu: "100m"
               memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /plugin-manifest.json
+              port: 9001
+              scheme: HTTPS
+            initialDelaySeconds: 1000
+            periodSeconds: 60
           ports:
             - containerPort: 9001
               protocol: TCP
