@@ -1691,8 +1691,8 @@ github.com/prometheus/procfs v0.9.0/go.mod h1:+pB4zwohETzFnmlpe6yd2lSc+0/46IYZRB
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
 github.com/rboyer/safeio v0.2.1 h1:05xhhdRNAdS3apYm7JRjOqngf4xruaW959jmRxGDuSU=
 github.com/rboyer/safeio v0.2.1/go.mod h1:Cq/cEPK+YXFn622lsQ0K4KsPZSPtaptHHEldsy7Fmig=
-github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230406103321-5d897ccd5cb5 h1:DRYrCsbhDXSPBGRfTIB1ELG1dmoIaiUU0j5f9D1Kurg=
-github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230406103321-5d897ccd5cb5/go.mod h1:lnmSyta9Ws53do/ppkVpwdpLXW7/dDCJybX8nosoYfM=
+github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230417084356-efe3f3bf8820 h1:DLMYEuYNIM8rHKTBu7+yRDgTyc4d8PHNJFxxUXmr0Sg=
+github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230417084356-efe3f3bf8820/go.mod h1:+m+BfgWXPG0ZnH5YaAX5kWcH4fK2SbNJMKBgj0RRYeE=
 github.com/renier/xmlrpc v0.0.0-20170708154548-ce4a1a486c03 h1:Wdi9nwnhFNAlseAOekn6B5G/+GMtks9UKbvRU/CMM/o=
 github.com/renier/xmlrpc v0.0.0-20170708154548-ce4a1a486c03/go.mod h1:gRAiPF5C5Nd0eyyRdqIu9qTiFSoZzpTq727b5B8fkkU=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
@@ -1705,8 +1705,8 @@ github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTE
 github.com/rogpeppe/go-internal v1.6.2/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rogpeppe/go-internal v1.8.1/go.mod h1:JeRgkft04UBgHMgCIwADu4Pn6Mtm5d4nPKWu0nJ5d+o=
 github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
-github.com/rook/rook v1.11.3 h1:dijg6WRMH2sNE2T+qXK09FkuLoqQlZ4FpLmkQ1kjGmY=
-github.com/rook/rook v1.11.3/go.mod h1:RwQdIZvb7BGomy9yR9caWYCoT8pHngYsxBXg6Fl8LZk=
+github.com/rook/rook v1.11.4 h1:V5+r8JnVpSCdWGZ8eV5zUX1SnMTgCnz3azux+7Jefzc=
+github.com/rook/rook v1.11.4/go.mod h1:RwQdIZvb7BGomy9yR9caWYCoT8pHngYsxBXg6Fl8LZk=
 github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/zerolog v1.4.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
 github.com/rs/zerolog v1.13.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
