@@ -460,6 +460,13 @@ spec:
             spec:
               containers:
               - image: quay.io/ocs-dev/odf-console:latest
+                livenessProbe:
+                  httpGet:
+                    path: /plugin-manifest.json
+                    port: 9001
+                    scheme: HTTPS
+                  initialDelaySeconds: 1000
+                  periodSeconds: 60
                 name: odf-console
                 ports:
                 - containerPort: 9001
