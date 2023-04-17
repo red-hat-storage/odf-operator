@@ -12,7 +12,7 @@ require (
 	github.com/openshift/custom-resource-status v1.1.2
 	github.com/operator-framework/api v0.17.3
 	github.com/prometheus/client_golang v1.14.0
-	github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230406103321-5d897ccd5cb5
+	github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230417084356-efe3f3bf8820
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/multierr v1.9.0
 	k8s.io/api v0.26.1
@@ -90,7 +90,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.40.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/rook/rook v1.11.3 // indirect
+	github.com/rook/rook v1.11.4 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
