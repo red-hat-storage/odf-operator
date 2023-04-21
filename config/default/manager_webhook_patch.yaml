@@ -16,7 +16,7 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop:
-              - all
+              - ALL
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
