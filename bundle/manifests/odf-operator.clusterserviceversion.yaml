@@ -37,6 +37,7 @@ metadata:
     containerImage: quay.io/ocs-dev/odf-operator:latest
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.10"}]'
     olm.skipRange: ""
     operatorframework.io/initialization-resource: |-
       {
@@ -285,24 +286,6 @@ spec:
           - operators.coreos.com
           resources:
           - clusterserviceversions
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - clusterserviceversions/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - installplans
           verbs:
           - create
           - delete
