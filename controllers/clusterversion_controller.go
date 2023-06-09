@@ -88,6 +88,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	logger := log.FromContext(context.TODO())
 	// The base path to where the request are sent
 	basePath := console.GetBasePath(clusterVersion)
+	nginxConf := console.GetNginxConfiguration()
 
 	// Get ODF console Deployment
 	odfConsoleDeployment := console.GetDeployment(OperatorNamespace)
@@ -102,6 +103,10 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	// Create/Update ODF console ConfigMap (nginx configuration)
 	odfConsoleConfigMap := console.GetNginxConfConfigMap(OperatorNamespace)
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsoleConfigMap, func() error {
+		if odfConsoleConfigMapData := odfConsoleConfigMap.Data["nginx.conf"]; odfConsoleConfigMapData != nginxConf {
+			logger.Info(fmt.Sprintf("Set the ConfigMap odf-console-nginx-conf data as '%s'", nginxConf))
+			odfConsoleConfigMap.Data["nginx.conf"] = nginxConf
+		}
 		return controllerutil.SetControllerReference(odfConsoleDeployment, odfConsoleConfigMap, r.Scheme)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {

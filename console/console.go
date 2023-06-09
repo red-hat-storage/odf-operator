@@ -38,6 +38,10 @@ func GetDeployment(namespace string) *appsv1.Deployment {
 	}
 }
 
+func GetNginxConfiguration() string {
+	return NginxConf
+}
+
 func GetNginxConfConfigMap(namespace string) *apiv1.ConfigMap {
 	return &apiv1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
