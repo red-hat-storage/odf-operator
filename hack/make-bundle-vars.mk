@@ -5,6 +5,10 @@
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
 VERSION ?= 4.12.0
 
+# MAX_OCP_VERSION variable specifies the maximum supported version of OCP.
+# Its purpose is to add an annotation to the CSV file, blocking OCP upgrades beyond the X+1 version.
+MAX_OCP_VERSION := $(shell echo $(VERSION) | awk -F. '{print $$1"."$$2+1}')
+
 # DEFAULT_CHANNEL defines the default channel used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g DEFAULT_CHANNEL = "stable")
 # To re-generate a bundle for any other default channel without changing the default setup, you can:
