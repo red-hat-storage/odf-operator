@@ -7,11 +7,11 @@ endef
 
 CONTROLLER_GEN = $(BIN_DIR)/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.9.2)
 
 KUSTOMIZE = $(BIN_DIR)/kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.3)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.5)
 
 GINKGO = $(BIN_DIR)/ginkgo
 ginkgo: ## Download ginkgo locally if necessary.
@@ -19,9 +19,9 @@ ginkgo: ## Download ginkgo locally if necessary.
 
 OPERATOR_SDK = $(BIN_DIR)/operator-sdk
 operator-sdk: ## Download operator-sdk locally if necessary.
-	@./hack/get-tool.sh $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.14.0/operator-sdk_$(GOOS)_$(GOARCH)
+	@./hack/get-tool.sh $(OPERATOR_SDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.30.0/operator-sdk_$(GOOS)_$(GOARCH)
 
 .PHONY: opm
 OPM = $(BIN_DIR)/opm
 opm: ## Download opm locally if necessary.
-	@./hack/get-tool.sh $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.22.0/$(GOOS)-$(GOARCH)-opm
+	@./hack/get-tool.sh $(OPM) https://github.com/operator-framework/operator-registry/releases/download/v1.23.0/$(GOOS)-$(GOARCH)-opm
