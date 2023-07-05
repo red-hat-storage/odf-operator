@@ -38,7 +38,7 @@ metadata:
     createdAt: "2023-07-05T11:25:37Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.14"}]'
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.15"}]'
     olm.skipRange: ""
     operatorframework.io/initialization-resource: |-
       {
@@ -68,7 +68,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: odf-operator.v4.13.0
+  name: odf-operator.v4.14.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -578,4 +578,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 4.13.0
+  version: 4.14.0
