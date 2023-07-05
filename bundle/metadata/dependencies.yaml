@@ -10,4 +10,4 @@ dependencies:
 - type: olm.package
   value:
     packageName: csi-addons
-    version: "0.6.0"
+    version: "0.7.0"
