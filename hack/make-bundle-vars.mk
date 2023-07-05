@@ -140,7 +140,7 @@ IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE ?= $(OPERATOR_CATALOGSOURCE_NAMESPACE)
 
 # kube rbac proxy image variables
 CLUSTER_ENV ?= openshift
-KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
 OSE_KUBE_RBAC_PROXY_IMG ?= registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.11.0
 
 ifeq ($(CLUSTER_ENV), openshift)
