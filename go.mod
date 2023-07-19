@@ -1,6 +1,6 @@
 module github.com/red-hat-storage/odf-operator
 
-go 1.19
+go 1.20
 
 require (
 	github.com/IBM/ibm-storage-odf-operator v1.3.1-0.20230201081526-a62cc98b3818
