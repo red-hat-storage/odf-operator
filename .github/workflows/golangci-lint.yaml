@@ -15,11 +15,11 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version-file: go.mod
 
     - uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.49.0
+        version: v1.53.1
         args: -E gosec --timeout=6m

@@ -13,9 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.19", "1.20"]
+        go: ["1.20"]
     steps:
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go }}
 
@@ -31,9 +31,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.19", "1.20"]
+        go: ["1.20"]
     steps:
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go }}
 
@@ -55,9 +55,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.19", "1.20"]
+        go: ["1.20"]
     steps:
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: ${{ matrix.go }}
 
