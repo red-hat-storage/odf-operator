@@ -1,6 +1,7 @@
 package deploymanager
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -75,7 +76,7 @@ func (d *DeployManager) CheckStorageSystemCondition() error {
 
 	lastReason := ""
 
-	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	err := utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
 		storageSystem := &odfv1alpha1.StorageSystem{}
 		err = d.Client.Get(d.Ctx, types.NamespacedName{
 			Name:      stoargeSystemName,
@@ -156,7 +157,7 @@ func (d *DeployManager) DeleteStorageSystemAndWait() error {
 	interval := 10 * time.Second
 	lastReason := ""
 
-	err = utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	err = utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
 		existingStorageSystem := &odfv1alpha1.StorageSystem{}
 		err = d.Client.Get(d.Ctx, types.NamespacedName{
 			Name:      stoargeSystemName,
