@@ -104,9 +104,9 @@ func main() {
 		LeaderElectionID:        "4fd470de.openshift.io",
 		LeaderElectionNamespace: operatorNamespace,
 		Namespace:               operatorNamespace,
-		NewCache: cache.BuilderWithOptions(cache.Options{
-			Namespace: operatorNamespace,
-		}),
+		Cache: cache.Options{
+			Namespaces: []string{operatorNamespace},
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
