@@ -1,6 +1,7 @@
 package deploymanager
 
 import (
+	"context"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -46,7 +47,7 @@ func (d *DeployManager) DeleteNamespaceAndWait(name string) error {
 	timeout := 600 * time.Second
 	interval := 10 * time.Second
 
-	err = utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	err = utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
 
 		existingNamespace := &corev1.Namespace{}
 		err = d.Client.Get(d.Ctx, client.ObjectKeyFromObject(namespace), existingNamespace)

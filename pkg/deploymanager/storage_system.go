@@ -1,11 +1,12 @@
 package deploymanager
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
-	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v1"
+	ocsv1 "github.com/red-hat-storage/ocs-operator/v4/api/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -75,7 +76,7 @@ func (d *DeployManager) CheckStorageSystemCondition() error {
 
 	lastReason := ""
 
-	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	err := utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
 		storageSystem := &odfv1alpha1.StorageSystem{}
 		err = d.Client.Get(d.Ctx, types.NamespacedName{
 			Name:      stoargeSystemName,
@@ -156,7 +157,7 @@ func (d *DeployManager) DeleteStorageSystemAndWait() error {
 	interval := 10 * time.Second
 	lastReason := ""
 
-	err = utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	err = utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
 		existingStorageSystem := &odfv1alpha1.StorageSystem{}
 		err = d.Client.Get(d.Ctx, types.NamespacedName{
 			Name:      stoargeSystemName,

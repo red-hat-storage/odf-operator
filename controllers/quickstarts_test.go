@@ -21,13 +21,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"testing"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/stretchr/testify/assert"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	consolev1 "github.com/openshift/api/console/v1"
@@ -156,16 +154,10 @@ func TestDeleteQuickStarts(t *testing.T) {
 			assert.NoError(t, err)
 		}
 		for i := range tc.deleteStorageSystems {
-			var ss odfv1alpha1.StorageSystem
-			err := fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
-				Name: tc.deleteStorageSystems[i].Name, Namespace: tc.deleteStorageSystems[i].Namespace}, &ss)
+			err := fakeReconciler.Client.Delete(context.TODO(), &tc.deleteStorageSystems[i])
 			assert.NoError(t, err)
-			ss.SetDeletionTimestamp(&v1.Time{Time: time.Now()})
-			err = fakeReconciler.Client.Update(context.TODO(), &ss)
+			err = fakeReconciler.deleteResources(&tc.deleteStorageSystems[i], fakeReconciler.Log)
 			assert.NoError(t, err)
-			err = fakeReconciler.deleteResources(&ss, fakeReconciler.Log)
-			assert.NoError(t, err)
-
 		}
 		quickstarts = getActualQuickStarts(t, cases, fakeReconciler)
 		if tc.expectDeleted {
