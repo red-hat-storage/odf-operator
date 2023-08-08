@@ -76,13 +76,19 @@ rules:
   resources:
   - consoleplugins
   verbs:
-  - '*'
+  - create
+  - get
+  - update
 - apiGroups:
   - console.openshift.io
   resources:
   - consolequickstarts
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - update
 - apiGroups:
   - ocs.openshift.io
   resources:
