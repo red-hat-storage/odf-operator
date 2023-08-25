@@ -15,10 +15,10 @@ require (
 	github.com/red-hat-storage/ocs-operator v0.0.1-master.0.20230417084356-efe3f3bf8820
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/multierr v1.9.0
-	k8s.io/api v0.26.1
+	k8s.io/api v0.26.4
 	k8s.io/apiextensions-apiserver v0.26.1
-	k8s.io/apimachinery v0.26.1
-	k8s.io/client-go v0.26.1
+	k8s.io/apimachinery v0.26.4
+	k8s.io/client-go v0.26.4
 	sigs.k8s.io/controller-runtime v0.14.4
 )
 
