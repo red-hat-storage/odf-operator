@@ -45,7 +45,6 @@ type StorageClusterSpec struct {
 	// Resources follows the conventions of and is mapped to CephCluster.Spec.Resources
 	Resources          map[string]corev1.ResourceRequirements `json:"resources,omitempty"`
 	Encryption         EncryptionSpec                         `json:"encryption,omitempty"`
-	OSDStore           rookCephv1.OSDStore                    `json:"osdStore,omitempty"`
 	StorageDeviceSets  []StorageDeviceSet                     `json:"storageDeviceSets,omitempty"`
 	MonPVCTemplate     *corev1.PersistentVolumeClaim          `json:"monPVCTemplate,omitempty"`
 	MonDataDirHostPath string                                 `json:"monDataDirHostPath,omitempty"`
@@ -172,6 +171,8 @@ type ManagedResourcesSpec struct {
 // ManageCephCluster defines how to reconcile the Ceph cluster definition
 type ManageCephCluster struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
+	// +kubebuilder:validation:Enum=3;5
+	MonCount int `json:"monCount,omitempty"`
 }
 
 // ManageCephConfig defines how to reconcile the Ceph configuration
