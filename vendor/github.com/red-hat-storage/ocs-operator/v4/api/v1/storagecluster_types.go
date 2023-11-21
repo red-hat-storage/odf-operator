@@ -187,11 +187,13 @@ type ManageCephDashboard struct {
 	SSL bool `json:"ssl,omitempty"`
 }
 
-// ManageCephBlockPools defines how to reconcilea CephBlockPools
+// ManageCephBlockPools defines how to reconcile CephBlockPools
 type ManageCephBlockPools struct {
 	ReconcileStrategy    string `json:"reconcileStrategy,omitempty"`
 	DisableStorageClass  bool   `json:"disableStorageClass,omitempty"`
 	DisableSnapshotClass bool   `json:"disableSnapshotClass,omitempty"`
+	// if set to true, the storageClass created for cephBlockPools will be annotated as the default for the whole cluster
+	DefaultStorageClass bool `json:"defaultStorageClass,omitempty"`
 	// StorageClassName specifies the name of the storage class created for ceph block pools
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
@@ -256,6 +258,7 @@ type ManageCephRBDMirror struct {
 type MgrSpec struct {
 	// EnableActivePassive can be set as true to deploy 2 ceph manager pods, one active and one standby
 	// Ceph will promote the standby mgr when the active mgr goes down due to any reason
+	// +kubebuilder:deprecatedversion:warning="This field has been deprecated and will be removed in future. By default we now have 2 ceph manager pods, one active and one standby."
 	EnableActivePassive bool `json:"enableActivePassive,omitempty"`
 }
 
@@ -374,6 +377,22 @@ type MultiCloudGatewaySpec struct {
 	// +nullable
 	// +optional
 	DisableLoadBalancerService bool `json:"disableLoadBalancerService,omitempty"`
+
+	// Allows Noobaa to connect to an external Postgres server
+	// +optional
+	ExternalPgConfig *ExternalPGSpec `json:"externalPgConfig,omitempty"`
+}
+
+type ExternalPGSpec struct {
+	// PGSecret stores the secret name which contains connection string of the Postgres server
+	// +optional
+	PGSecretName string `json:"pgSecretName,omitempty"`
+	// AllowSelfSignedCerts will allow the Postgres server to use self signed certificates to authenticate
+	// +optional
+	AllowSelfSignedCerts bool `json:"allowSelfSignedCerts,omitempty"`
+	// TLSSecret stores the secret name which contains the client side certificates if enabled
+	// +optional
+	TLSSecretName string `json:"tlsSecretName,omitempty"`
 }
 
 // NFSSpec defines specific nfs configuration options

@@ -50,14 +50,28 @@ func (c *ClusterSpec) IsStretchCluster() bool {
 	return c.Mon.StretchCluster != nil && len(c.Mon.StretchCluster.Zones) > 0
 }
 
+func (c *ClusterSpec) ZonesRequired() bool {
+	return c.IsStretchCluster() || len(c.Mon.Zones) > 0
+}
+
 func (c *CephCluster) ValidateCreate() (admission.Warnings, error) {
+	if c.Spec.ZonesRequired() {
+		if len(c.Spec.Mon.Zones) < c.Spec.Mon.Count {
+			return nil, errors.New("Not enough zones available for mons, please specify more zones")
+		}
+	}
 	logger.Infof("validate create cephcluster %q", c.ObjectMeta.Name)
 	//If external mode enabled, then check if other fields are empty
 	if c.Spec.External.Enable {
-		if c.Spec.Mon != (MonSpec{}) || c.Spec.Dashboard != (DashboardSpec{}) || !reflect.DeepEqual(c.Spec.Monitoring, (MonitoringSpec{})) || c.Spec.DisruptionManagement != (DisruptionManagementSpec{}) || len(c.Spec.Mgr.Modules) > 0 || len(c.Spec.Network.Provider) > 0 || len(c.Spec.Network.Selectors) > 0 {
+		if !reflect.DeepEqual(c.Spec.Mon, MonSpec{}) || c.Spec.Dashboard != (DashboardSpec{}) || !reflect.DeepEqual(c.Spec.Monitoring, (MonitoringSpec{})) || c.Spec.DisruptionManagement != (DisruptionManagementSpec{}) || len(c.Spec.Mgr.Modules) > 0 || len(c.Spec.Network.Provider) > 0 || len(c.Spec.Network.Selectors) > 0 {
 			return nil, errors.New("invalid create : external mode enabled cannot have mon,dashboard,monitoring,network,disruptionManagement,storage fields in CR")
 		}
 	}
+
+	if err := ValidateNetworkSpec(c.GetNamespace(), c.Spec.Network); err != nil {
+		return nil, errors.Errorf("invalid create: %s", err)
+	}
+
 	return nil, nil
 }
 
@@ -76,11 +90,8 @@ func validateUpdatedCephCluster(updatedCephCluster *CephCluster, found *CephClus
 		return nil, errors.Errorf("invalid update: DataDirHostPath change from %q to %q is not allowed", found.Spec.DataDirHostPath, updatedCephCluster.Spec.DataDirHostPath)
 	}
 
-	// Allow an attempt to enable or disable host networking, but not other provider changes
-	oldProvider := updatedCephCluster.Spec.Network.Provider
-	newProvider := found.Spec.Network.Provider
-	if oldProvider != newProvider && oldProvider != "host" && newProvider != "host" {
-		return nil, errors.Errorf("invalid update: Provider change from %q to %q is not allowed", found.Spec.Network.Provider, updatedCephCluster.Spec.Network.Provider)
+	if err := ValidateNetworkSpecUpdate(found.GetNamespace(), found.Spec.Network, updatedCephCluster.Spec.Network); err != nil {
+		return nil, errors.Errorf("invalid update: %s", err)
 	}
 
 	if len(updatedCephCluster.Spec.Storage.StorageClassDeviceSets) == len(found.Spec.Storage.StorageClassDeviceSets) {
