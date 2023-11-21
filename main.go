@@ -46,6 +46,7 @@ import (
 	consolev1 "github.com/openshift/api/console/v1"
 	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metrics "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 var (
@@ -97,16 +98,12 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                  scheme,
-		MetricsBindAddress:      metricsAddr,
-		Port:                    9443,
+		Metrics:                 metrics.Options{BindAddress: metricsAddr},
 		HealthProbeBindAddress:  probeAddr,
 		LeaderElection:          enableLeaderElection,
 		LeaderElectionID:        "4fd470de.openshift.io",
 		LeaderElectionNamespace: operatorNamespace,
-		Namespace:               operatorNamespace,
-		Cache: cache.Options{
-			Namespaces: []string{operatorNamespace},
-		},
+		Cache:                   cache.Options{DefaultNamespaces: map[string]cache.Config{operatorNamespace: {}}},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
