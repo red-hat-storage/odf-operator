@@ -7,7 +7,7 @@ schema: olm.channel
 package: odf-operator
 name: alpha
 entries:
-  - name: odf-operator.v4.14.0
+  - name: odf-operator.v4.15.0
 
 ---
 defaultChannel: alpha
