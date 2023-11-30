@@ -43,14 +43,21 @@ type StorageClusterSpec struct {
 	// Placement is optional and used to specify placements of OCS components explicitly
 	Placement rookCephv1.PlacementSpec `json:"placement,omitempty"`
 	// Resources follows the conventions of and is mapped to CephCluster.Spec.Resources
-	Resources          map[string]corev1.ResourceRequirements `json:"resources,omitempty"`
-	Encryption         EncryptionSpec                         `json:"encryption,omitempty"`
-	StorageDeviceSets  []StorageDeviceSet                     `json:"storageDeviceSets,omitempty"`
-	MonPVCTemplate     *corev1.PersistentVolumeClaim          `json:"monPVCTemplate,omitempty"`
-	MonDataDirHostPath string                                 `json:"monDataDirHostPath,omitempty"`
-	Mgr                *MgrSpec                               `json:"mgr,omitempty"`
-	MultiCloudGateway  *MultiCloudGatewaySpec                 `json:"multiCloudGateway,omitempty"`
-	NFS                *NFSSpec                               `json:"nfs,omitempty"`
+	Resources map[string]corev1.ResourceRequirements `json:"resources,omitempty"`
+	// Resource Profile can be used to choose from a set of predefined resource profiles for the ceph daemons.
+	// We have 3 profiles
+	// lean: suitable for clusters with limited resources,
+	// balanced: suitable for most use cases,
+	// performance: suitable for clusters with high amount of resources.
+	// +kubebuilder:validation:Enum=lean;Lean;balanced;Balanced;performance;Performance
+	ResourceProfile    string                        `json:"resourceProfile,omitempty"`
+	Encryption         EncryptionSpec                `json:"encryption,omitempty"`
+	StorageDeviceSets  []StorageDeviceSet            `json:"storageDeviceSets,omitempty"`
+	MonPVCTemplate     *corev1.PersistentVolumeClaim `json:"monPVCTemplate,omitempty"`
+	MonDataDirHostPath string                        `json:"monDataDirHostPath,omitempty"`
+	Mgr                *MgrSpec                      `json:"mgr,omitempty"`
+	MultiCloudGateway  *MultiCloudGatewaySpec        `json:"multiCloudGateway,omitempty"`
+	NFS                *NFSSpec                      `json:"nfs,omitempty"`
 	// Monitoring controls the configuration of resources for exposing OCS metrics
 	Monitoring *MonitoringSpec `json:"monitoring,omitempty"`
 	// Version specifies the version of StorageCluster
@@ -109,29 +116,15 @@ type StorageClusterSpec struct {
 	// DefaultStorageProfile is the default storage profile to use for
 	// the storageclassrequest as StorageProfile is optional.
 	DefaultStorageProfile string `json:"defaultStorageProfile,omitempty"`
-
-	StorageProfiles []StorageProfile `json:"storageProfiles,omitempty"`
-}
-
-// StorageProfile is the storage profile to use for the storageclassrequest.
-type StorageProfile struct {
-	// +kubebuilder:validation:Required
-	// Name of the storage profile.
-	Name string `json:"name"`
-	// +kubebuilder:validation:Required
-	// DeviceClass is the deviceclass name.
-	DeviceClass string `json:"deviceClass"`
-	// configurations to use for cephfilesystem.
-	SharedFilesystemConfiguration SharedFilesystemConfigurationSpec `json:"sharedFilesystemConfiguration,omitempty"`
-	// configurations to use for  profile specific blockpool.
-	BlockPoolConfiguration BlockPoolConfigurationSpec `json:"blockPoolConfiguration,omitempty"`
 }
 
 type SharedFilesystemConfigurationSpec struct {
+	// +kubebuilder:validation:Optional
 	Parameters map[string]string `json:"parameters,omitempty"`
 }
 
 type BlockPoolConfigurationSpec struct {
+	// +kubebuilder:validation:Optional
 	Parameters map[string]string `json:"parameters,omitempty"`
 }
 
@@ -171,6 +164,8 @@ type ManagedResourcesSpec struct {
 // ManageCephCluster defines how to reconcile the Ceph cluster definition
 type ManageCephCluster struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
+	// +kubebuilder:validation:Enum=1;2
+	MgrCount int `json:"mgrCount,omitempty"`
 	// +kubebuilder:validation:Enum=3;5
 	MonCount int `json:"monCount,omitempty"`
 }
@@ -218,9 +213,10 @@ type ManageCephNonResilientPools struct {
 
 // ManageCephFilesystems defines how to reconcile CephFilesystems
 type ManageCephFilesystems struct {
-	ReconcileStrategy    string `json:"reconcileStrategy,omitempty"`
-	DisableStorageClass  bool   `json:"disableStorageClass,omitempty"`
-	DisableSnapshotClass bool   `json:"disableSnapshotClass,omitempty"`
+	ReconcileStrategy     string `json:"reconcileStrategy,omitempty"`
+	DisableStorageClass   bool   `json:"disableStorageClass,omitempty"`
+	ActiveMetadataServers int    `json:"activeMetadataServers,omitempty"`
+	DisableSnapshotClass  bool   `json:"disableSnapshotClass,omitempty"`
 	// StorageClassName specifies the name of the storage class created for cephfs
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
@@ -231,7 +227,7 @@ type ManageCephFilesystems struct {
 type ManageCephObjectStores struct {
 	ReconcileStrategy   string `json:"reconcileStrategy,omitempty"`
 	DisableStorageClass bool   `json:"disableStorageClass,omitempty"`
-	GatewayInstances    int32  `json:"gatewayInstances,omitempty"`
+	GatewayInstances    int    `json:"gatewayInstances,omitempty"`
 	DisableRoute        bool   `json:"disableRoute,omitempty"`
 	// StorageClassName specifies the name of the storage class created for ceph obc's
 	// +kubebuilder:validation:MaxLength=253
