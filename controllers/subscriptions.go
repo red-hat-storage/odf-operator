@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
@@ -61,6 +62,10 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 			// If the config is not set, only then set it to the desired value => allow user to override
 			if actualSub.Spec.Config == nil {
 				actualSub.Spec.Config = desiredSubscription.Spec.Config
+			} else if actualSub.Spec.Config != nil && desiredSubscription.Spec.Config != nil {
+				// Combines the environment variables from both subscriptions.
+				// If actualSub already contains an environment variable, its value will be updated with the value from desiredSubscription.
+				actualSub.Spec.Config.Env = getMergedEnvVars(actualSub.Spec.Config.Env, desiredSubscription.Spec.Config.Env)
 			}
 
 			desiredSubscription = actualSub
@@ -68,6 +73,31 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 	}
 
 	return desiredSubscription, nil
+}
+
+// getMergedEnvVars updates the value of env variables in the envList1 with that of envList2 and
+// returns the updated list of env variables.
+func getMergedEnvVars(envList1, envList2 []corev1.EnvVar) []corev1.EnvVar {
+	envMap := make(map[string]string)
+
+	for _, env := range envList1 {
+		envMap[env.Name] = env.Value
+	}
+
+	for _, env := range envList2 {
+		envMap[env.Name] = env.Value
+	}
+
+	// Convert the map back to a slice
+	var updatedEnvVars []corev1.EnvVar
+	for key, value := range envMap {
+		updatedEnvVars = append(updatedEnvVars, corev1.EnvVar{
+			Name:  key,
+			Value: value,
+		})
+	}
+
+	return updatedEnvVars
 }
 
 func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
@@ -241,6 +271,18 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 			StartingCSV:            NoobaaSubscriptionStartingCSV,
 			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
 		},
+	}
+
+	roleARN := os.Getenv("ROLEARN")
+	if roleARN != "" {
+		noobaaSubscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
+			Env: []corev1.EnvVar{
+				{
+					Name:  "ROLEARN",
+					Value: roleARN,
+				},
+			},
+		}
 	}
 
 	ocsSubscription := &operatorv1alpha1.Subscription{
