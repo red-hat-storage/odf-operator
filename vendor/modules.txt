@@ -4,7 +4,7 @@
 ## explicit; go 1.19
 # github.com/Azure/go-autorest/autorest/adal v0.9.21
 ## explicit; go 1.15
-# github.com/IBM/ibm-storage-odf-operator v1.3.1-0.20230201081526-a62cc98b3818
+# github.com/IBM/ibm-storage-odf-operator v1.4.1
 ## explicit; go 1.18
 github.com/IBM/ibm-storage-odf-operator/api/v1alpha1
 # github.com/armon/go-metrics v0.4.1
