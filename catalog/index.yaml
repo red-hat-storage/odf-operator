@@ -51,4 +51,4 @@ schema: olm.channel
 package: ibm-storage-odf-operator
 name: stable-v1.4
 entries:
-  - name: ibm-storage-odf-operator.v1.4.0
+  - name: ibm-storage-odf-operator.v1.4.1

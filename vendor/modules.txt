@@ -1,4 +1,4 @@
-# github.com/IBM/ibm-storage-odf-operator v1.3.1-0.20230608092004-7525dea20038
+# github.com/IBM/ibm-storage-odf-operator v1.4.1
 ## explicit; go 1.18
 github.com/IBM/ibm-storage-odf-operator/api/v1alpha1
 # github.com/beorn7/perks v1.0.1
