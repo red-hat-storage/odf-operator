@@ -23,23 +23,32 @@ import (
 	"github.com/go-logr/logr"
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	operatorv2 "github.com/operator-framework/api/pkg/operators/v2"
+	"github.com/operator-framework/operator-lib/conditions"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
 // SubscriptionReconciler reconciles a Subscription object
 type SubscriptionReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Recorder *EventReporter
+	Scheme            *runtime.Scheme
+	Recorder          *EventReporter
+	ConditionName     string
+	OperatorCondition conditions.Condition
 }
 
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
@@ -47,6 +56,7 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -62,6 +72,11 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+
+	err = r.setOperatorCondition(logger, req.NamespacedName.Namespace)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -117,6 +132,45 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespa
 	return err
 }
 
+func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namespace string) error {
+	ocdList := &operatorv2.OperatorConditionList{}
+	err := r.Client.List(context.TODO(), ocdList, client.InNamespace(namespace))
+	if err != nil {
+		logger.Error(err, "failed to list OperatorConditions")
+		return err
+	}
+
+	condNames := append(GetVendorCsvNames(StorageClusterKind), GetVendorCsvNames(FlashSystemKind)...)
+
+	condMap := make(map[string]struct{}, len(condNames))
+	for i := range condNames {
+		condMap[condNames[i]] = struct{}{}
+	}
+
+	for ocdIdx := range ocdList.Items {
+		// skip operatorconditions of not dependent operators
+		if _, exist := condMap[ocdList.Items[ocdIdx].GetName()]; !exist {
+			continue
+		}
+
+		ocd := &ocdList.Items[ocdIdx]
+		cond := getNotUpgradeableCond(ocd)
+		if cond != nil {
+			// operator is not upgradeable
+			msg := fmt.Sprintf("%s:%s", ocd.GetName(), cond.Message)
+			logger.Info("setting operator upgradeable status", "status", cond.Status)
+			return r.OperatorCondition.Set(context.TODO(), cond.Status,
+				conditions.WithReason(cond.Reason), conditions.WithMessage(msg))
+		}
+	}
+
+	// all operators are upgradeable
+	status := metav1.ConditionTrue
+	logger.Info("setting operator upgradeable status", "status", status)
+	return r.OperatorCondition.Set(context.TODO(), status,
+		conditions.WithReason("Dependents"), conditions.WithMessage("No dependent reports not upgradeable status"))
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
@@ -151,10 +205,98 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		},
 	}
 
+	conditionPredicate := predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return false
+		},
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// not mandatory but these checks wouldn't harm
+			if e.ObjectOld == nil || e.ObjectNew == nil {
+				return false
+			}
+			oldObj, _ := e.ObjectOld.(*operatorv2.OperatorCondition)
+			newObj, _ := e.ObjectNew.(*operatorv2.OperatorCondition)
+			if oldObj == nil || newObj == nil {
+				return false
+			}
+
+			// skip sending a reconcile event if our own condition is updated
+			if newObj.GetName() == r.ConditionName {
+				return false
+			}
+
+			// change in admin set conditions for upgradeability
+			oldOverride := util.Find(oldObj.Spec.Overrides, func(cond *metav1.Condition) bool {
+				return cond.Type == operatorv2.Upgradeable
+			})
+			newOverride := util.Find(newObj.Spec.Overrides, func(cond *metav1.Condition) bool {
+				return cond.Type == operatorv2.Upgradeable
+			})
+			if oldOverride != nil && newOverride == nil {
+				// override is removed
+				return true
+			}
+			if newOverride != nil {
+				if oldOverride == nil {
+					return true
+				}
+				return oldOverride.Status != newOverride.Status
+			}
+
+			// change in operator set conditions for upgradeability
+			oldCond := util.Find(oldObj.Status.Conditions, func(cond *metav1.Condition) bool {
+				return cond.Type == operatorv2.Upgradeable
+			})
+			newCond := util.Find(newObj.Status.Conditions, func(cond *metav1.Condition) bool {
+				return cond.Type == operatorv2.Upgradeable
+			})
+			if newCond != nil {
+				if oldCond == nil {
+					return true
+				}
+				return oldCond.Status != newCond.Status
+			}
+
+			return false
+		},
+	}
+	enqueueFromCondition := handler.EnqueueRequestsFromMapFunc(
+		func(ctx context.Context, obj client.Object) []reconcile.Request {
+			if _, ok := obj.(*operatorv2.OperatorCondition); !ok {
+				return []reconcile.Request{}
+			}
+			logger := log.FromContext(ctx)
+			sub, err := GetOdfSubscription(r.Client)
+			if err != nil {
+				logger.Error(err, "failed to get ODF Subscription")
+				return []reconcile.Request{}
+			}
+			return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: sub.Name, Namespace: sub.Namespace}}}
+		},
+	)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&operatorv1alpha1.Subscription{},
 			builder.WithPredicates(generationChangedPredicate, subscriptionPredicate)).
 		Owns(&operatorv1alpha1.Subscription{},
 			builder.WithPredicates(generationChangedPredicate)).
+		Watches(&operatorv2.OperatorCondition{}, enqueueFromCondition, builder.WithPredicates(conditionPredicate)).
 		Complete(r)
+}
+
+func getNotUpgradeableCond(ocd *operatorv2.OperatorCondition) *metav1.Condition {
+	cond := util.Find(ocd.Spec.Overrides, func(cd *metav1.Condition) bool {
+		return cd.Type == operatorv2.Upgradeable
+	})
+	if cond != nil {
+		if cond.Status != "True" {
+			return cond
+		}
+		// if upgradeable is overridden we should skip checking operator set conditions
+		return nil
+	}
+
+	return util.Find(ocd.Status.Conditions, func(cd *metav1.Condition) bool {
+		return cd.Type == operatorv2.Upgradeable && cd.Status != "True"
+	})
 }
