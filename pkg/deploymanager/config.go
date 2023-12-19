@@ -8,7 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	ocsv1 "github.com/red-hat-storage/ocs-operator/v4/api/v1"
+	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"

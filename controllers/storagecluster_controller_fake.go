@@ -24,7 +24,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	ocsv1 "github.com/red-hat-storage/ocs-operator/v4/api/v1"
+	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 )
 
 func GetFakeStorageCluster() *ocsv1.StorageCluster {
