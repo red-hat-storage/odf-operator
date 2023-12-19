@@ -1,6 +1,8 @@
 package v1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // +genclient
 // +genclient:nonNamespaced
@@ -229,6 +231,24 @@ const (
 	IBMCloudProviderTypeUPI IBMCloudProviderType = "UPI"
 )
 
+// ClusterHostedDNS indicates whether the cluster DNS is hosted by the cluster or Core DNS .
+type ClusterHostedDNS string
+
+const (
+	// EnabledClusterHostedDNS indicates that a DNS solution other than the default provided by the
+	// cloud platform is in use. In this mode, the cluster hosts a DNS solution during installation and the
+	// user is expected to provide their own DNS solution post-install.
+	// When "Enabled", the cluster will continue to use the default Load Balancers provided by the cloud
+	// platform.
+	EnabledClusterHostedDNS ClusterHostedDNS = "Enabled"
+
+	// DisabledClusterHostedDNS indicates that the cluster is using the default DNS solution for the
+	// cloud platform. OpenShift is responsible for all the LB and DNS configuration needed for the
+	// cluster to be functional with no intervention from the user. To accomplish this, OpenShift
+	// configures the default LB and DNS solutions provided by the underlying cloud.
+	DisabledClusterHostedDNS ClusterHostedDNS = "Disabled"
+)
+
 // ExternalPlatformSpec holds the desired state for the generic External infrastructure provider.
 type ExternalPlatformSpec struct {
 	// PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time.
@@ -455,6 +475,7 @@ type AWSPlatformSpec struct {
 	// serviceEndpoints list contains custom endpoints which will override default
 	// service endpoint of AWS Services.
 	// There must be only one ServiceEndpoint for a service.
+	// +listType=atomic
 	// +optional
 	ServiceEndpoints []AWSServiceEndpoint `json:"serviceEndpoints,omitempty"`
 }
@@ -467,6 +488,7 @@ type AWSPlatformStatus struct {
 	// ServiceEndpoints list contains custom endpoints which will override default
 	// service endpoint of AWS Services.
 	// There must be only one ServiceEndpoint for a service.
+	// +listType=atomic
 	// +optional
 	ServiceEndpoints []AWSServiceEndpoint `json:"serviceEndpoints,omitempty"`
 
@@ -475,6 +497,7 @@ type AWSPlatformStatus struct {
 	// AWS supports a maximum of 50 tags per resource. OpenShift reserves 25 tags for its use, leaving 25 tags
 	// available for the user.
 	// +kubebuilder:validation:MaxItems=25
+	// +listType=atomic
 	// +optional
 	ResourceTags []AWSResourceTag `json:"resourceTags,omitempty"`
 }
@@ -530,6 +553,7 @@ type AzurePlatformStatus struct {
 	// may be applied. OpenShift reserves 5 tags for internal use, allowing 10 tags for user configuration.
 	// +kubebuilder:validation:MaxItems=10
 	// +kubebuilder:validation:XValidation:rule="self.all(x, x in oldSelf) && oldSelf.all(x, x in self)",message="resourceTags are immutable and may only be configured during installation"
+	// +listType=atomic
 	// +optional
 	ResourceTags []AzureResourceTag `json:"resourceTags,omitempty"`
 }
@@ -610,6 +634,24 @@ type GCPPlatformStatus struct {
 	// +optional
 	// +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
 	ResourceTags []GCPResourceTag `json:"resourceTags,omitempty"`
+
+	// clusterHostedDNS indicates the type of DNS solution in use within the cluster. Its default value of
+	// "Disabled" indicates that the cluster's DNS is the default provided by the cloud platform. It can be
+	// "Enabled" during install to bypass the configuration of the cloud default DNS. When "Enabled", the
+	// cluster needs to provide a self-hosted DNS solution for the cluster's installation to succeed.
+	// The cluster's use of the cloud's Load Balancers is unaffected by this setting.
+	// The value is immutable after it has been set at install time.
+	// Currently, there is no way for the customer to add additional DNS entries into the cluster hosted DNS.
+	// Enabling this functionality allows the user to start their own DNS solution outside the cluster after
+	// installation is complete. The customer would be responsible for configuring this custom DNS solution,
+	// and it can be run in addition to the in-cluster DNS solution.
+	// +kubebuilder:default:="Disabled"
+	// +default="Disabled"
+	// +kubebuilder:validation:Enum="Enabled";"Disabled"
+	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="clusterHostedDNS is immutable and may only be configured during installation"
+	// +optional
+	// +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
+	ClusterHostedDNS ClusterHostedDNS `json:"clusterHostedDNS,omitempty"`
 }
 
 // GCPResourceLabel is a label to apply to GCP resources created for the cluster.
@@ -622,7 +664,7 @@ type GCPResourceLabel struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
-	// +kubebuilder:validation:Pattern=`^[a-z][0-9a-z_-]+$`
+	// +kubebuilder:validation:Pattern=`^[a-z][0-9a-z_-]{0,62}$`
 	Key string `json:"key"`
 
 	// value is the value part of the label. A label value can have a maximum of 63 characters and cannot be empty.
@@ -630,7 +672,7 @@ type GCPResourceLabel struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:MaxLength=63
-	// +kubebuilder:validation:Pattern=`^[0-9a-z_-]+$`
+	// +kubebuilder:validation:Pattern=`^[0-9a-z_-]{1,63}$`
 	Value string `json:"value"`
 }
 
@@ -713,6 +755,7 @@ type BareMetalPlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	APIServerInternalIPs []string `json:"apiServerInternalIPs"`
 
 	// ingressIP is an external IP which routes to the default ingress controller.
@@ -728,6 +771,7 @@ type BareMetalPlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	IngressIPs []string `json:"ingressIPs"`
 
 	// nodeDNSIP is the IP address for the internal DNS used by the
@@ -789,6 +833,7 @@ type OpenStackPlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	APIServerInternalIPs []string `json:"apiServerInternalIPs"`
 
 	// cloudName is the name of the desired OpenStack cloud in the
@@ -808,6 +853,7 @@ type OpenStackPlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	IngressIPs []string `json:"ingressIPs"`
 
 	// nodeDNSIP is the IP address for the internal DNS used by the
@@ -868,6 +914,7 @@ type OvirtPlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	APIServerInternalIPs []string `json:"apiServerInternalIPs"`
 
 	// ingressIP is an external IP which routes to the default ingress controller.
@@ -883,6 +930,7 @@ type OvirtPlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	IngressIPs []string `json:"ingressIPs"`
 
 	// deprecated: as of 4.6, this field is no longer set or honored.  It will be removed in a future release.
@@ -983,6 +1031,7 @@ type VSpherePlatformTopology struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MaxItems=1
 	// +kubebuilder:validation:MinItems=1
+	// +listType=atomic
 	Networks []string `json:"networks"`
 
 	// datastore is the absolute path of the datastore in which the
@@ -1010,6 +1059,22 @@ type VSpherePlatformTopology struct {
 	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
 	// +optional
 	Folder string `json:"folder,omitempty"`
+
+	// template is the full inventory path of the virtual machine or template
+	// that will be cloned when creating new machines in this failure domain.
+	// The maximum length of the path is 2048 characters.
+	//
+	// When omitted, the template will be calculated by the control plane
+	// machineset operator based on the region and zone defined in
+	// VSpherePlatformFailureDomainSpec.
+	// For example, for zone=zonea, region=region1, and infrastructure name=test,
+	// the template path would be calculated as /<datacenter>/vm/test-rhcos-region1-zonea.
+	// +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=2048
+	// +kubebuilder:validation:Pattern=`^/.*?/vm/.*?`
+	// +optional
+	Template string `json:"template,omitempty"`
 }
 
 // VSpherePlatformVCenterSpec stores the vCenter connection fields.
@@ -1040,6 +1105,7 @@ type VSpherePlatformVCenterSpec struct {
 	// a topology.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
+	// +listType=set
 	Datacenters []string `json:"datacenters"`
 }
 
@@ -1053,6 +1119,7 @@ type VSpherePlatformNodeNetworkingSpec struct {
 	// that will be used in respective status.addresses fields.
 	// ---
 	// + Validation is applied via a patch, we validate the format as cidr
+	// +listType=set
 	// +optional
 	NetworkSubnetCIDR []string `json:"networkSubnetCidr,omitempty"`
 
@@ -1069,6 +1136,7 @@ type VSpherePlatformNodeNetworkingSpec struct {
 	// the IP address from the VirtualMachine's VM for use in the status.addresses fields.
 	// ---
 	// + Validation is applied via a patch, we validate the format as cidr
+	// +listType=atomic
 	// +optional
 	ExcludeNetworkSubnetCIDR []string `json:"excludeNetworkSubnetCidr,omitempty"`
 }
@@ -1094,11 +1162,14 @@ type VSpherePlatformSpec struct {
 	// + in openshift-config.
 	// +kubebuilder:validation:MaxItems=1
 	// +kubebuilder:validation:MinItems=0
+	// +listType=atomic
 	// +optional
 	VCenters []VSpherePlatformVCenterSpec `json:"vcenters,omitempty"`
 
 	// failureDomains contains the definition of region, zone and the vCenter topology.
 	// If this is omitted failure domains (regions and zones) will not be used.
+	// +listType=map
+	// +listMapKey=name
 	// +optional
 	FailureDomains []VSpherePlatformFailureDomainSpec `json:"failureDomains,omitempty"`
 
@@ -1129,6 +1200,7 @@ type VSpherePlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	APIServerInternalIPs []string `json:"apiServerInternalIPs"`
 
 	// ingressIP is an external IP which routes to the default ingress controller.
@@ -1144,6 +1216,7 @@ type VSpherePlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	IngressIPs []string `json:"ingressIPs"`
 
 	// nodeDNSIP is the IP address for the internal DNS used by the
@@ -1166,15 +1239,14 @@ type VSpherePlatformStatus struct {
 // override existing defaults of IBM Cloud Services.
 type IBMCloudServiceEndpoint struct {
 	// name is the name of the IBM Cloud service.
+	// Possible values are: CIS, COS, DNSServices, GlobalSearch, GlobalTagging, HyperProtect, IAM, KeyProtect, ResourceController, ResourceManager, or VPC.
 	// For example, the IBM Cloud Private IAM service could be configured with the
 	// service `name` of `IAM` and `url` of `https://private.iam.cloud.ibm.com`
 	// Whereas the IBM Cloud Private VPC service for US South (Dallas) could be configured
 	// with the service `name` of `VPC` and `url` of `https://us.south.private.iaas.cloud.ibm.com`
 	//
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9-]+$`
-	// +kubebuilder:validation:MaxLength=32
-	Name string `json:"name"`
+	Name IBMCloudServiceName `json:"name"`
 
 	// url is fully qualified URI with scheme https, that overrides the default generated
 	// endpoint for a client.
@@ -1209,13 +1281,13 @@ type IBMCloudPlatformStatus struct {
 	// for the cluster's base domain
 	DNSInstanceCRN string `json:"dnsInstanceCRN,omitempty"`
 
-        // serviceEndpoints is a list of custom endpoints which will override the default
-        // service endpoints of an IBM Cloud service. These endpoints are consumed by
+	// serviceEndpoints is a list of custom endpoints which will override the default
+	// service endpoints of an IBM Cloud service. These endpoints are consumed by
 	// components within the cluster to reach the respective IBM Cloud Services.
-        // +listType=map
-        // +listMapKey=name
-        // +optional
-        ServiceEndpoints []IBMCloudServiceEndpoint `json:"serviceEndpoints,omitempty"`
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	ServiceEndpoints []IBMCloudServiceEndpoint `json:"serviceEndpoints,omitempty"`
 }
 
 // KubevirtPlatformSpec holds the desired state of the kubevirt infrastructure provider.
@@ -1311,6 +1383,8 @@ type PowerVSPlatformStatus struct {
 
 	// serviceEndpoints is a list of custom endpoints which will override the default
 	// service endpoints of a Power VS service.
+	// +listType=map
+	// +listMapKey=name
 	// +optional
 	ServiceEndpoints []PowerVSServiceEndpoint `json:"serviceEndpoints,omitempty"`
 
@@ -1402,6 +1476,75 @@ type NutanixPlatformSpec struct {
 	// +listType=map
 	// +listMapKey=name
 	PrismElements []NutanixPrismElementEndpoint `json:"prismElements"`
+
+	// failureDomains configures failure domains information for the Nutanix platform.
+	// When set, the failure domains defined here may be used to spread Machines across
+	// prism element clusters to improve fault tolerance of the cluster.
+	// +listType=map
+	// +listMapKey=name
+	// +optional
+	FailureDomains []NutanixFailureDomain `json:"failureDomains"`
+}
+
+// NutanixFailureDomain configures failure domain information for the Nutanix platform.
+type NutanixFailureDomain struct {
+	// name defines the unique name of a failure domain.
+	// Name is required and must be at most 64 characters in length.
+	// It must consist of only lower case alphanumeric characters and hyphens (-).
+	// It must start and end with an alphanumeric character.
+	// This value is arbitrary and is used to identify the failure domain within the platform.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:Pattern=`[a-z0-9]([-a-z0-9]*[a-z0-9])?`
+	Name string `json:"name"`
+
+	// cluster is to identify the cluster (the Prism Element under management of the Prism Central),
+	// in which the Machine's VM will be created. The cluster identifier (uuid or name) can be obtained
+	// from the Prism Central console or using the prism_central API.
+	// +kubebuilder:validation:Required
+	Cluster NutanixResourceIdentifier `json:"cluster"`
+
+	// subnets holds a list of identifiers (one or more) of the cluster's network subnets
+	// for the Machine's VM to connect to. The subnet identifiers (uuid or name) can be
+	// obtained from the Prism Central console or using the prism_central API.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=1
+	// +listType=map
+	// +listMapKey=type
+	Subnets []NutanixResourceIdentifier `json:"subnets"`
+}
+
+// NutanixIdentifierType is an enumeration of different resource identifier types.
+// +kubebuilder:validation:Enum:=UUID;Name
+type NutanixIdentifierType string
+
+const (
+	// NutanixIdentifierUUID is a resource identifier identifying the object by UUID.
+	NutanixIdentifierUUID NutanixIdentifierType = "UUID"
+
+	// NutanixIdentifierName is a resource identifier identifying the object by Name.
+	NutanixIdentifierName NutanixIdentifierType = "Name"
+)
+
+// NutanixResourceIdentifier holds the identity of a Nutanix PC resource (cluster, image, subnet, etc.)
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'UUID' ?  has(self.uuid) : !has(self.uuid)",message="uuid configuration is required when type is UUID, and forbidden otherwise"
+// +kubebuilder:validation:XValidation:rule="has(self.type) && self.type == 'Name' ?  has(self.name) : !has(self.name)",message="name configuration is required when type is Name, and forbidden otherwise"
+// +union
+type NutanixResourceIdentifier struct {
+	// type is the identifier type to use for this resource.
+	// +unionDiscriminator
+	// +kubebuilder:validation:Required
+	Type NutanixIdentifierType `json:"type"`
+
+	// uuid is the UUID of the resource in the PC. It cannot be empty if the type is UUID.
+	// +optional
+	UUID *string `json:"uuid,omitempty"`
+
+	// name is the resource name in the PC. It cannot be empty if the type is Name.
+	// +optional
+	Name *string `json:"name,omitempty"`
 }
 
 // NutanixPrismEndpoint holds the endpoint address and port to access the Nutanix Prism Central or Element (cluster)
@@ -1452,6 +1595,7 @@ type NutanixPlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	APIServerInternalIPs []string `json:"apiServerInternalIPs"`
 
 	// ingressIP is an external IP which routes to the default ingress controller.
@@ -1467,6 +1611,7 @@ type NutanixPlatformStatus struct {
 	//
 	// +kubebuilder:validation:Format=ip
 	// +kubebuilder:validation:MaxItems=2
+	// +listType=set
 	IngressIPs []string `json:"ingressIPs"`
 
 	// loadBalancer defines how the load balancer used by the cluster is configured.
