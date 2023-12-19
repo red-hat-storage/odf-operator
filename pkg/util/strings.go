@@ -36,3 +36,14 @@ func RemoveFromSlice(slice []string, s string) (result []string) {
 	}
 	return
 }
+
+// Find returns the first entry matching the function "f" or else return nil
+func Find[T any](list []T, f func(item *T) bool) *T {
+	for idx := range list {
+		ele := &list[idx]
+		if f(ele) {
+			return ele
+		}
+	}
+	return nil
+}
