@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	operatorv2 "github.com/operator-framework/api/pkg/operators/v2"
 
 	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
@@ -62,6 +63,7 @@ func init() {
 	utilruntime.Must(ibmv1alpha1.AddToScheme(scheme))
 
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(operatorv2.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 
 	utilruntime.Must(consolev1.AddToScheme(scheme))
@@ -126,9 +128,21 @@ func main() {
 		os.Exit(1)
 	}
 
+	conditionName, err := util.GetConditionName(mgr.GetClient())
+	if err != nil {
+		setupLog.Error(err, "unable to get condition name")
+		os.Exit(1)
+	}
+	condition, err := util.NewUpgradeableCondition(mgr.GetClient())
+	if err != nil {
+		setupLog.Error(err, "unable to get OperatorCondition")
+		os.Exit(1)
+	}
 	subscriptionReconciler := &controllers.SubscriptionReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		ConditionName:     conditionName,
+		OperatorCondition: condition,
 	}
 	if err = subscriptionReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Subscription")
