@@ -10,7 +10,7 @@ require (
 	github.com/onsi/gomega v1.27.10
 	github.com/openshift/api v0.0.0-20231212225112-7cca8a108d7b
 	github.com/openshift/custom-resource-status v1.1.2
-	github.com/operator-framework/api v0.17.7-0.20230626210316-aa3e49803e7b
+	github.com/operator-framework/api v0.20.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20231218123823-334ed88d3c2c
 	github.com/stretchr/testify v1.8.4
@@ -73,6 +73,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/noobaa/noobaa-operator/v5 v5.0.0-20231213124549-5d7b0417716d // indirect
+	github.com/operator-framework/operator-lib v0.11.1-0.20230717184314-6efbe3a22f6f
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
