@@ -94,6 +94,18 @@ func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1alph
 				Namespace: serviceNamespace,
 				Port:      int32(consolePort),
 			},
+			Proxy: []consolev1alpha1.ConsolePluginProxy{
+				{
+					Type:  consolev1alpha1.ProxyTypeService,
+					Alias: "provider-proxy",
+					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
+						Name:      "ux-backend-proxy",
+						Namespace: serviceNamespace,
+						Port:      8888,
+					},
+					Authorize: true,
+				},
+			},
 		},
 	}
 }
