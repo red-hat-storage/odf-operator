@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/console"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
@@ -128,6 +129,20 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 		if currentBasePath := odfConsolePlugin.Spec.Service.BasePath; currentBasePath != basePath {
 			logger.Info(fmt.Sprintf("Set the BasePath for odf-console plugin as '%s'", basePath))
 			odfConsolePlugin.Spec.Service.BasePath = basePath
+		}
+		if odfConsolePlugin.Spec.Proxy == nil {
+			odfConsolePlugin.Spec.Proxy = []consolev1alpha1.ConsolePluginProxy{
+				{
+					Type:  consolev1alpha1.ProxyTypeService,
+					Alias: "provider-proxy",
+					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
+						Name:      "ux-backend-proxy",
+						Namespace: OperatorNamespace,
+						Port:      8888,
+					},
+					Authorize: true,
+				},
+			}
 		}
 		return nil
 	})
