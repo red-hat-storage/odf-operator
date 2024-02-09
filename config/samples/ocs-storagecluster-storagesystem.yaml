@@ -1,9 +1,9 @@
 apiVersion: odf.openshift.io/v1alpha1
 kind: StorageSystem
 metadata:
-  name: ocs-storagecluster-storagesystem
+  name: my-storagecluster-storagesystem
   namespace: openshift-storage
 spec:
   kind: storagecluster.ocs.openshift.io/v1
-  name: ocs-storagecluster
+  name: my-storagecluster
   namespace: openshift-storage
