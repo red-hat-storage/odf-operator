@@ -8,12 +8,12 @@ metadata:
           "apiVersion": "odf.openshift.io/v1alpha1",
           "kind": "StorageSystem",
           "metadata": {
-            "name": "ibm-flashsystemcluster-storagesystem",
+            "name": "my-flashsystemcluster-storagesystem",
             "namespace": "openshift-storage"
           },
           "spec": {
             "kind": "flashsystemcluster.odf.ibm.com/v1alpha1",
-            "name": "ibm-flashsystemcluster",
+            "name": "my-flashsystemcluster",
             "namespace": "openshift-storage"
           }
         },
@@ -21,12 +21,12 @@ metadata:
           "apiVersion": "odf.openshift.io/v1alpha1",
           "kind": "StorageSystem",
           "metadata": {
-            "name": "ocs-storagecluster-storagesystem",
+            "name": "my-storagecluster-storagesystem",
             "namespace": "openshift-storage"
           },
           "spec": {
             "kind": "storagecluster.ocs.openshift.io/v1",
-            "name": "ocs-storagecluster",
+            "name": "my-storagecluster",
             "namespace": "openshift-storage"
           }
         }
@@ -35,7 +35,7 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2023-12-12T05:53:20Z"
+    createdAt: "2024-02-09T04:53:49Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
