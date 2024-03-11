@@ -15,3 +15,7 @@ dependencies:
   value:
     packageName: csi-addons
     version: "0.7.0"
+- type: olm.package
+  value:
+    packageName: odf-prometheus-operator
+    version: "4.10.0"

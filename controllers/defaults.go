@@ -58,6 +58,13 @@ var (
 		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.15.0",
 		"ROOK_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
+		"PROMETHEUS_SUBSCRIPTION_NAME":                    "odf-prometheus-operator",
+		"PROMETHEUS_SUBSCRIPTION_PACKAGE":                 "odf-prometheus-operator",
+		"PROMETHEUS_SUBSCRIPTION_CHANNEL":                 "beta",
+		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.10.0",
+		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
@@ -96,6 +103,13 @@ var (
 	RookSubscriptionStartingCSV            = GetEnvOrDefault("ROOK_SUBSCRIPTION_STARTINGCSV")
 	RookSubscriptionCatalogSource          = GetEnvOrDefault("ROOK_SUBSCRIPTION_CATALOGSOURCE")
 	RookSubscriptionCatalogSourceNamespace = GetEnvOrDefault("ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	PrometheusSubscriptionName                   = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_NAME")
+	PrometheusSubscriptionPackage                = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_PACKAGE")
+	PrometheusSubscriptionChannel                = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_CHANNEL")
+	PrometheusSubscriptionStartingCSV            = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_STARTINGCSV")
+	PrometheusSubscriptionCatalogSource          = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE")
+	PrometheusSubscriptionCatalogSourceNamespace = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 )
 
 const (
