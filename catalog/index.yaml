@@ -52,3 +52,14 @@ package: ibm-storage-odf-operator
 name: stable-v1.4
 entries:
   - name: ibm-storage-odf-operator.v1.4.1
+
+---
+defaultChannel: alpha
+name: rook-ceph-operator
+schema: olm.package
+---
+schema: olm.channel
+package: rook-ceph-operator
+name: alpha
+entries:
+  - name: rook-ceph-operator.v4.15.0

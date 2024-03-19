@@ -51,6 +51,13 @@ var (
 		"IBM_SUBSCRIPTION_STARTINGCSV":             "ibm-storage-odf-operator.v1.4.1",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
+		"ROOK_SUBSCRIPTION_NAME":                    "rook-ceph-operator",
+		"ROOK_SUBSCRIPTION_PACKAGE":                 "rook-ceph-operator",
+		"ROOK_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.15.0",
+		"ROOK_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
@@ -82,6 +89,13 @@ var (
 	IbmSubscriptionStartingCSV            = GetEnvOrDefault("IBM_SUBSCRIPTION_STARTINGCSV")
 	IbmSubscriptionCatalogSource          = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE")
 	IbmSubscriptionCatalogSourceNamespace = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	RookSubscriptionName                   = GetEnvOrDefault("ROOK_SUBSCRIPTION_NAME")
+	RookSubscriptionPackage                = GetEnvOrDefault("ROOK_SUBSCRIPTION_PACKAGE")
+	RookSubscriptionChannel                = GetEnvOrDefault("ROOK_SUBSCRIPTION_CHANNEL")
+	RookSubscriptionStartingCSV            = GetEnvOrDefault("ROOK_SUBSCRIPTION_STARTINGCSV")
+	RookSubscriptionCatalogSource          = GetEnvOrDefault("ROOK_SUBSCRIPTION_CATALOGSOURCE")
+	RookSubscriptionCatalogSourceNamespace = GetEnvOrDefault("ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 )
 
 const (
