@@ -11,4 +11,5 @@ cd e2e/odf && ${GINKGO} build && ./odf.test \
     --ocs-cluster-service-version=${OCS_SUBSCRIPTION_STARTINGCSV} \
     --nooba-cluster-service-version=${NOOBAA_SUBSCRIPTION_STARTINGCSV} \
     --csiaddons-cluster-service-version=${CSIADDONS_SUBSCRIPTION_STARTINGCSV} \
-    --rook-cluster-service-version=${ROOK_SUBSCRIPTION_STARTINGCSV}
+    --rook-cluster-service-version=${ROOK_SUBSCRIPTION_STARTINGCSV} \
+    --prometheus-cluster-service-version=${PROMETHEUS_SUBSCRIPTION_STARTINGCSV}

@@ -400,7 +400,22 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription, csiAddonsSubscription}
+	prometheusSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      PrometheusSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          PrometheusSubscriptionCatalogSource,
+			CatalogSourceNamespace: PrometheusSubscriptionCatalogSourceNamespace,
+			Package:                PrometheusSubscriptionPackage,
+			Channel:                PrometheusSubscriptionChannel,
+			StartingCSV:            PrometheusSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
+	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription, csiAddonsSubscription, prometheusSubscription}
 }
 
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster

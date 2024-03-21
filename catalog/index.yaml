@@ -63,3 +63,14 @@ package: rook-ceph-operator
 name: alpha
 entries:
   - name: rook-ceph-operator.v4.15.0
+
+---
+defaultChannel: beta
+name: odf-prometheus-operator
+schema: olm.package
+---
+schema: olm.channel
+package: odf-prometheus-operator
+name: beta
+entries:
+  - name: odf-prometheus-operator.v4.10.0

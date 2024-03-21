@@ -26,6 +26,8 @@ var (
 	CsiaddonsClusterServiceVersion string
 	// RookClusterServiceVersion is the name of Rook csv
 	RookClusterServiceVersion string
+	// PrometheusClusterService version is the name of the Prometheus csv
+	PrometheusClusterServiceVersion string
 )
 
 var (
@@ -49,6 +51,7 @@ func init() {
 	flag.StringVar(&NoobaClusterServiceVersion, "nooba-cluster-service-version", "", "The Nooba CSV name which needs to verified")
 	flag.StringVar(&CsiaddonsClusterServiceVersion, "csiaddons-cluster-service-version", "", "The CSI Addon CSV name which needs to verified")
 	flag.StringVar(&RookClusterServiceVersion, "rook-cluster-service-version", "", "The Rook CSV name which needs to verified")
+	flag.StringVar(&PrometheusClusterServiceVersion, "prometheus-cluster-service-version", "", "The Prometheus CSV name which needs to verified")
 	flag.Parse()
 
 	verifyFlags()
@@ -56,7 +59,7 @@ func init() {
 	// A list of names of all the csvs that should be installed
 	CsvNames = []string{OdfClusterServiceVersion, OcsClusterServiceVersion,
 		RookClusterServiceVersion, NoobaClusterServiceVersion,
-		CsiaddonsClusterServiceVersion}
+		CsiaddonsClusterServiceVersion, PrometheusClusterServiceVersion}
 
 	dm, err := deploymanager.NewDeployManager()
 	if err != nil {
@@ -93,5 +96,9 @@ func verifyFlags() {
 
 	if RookClusterServiceVersion == "" {
 		panic("rook-cluster-service-version is not provided")
+	}
+
+	if PrometheusClusterServiceVersion == "" {
+		panic("prometheus-cluster-service-version is not provided")
 	}
 }
