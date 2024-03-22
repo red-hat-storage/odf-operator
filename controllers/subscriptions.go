@@ -224,7 +224,7 @@ func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
 		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
 		csvNames = []string{OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
-			CSIAddonsSubscriptionStartingCSV, OcsClientSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV}
+			CSIAddonsSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV}
 	}
 
 	return csvNames
@@ -361,21 +361,6 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	ocsClientSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      OcsClientSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          OcsClientSubscriptionCatalogSource,
-			CatalogSourceNamespace: OcsClientSubscriptionCatalogSourceNamespace,
-			Package:                OcsClientSubscriptionPackage,
-			Channel:                OcsClientSubscriptionChannel,
-			StartingCSV:            OcsClientSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
 	csiAddonsSubscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CSIAddonsSubscriptionName,
@@ -432,7 +417,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 	}
 
 	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription,
-		csiAddonsSubscription, ocsClientSubscription, prometheusSubscription}
+		csiAddonsSubscription, prometheusSubscription}
 }
 
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
