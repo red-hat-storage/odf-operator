@@ -224,7 +224,7 @@ func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
 		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
 		csvNames = []string{OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
-			CSIAddonsSubscriptionStartingCSV, OcsClientSubscriptionStartingCSV}
+			CSIAddonsSubscriptionStartingCSV, OcsClientSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV}
 	}
 
 	return csvNames
