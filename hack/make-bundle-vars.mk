@@ -117,7 +117,7 @@ PROMETHEUS_BUNDLE_IMG ?= $(PROMETHEUS_BUNDLE_IMG_LOCATION)/$(PROMETHEUS_BUNDLE_I
 
 # A space-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0 example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
-BUNDLE_IMGS ?= $(BUNDLE_IMG) $(OCS_BUNDLE_IMG) $(OCS_CLIENT_BUNDLE_IMG) $(IBM_BUNDLE_IMG) $(NOOBAA_BUNDLE_IMG) $(CSIADDONS_BUNDLE_IMG) $(ROOK_BUNDLE_IMG)
+BUNDLE_IMGS ?= $(BUNDLE_IMG) $(OCS_BUNDLE_IMG) $(OCS_CLIENT_BUNDLE_IMG) $(IBM_BUNDLE_IMG) $(NOOBAA_BUNDLE_IMG) $(CSIADDONS_BUNDLE_IMG) $(ROOK_BUNDLE_IMG) $(PROMETHEUS_BUNDLE_IMG)
 
 # Set CATALOG_BASE_IMG to an existing catalog image tag to add $BUNDLE_IMGS to that image.
 ifneq ($(origin CATALOG_BASE_IMG), undefined)
