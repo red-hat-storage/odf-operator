@@ -38,6 +38,13 @@ var (
 		"OCS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
+		"OCS_CLIENT_SUBSCRIPTION_NAME":                    "ocs-client-operator",
+		"OCS_CLIENT_SUBSCRIPTION_PACKAGE":                 "ocs-client-operator",
+		"OCS_CLIENT_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"OCS_CLIENT_SUBSCRIPTION_STARTINGCSV":             "ocs-client-operator.v4.15.0",
+		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
 		"CSIADDONS_SUBSCRIPTION_NAME":                    "csi-addons",
 		"CSIADDONS_SUBSCRIPTION_PACKAGE":                 "csi-addons",
 		"CSIADDONS_SUBSCRIPTION_CHANNEL":                 "alpha",
@@ -75,6 +82,13 @@ var (
 	OcsSubscriptionStartingCSV            = GetEnvOrDefault("OCS_SUBSCRIPTION_STARTINGCSV")
 	OcsSubscriptionCatalogSource          = GetEnvOrDefault("OCS_SUBSCRIPTION_CATALOGSOURCE")
 	OcsSubscriptionCatalogSourceNamespace = GetEnvOrDefault("OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	OcsClientSubscriptionName                   = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_NAME")
+	OcsClientSubscriptionPackage                = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_PACKAGE")
+	OcsClientSubscriptionChannel                = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_CHANNEL")
+	OcsClientSubscriptionStartingCSV            = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_STARTINGCSV")
+	OcsClientSubscriptionCatalogSource          = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE")
+	OcsClientSubscriptionCatalogSourceNamespace = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 
 	NoobaaSubscriptionName                   = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_NAME")
 	NoobaaSubscriptionPackage                = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_PACKAGE")

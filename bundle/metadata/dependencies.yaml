@@ -9,6 +9,10 @@ dependencies:
     version: ">=4.14.0 <4.15.0 || 4.15.0"
 - type: olm.package
   value:
+    packageName: ocs-client-operator
+    version: ">=4.14.0 <4.15.0 || 4.15.0"
+- type: olm.package
+  value:
     packageName: noobaa-operator
     version: "5.14.0"
 - type: olm.package
