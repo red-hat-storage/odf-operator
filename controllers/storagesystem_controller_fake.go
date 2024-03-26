@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,6 +53,7 @@ func GetFakeStorageSystemReconciler(t *testing.T, objs ...runtime.Object) *Stora
 
 	scheme := createFakeScheme(t)
 	fakeStorageSystemReconciler := &StorageSystemReconciler{
+		ctx:      context.TODO(),
 		Client:   fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objs...).Build(),
 		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
 		Scheme:   scheme,

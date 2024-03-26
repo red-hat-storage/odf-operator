@@ -17,7 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -41,7 +40,7 @@ func (r *StorageSystemReconciler) deleteResources(instance *odfv1alpha1.StorageS
 		backendStorage = &ibmv1alpha1.FlashSystemCluster{}
 	}
 
-	err := r.Client.Get(context.TODO(), types.NamespacedName{
+	err := r.Client.Get(r.ctx, types.NamespacedName{
 		Name: instance.Spec.Name, Namespace: instance.Spec.Namespace},
 		backendStorage)
 
@@ -53,7 +52,7 @@ func (r *StorageSystemReconciler) deleteResources(instance *odfv1alpha1.StorageS
 		return err
 	}
 
-	err = r.Client.Delete(context.TODO(), backendStorage)
+	err = r.Client.Delete(r.ctx, backendStorage)
 	if err != nil {
 		logger.Error(err, "Failed to delete", "Kind", instance.Spec.Kind, "Name", instance.Spec.Name)
 		return err
@@ -67,7 +66,7 @@ func (r *StorageSystemReconciler) deleteResources(instance *odfv1alpha1.StorageS
 func (r *StorageSystemReconciler) areAllStorageSystemsMarkedForDeletion(namespace string) (bool, error) {
 
 	var storageSystems odfv1alpha1.StorageSystemList
-	err := r.Client.List(context.TODO(), &storageSystems, &client.ListOptions{Namespace: namespace})
+	err := r.Client.List(r.ctx, &storageSystems, &client.ListOptions{Namespace: namespace})
 	if err != nil {
 		return false, err
 	}

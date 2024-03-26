@@ -17,7 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,7 +50,6 @@ func TestEnsureSubscription(t *testing.T) {
 
 		for _, kind := range KnownKinds {
 			var err error
-
 			fakeStorageSystem := GetFakeStorageSystem(kind)
 			fakeReconciler := GetFakeStorageSystemReconciler(t, fakeStorageSystem)
 			subs := GetSubscriptions(kind)
@@ -60,7 +58,7 @@ func TestEnsureSubscription(t *testing.T) {
 				for _, subscription := range subs {
 					sub := subscription.DeepCopy()
 					sub.Spec.Channel = "fake-channel"
-					err = fakeReconciler.Client.Create(context.TODO(), sub)
+					err = fakeReconciler.Client.Create(fakeReconciler.ctx, sub)
 					assert.NoError(t, err)
 				}
 			}
@@ -85,7 +83,7 @@ func TestEnsureSubscription(t *testing.T) {
 					},
 				},
 			}
-			err = fakeReconciler.Client.Create(context.TODO(), odfSub)
+			err = fakeReconciler.Client.Create(fakeReconciler.ctx, odfSub)
 			assert.NoError(t, err)
 
 			err = fakeReconciler.ensureSubscriptions(fakeStorageSystem, fakeReconciler.Log)
@@ -101,7 +99,7 @@ func TestEnsureSubscription(t *testing.T) {
 				}
 
 				actualSubscription := &operatorv1alpha1.Subscription{}
-				err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{Name: expectedSubscription.Name, Namespace: expectedSubscription.Namespace}, actualSubscription)
+				err = fakeReconciler.Client.Get(fakeReconciler.ctx, types.NamespacedName{Name: expectedSubscription.Name, Namespace: expectedSubscription.Namespace}, actualSubscription)
 				assert.NoError(t, err)
 
 				assert.Equal(t, expectedSubscription.Spec, actualSubscription.Spec)

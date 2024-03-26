@@ -17,7 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,7 +50,6 @@ func TestIsVendorSystemPresent(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
-
 		fakeStorageSystem := GetFakeStorageSystem(StorageClusterKind)
 		fakeReconciler := GetFakeStorageSystemReconciler(t, fakeStorageSystem)
 
@@ -62,7 +60,7 @@ func TestIsVendorSystemPresent(t *testing.T) {
 					Namespace: fakeStorageSystem.Spec.Namespace,
 				},
 			}
-			err := fakeReconciler.Client.Create(context.TODO(), storageCluster)
+			err := fakeReconciler.Client.Create(fakeReconciler.ctx, storageCluster)
 			assert.NoError(t, err)
 		}
 

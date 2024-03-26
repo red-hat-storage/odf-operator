@@ -40,9 +40,9 @@ import (
 //
 // NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
 // because fake.Client does not support them.
-func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) (*operatorv1alpha1.Subscription, error) {
+func CheckExistingSubscriptions(ctx context.Context, cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) (*operatorv1alpha1.Subscription, error) {
 
-	odfSub, err := GetOdfSubscription(cli)
+	odfSub, err := GetOdfSubscription(ctx, cli)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 	}
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
-	err = cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
+	err = cli.List(ctx, subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
 	if err != nil {
 		return nil, err
 	}
@@ -160,11 +160,11 @@ func getMergedEnvVars(envList1, envList2 []corev1.EnvVar) []corev1.EnvVar {
 	return updatedEnvVars
 }
 
-func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
+func EnsureDesiredSubscription(ctx context.Context, cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
 
 	var err error
 
-	desiredSubscription, err = CheckExistingSubscriptions(cli, desiredSubscription)
+	desiredSubscription, err = CheckExistingSubscriptions(ctx, cli, desiredSubscription)
 	if err != nil {
 		return err
 	}
@@ -172,9 +172,9 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 	// create/update subscription
 	sub := &operatorv1alpha1.Subscription{}
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, sub, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, cli, sub, func() error {
 		sub.Spec = desiredSubscription.Spec
-		return SetOdfSubControllerReference(cli, sub)
+		return SetOdfSubControllerReference(ctx, cli, sub)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -183,9 +183,9 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 	return nil
 }
 
-func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
+func SetOdfSubControllerReference(ctx context.Context, cli client.Client, obj client.Object) error {
 
-	odfSub, err := GetOdfSubscription(cli)
+	odfSub, err := GetOdfSubscription(ctx, cli)
 	if err != nil {
 		return err
 	}
@@ -199,10 +199,10 @@ func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
 }
 
 // GetOdfSubscription returns the subscription for odf-operator.
-func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, error) {
+func GetOdfSubscription(ctx context.Context, cli client.Client) (*operatorv1alpha1.Subscription, error) {
 
 	subsList := &operatorv1alpha1.SubscriptionList{}
-	err := cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: OperatorNamespace})
+	err := cli.List(ctx, subsList, &client.ListOptions{Namespace: OperatorNamespace})
 	if err != nil {
 		return nil, err
 	}
@@ -230,25 +230,25 @@ func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
 	return csvNames
 }
 
-func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.ClusterServiceVersion, error) {
+func EnsureVendorCsv(ctx context.Context, cli client.Client, csvName string) (*operatorv1alpha1.ClusterServiceVersion, error) {
 
 	var err error
 
 	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
-	err = cli.Get(context.TODO(), types.NamespacedName{
+	err = cli.Get(ctx, types.NamespacedName{
 		Name: csvName, Namespace: OperatorNamespace}, csvObj)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			approvalErr := ApproveInstallPlanForCsv(cli, csvName)
+			approvalErr := ApproveInstallPlanForCsv(ctx, cli, csvName)
 			if approvalErr != nil {
 				return nil, approvalErr
 			}
 		}
 		return nil, err
 	}
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, cli, csvObj, func() error {
 		csvObj.OwnerReferences = []metav1.OwnerReference{}
-		return SetOdfSubControllerReference(cli, csvObj)
+		return SetOdfSubControllerReference(ctx, cli, csvObj)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return nil, err
@@ -267,13 +267,13 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 
 // ApproveInstallPlanForCsv approve the manual approval installPlan for the given CSV
 // and returns an error if none found
-func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
+func ApproveInstallPlanForCsv(ctx context.Context, cli client.Client, csvName string) error {
 
 	var finalError error
 	var foundInstallPlan bool
 
 	installPlans := &operatorv1alpha1.InstallPlanList{}
-	err := cli.List(context.TODO(), installPlans, &client.ListOptions{Namespace: OperatorNamespace})
+	err := cli.List(ctx, installPlans, &client.ListOptions{Namespace: OperatorNamespace})
 
 	if err != nil {
 		return err
@@ -286,7 +286,7 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 				!installPlan.Spec.Approved {
 
 				installPlans.Items[i].Spec.Approved = true
-				err = cli.Update(context.TODO(), &installPlans.Items[i])
+				err = cli.Update(ctx, &installPlans.Items[i])
 				if err != nil {
 					multierr.AppendInto(&finalError, fmt.Errorf(
 						"Failed to approve installplan %s", installPlan.Name))

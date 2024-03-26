@@ -41,6 +41,7 @@ const (
 
 // StorageClusterReconciler reconciles a StorageCluster object
 type StorageClusterReconciler struct {
+	ctx context.Context
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder *EventReporter
@@ -54,10 +55,11 @@ type StorageClusterReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	r.ctx = ctx
+	logger := log.FromContext(r.ctx)
 
 	instance := &ocsv1.StorageCluster{}
-	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
+	err := r.Client.Get(r.ctx, req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("StorageCluster instance not found.")
@@ -71,7 +73,7 @@ func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	// get list of StorageSystems
 	storageSystemList := &odfv1alpha1.StorageSystemList{}
-	err = r.Client.List(context.TODO(), storageSystemList, &client.ListOptions{Namespace: instance.Namespace})
+	err = r.Client.List(r.ctx, storageSystemList, &client.ListOptions{Namespace: instance.Namespace})
 	if err != nil {
 		logger.Error(err, "Failed to list the StorageSystem.")
 		return ctrl.Result{}, err
@@ -94,7 +96,7 @@ func (r *StorageClusterReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 
 		// create StorageSystem for storageCluster
-		err = r.Client.Create(context.TODO(), storageSystem)
+		err = r.Client.Create(r.ctx, storageSystem)
 		if err != nil {
 			logger.Error(err, "Failed to create StorageSystem.", "StorageSystem", storageSystem.Name)
 			return ctrl.Result{}, err

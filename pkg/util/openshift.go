@@ -25,10 +25,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func DetermineOpenShiftVersion(client client.Client) (string, error) {
+func DetermineOpenShiftVersion(ctx context.Context, client client.Client) (string, error) {
 	// Determine ocp version
 	clusterVersionList := configv1.ClusterVersionList{}
-	if err := client.List(context.TODO(), &clusterVersionList); err != nil {
+	if err := client.List(ctx, &clusterVersionList); err != nil {
 		return "", err
 	}
 	clusterVersion := ""

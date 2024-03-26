@@ -46,6 +46,7 @@ const (
 // StorageSystemReconciler reconciles a StorageSystem object
 type StorageSystemReconciler struct {
 	client.Client
+	ctx      context.Context
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
 	Recorder *EventReporter
@@ -66,10 +67,11 @@ type StorageSystemReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	r.ctx = ctx
 	logger := r.Log.WithValues("instance", req.NamespacedName)
 
 	instance := &odfv1alpha1.StorageSystem{}
-	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
+	err := r.Client.Get(r.ctx, req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("storagesystem instance not found")
@@ -87,7 +89,7 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	result, reconcileError := r.reconcile(instance, logger)
 
 	// Apply status changes
-	statusError := r.Client.Status().Update(context.TODO(), instance)
+	statusError := r.Client.Status().Update(r.ctx, instance)
 	if statusError != nil {
 		logger.Error(statusError, "failed to update status")
 	}
@@ -178,7 +180,7 @@ func (r *StorageSystemReconciler) updateStorageSystem(instance *odfv1alpha1.Stor
 
 	// save the status locally before the Update call, as update call does not update the status and we lost it
 	instanceStatus := instance.Status.DeepCopy()
-	err := r.Client.Update(context.TODO(), instance)
+	err := r.Client.Update(r.ctx, instance)
 	instance.Status = *(instanceStatus)
 	return err
 }
@@ -207,7 +209,7 @@ func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.Stor
 	}
 
 	for _, desiredSubscription := range subs {
-		err = EnsureDesiredSubscription(r.Client, desiredSubscription)
+		err = EnsureDesiredSubscription(r.ctx, r.Client, desiredSubscription)
 		if err != nil && !errors.IsAlreadyExists(err) {
 			logger.Error(err, "failed to ensure subscription", "Subscription", desiredSubscription.Name)
 			return err
@@ -224,7 +226,7 @@ func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.Storage
 	var returnErr error
 	for _, csvName := range csvNames {
 
-		csvObj, err := EnsureVendorCsv(r.Client, csvName)
+		csvObj, err := EnsureVendorCsv(r.ctx, r.Client, csvName)
 		if err != nil {
 			logger.Error(err, "failed to validate CSV", "ClusterServiceVersion", csvName)
 			multierr.AppendInto(&returnErr, err)

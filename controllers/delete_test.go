@@ -67,6 +67,7 @@ func TestDeleteResources(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
+		ctx := context.TODO()
 		t.Logf("Case %d: %s\n", i+1, tc.label)
 
 		fakeStorageSystem := GetFakeStorageSystem(tc.kind)
@@ -83,7 +84,7 @@ func TestDeleteResources(t *testing.T) {
 
 			fakeStorageSystem.Spec.Name = vendorSystem.GetName()
 			fakeStorageSystem.Spec.Namespace = vendorSystem.GetNamespace()
-			err = fakeReconciler.Client.Create(context.TODO(), vendorSystem)
+			err = fakeReconciler.Client.Create(ctx, vendorSystem)
 			assert.NoError(t, err)
 		}
 
@@ -93,14 +94,14 @@ func TestDeleteResources(t *testing.T) {
 		// verify resource does not exist
 		if tc.kind == VendorStorageCluster() {
 			storageCluster := &ocsv1.StorageCluster{}
-			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
+			err = fakeReconciler.Client.Get(ctx, types.NamespacedName{
 				Name: fakeStorageSystem.Spec.Name, Namespace: fakeStorageSystem.Namespace},
 				storageCluster)
 			assert.True(t, errors.IsNotFound(err))
 
 		} else if tc.kind == VendorFlashSystemCluster() {
 			flashSystemCluster := &ibmv1alpha1.FlashSystemCluster{}
-			err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{
+			err = fakeReconciler.Client.Get(ctx, types.NamespacedName{
 				Name: fakeStorageSystem.Spec.Name, Namespace: fakeStorageSystem.Namespace},
 				flashSystemCluster)
 			assert.True(t, errors.IsNotFound(err))
