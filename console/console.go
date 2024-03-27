@@ -105,6 +105,16 @@ func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1alph
 					},
 					Authorize: true,
 				},
+				{
+					Type:  consolev1alpha1.ProxyTypeService,
+					Alias: "rosa-prometheus",
+					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
+						Name:      "prometheus",
+						Namespace: serviceNamespace,
+						Port:      9339,
+					},
+					Authorize: false,
+				},
 			},
 		},
 	}
