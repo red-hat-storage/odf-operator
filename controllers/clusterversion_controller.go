@@ -37,6 +37,7 @@ import (
 
 // ClusterVersionReconciler reconciles a ClusterVersion object
 type ClusterVersionReconciler struct {
+	ctx context.Context
 	client.Client
 	Scheme      *runtime.Scheme
 	ConsolePort int
@@ -53,9 +54,10 @@ type ClusterVersionReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
+	r.ctx = ctx
+	logger := log.FromContext(r.ctx)
 	instance := configv1.ClusterVersion{}
-	if err := r.Client.Get(context.TODO(), req.NamespacedName, &instance); err != nil {
+	if err := r.Client.Get(r.ctx, req.NamespacedName, &instance); err != nil {
 		return ctrl.Result{}, err
 	}
 	if err := r.ensureConsolePlugin(instance.Status.Desired.Version); err != nil {
@@ -68,8 +70,9 @@ func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.ctx = context.TODO()
 	err := mgr.Add(manager.RunnableFunc(func(context.Context) error {
-		clusterVersion, err := util.DetermineOpenShiftVersion(r.Client)
+		clusterVersion, err := util.DetermineOpenShiftVersion(r.ctx, r.Client)
 		if err != nil {
 			return err
 		}
@@ -86,14 +89,14 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) error {
-	logger := log.FromContext(context.TODO())
+	logger := log.FromContext(r.ctx)
 	// The base path to where the request are sent
 	basePath := console.GetBasePath(clusterVersion)
 	nginxConf := console.GetNginxConfiguration()
 
 	// Get ODF console Deployment
 	odfConsoleDeployment := console.GetDeployment(OperatorNamespace)
-	err := r.Client.Get(context.TODO(), types.NamespacedName{
+	err := r.Client.Get(r.ctx, types.NamespacedName{
 		Name:      odfConsoleDeployment.Name,
 		Namespace: odfConsoleDeployment.Namespace,
 	}, odfConsoleDeployment)
@@ -103,7 +106,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 
 	// Create/Update ODF console ConfigMap (nginx configuration)
 	odfConsoleConfigMap := console.GetNginxConfConfigMap(OperatorNamespace)
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsoleConfigMap, func() error {
+	_, err = controllerutil.CreateOrUpdate(r.ctx, r.Client, odfConsoleConfigMap, func() error {
 		if odfConsoleConfigMapData := odfConsoleConfigMap.Data["nginx.conf"]; odfConsoleConfigMapData != nginxConf {
 			logger.Info(fmt.Sprintf("Set the ConfigMap odf-console-nginx-conf data as '%s'", nginxConf))
 			odfConsoleConfigMap.Data["nginx.conf"] = nginxConf
@@ -116,7 +119,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 
 	// Create/Update ODF console Service
 	odfConsoleService := console.GetService(r.ConsolePort, OperatorNamespace)
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsoleService, func() error {
+	_, err = controllerutil.CreateOrUpdate(r.ctx, r.Client, odfConsoleService, func() error {
 		return controllerutil.SetControllerReference(odfConsoleDeployment, odfConsoleService, r.Scheme)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
@@ -125,7 +128,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 
 	// Create/Update ODF console ConsolePlugin
 	odfConsolePlugin := console.GetConsolePluginCR(r.ConsolePort, OperatorNamespace)
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsolePlugin, func() error {
+	_, err = controllerutil.CreateOrUpdate(r.ctx, r.Client, odfConsolePlugin, func() error {
 		if currentBasePath := odfConsolePlugin.Spec.Service.BasePath; currentBasePath != basePath {
 			logger.Info(fmt.Sprintf("Set the BasePath for odf-console plugin as '%s'", basePath))
 			odfConsolePlugin.Spec.Service.BasePath = basePath

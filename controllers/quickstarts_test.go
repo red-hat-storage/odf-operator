@@ -140,7 +140,6 @@ func TestDeleteQuickStarts(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Logf("Case %d: %s\n", i+1, tc.label)
-
 		fakeReconciler := GetFakeStorageSystemReconciler(t)
 
 		err := fakeReconciler.ensureQuickStarts(fakeReconciler.Log)
@@ -150,11 +149,11 @@ func TestDeleteQuickStarts(t *testing.T) {
 		assert.Equal(t, 2, len(quickstarts))
 
 		for i := range tc.createStorageSystems {
-			err = fakeReconciler.Client.Create(context.TODO(), &tc.createStorageSystems[i])
+			err = fakeReconciler.Client.Create(fakeReconciler.ctx, &tc.createStorageSystems[i])
 			assert.NoError(t, err)
 		}
 		for i := range tc.deleteStorageSystems {
-			err := fakeReconciler.Client.Delete(context.TODO(), &tc.deleteStorageSystems[i])
+			err := fakeReconciler.Client.Delete(fakeReconciler.ctx, &tc.deleteStorageSystems[i])
 			assert.NoError(t, err)
 			err = fakeReconciler.deleteResources(&tc.deleteStorageSystems[i], fakeReconciler.Log)
 			assert.NoError(t, err)

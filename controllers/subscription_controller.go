@@ -45,6 +45,7 @@ import (
 // SubscriptionReconciler reconciles a Subscription object
 type SubscriptionReconciler struct {
 	client.Client
+	ctx               context.Context
 	Scheme            *runtime.Scheme
 	Recorder          *EventReporter
 	ConditionName     string
@@ -61,11 +62,11 @@ type SubscriptionReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-
-	logger := log.FromContext(ctx)
+	r.ctx = ctx
+	logger := log.FromContext(r.ctx)
 
 	instance := &operatorv1alpha1.Subscription{}
-	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
+	err := r.Client.Get(r.ctx, req.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("Subscription instance not found.")
@@ -96,7 +97,7 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespa
 	subsList[StorageClusterKind] = GetSubscriptions(StorageClusterKind)
 
 	ssList := &odfv1alpha1.StorageSystemList{}
-	err = r.Client.List(context.TODO(), ssList, &client.ListOptions{Namespace: namespace})
+	err = r.Client.List(r.ctx, ssList, &client.ListOptions{Namespace: namespace})
 	if err != nil {
 		return err
 	}
@@ -107,7 +108,7 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespa
 
 	for _, subs := range subsList {
 		for _, sub := range subs {
-			errSub := EnsureDesiredSubscription(r.Client, sub)
+			errSub := EnsureDesiredSubscription(r.ctx, r.Client, sub)
 			if errSub != nil {
 				logger.Error(errSub, "failed to ensure Subscription", "Subscription", sub.Name)
 				err = fmt.Errorf("failed to ensure Subscriptions")
@@ -122,7 +123,7 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespa
 
 	for kind := range subsList {
 		for _, csvName := range GetVendorCsvNames(kind) {
-			_, csvErr := EnsureVendorCsv(r.Client, csvName)
+			_, csvErr := EnsureVendorCsv(r.ctx, r.Client, csvName)
 			if csvErr != nil {
 				multierr.AppendInto(&err, csvErr)
 			}
@@ -134,7 +135,7 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespa
 
 func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namespace string) error {
 	ocdList := &operatorv2.OperatorConditionList{}
-	err := r.Client.List(context.TODO(), ocdList, client.InNamespace(namespace))
+	err := r.Client.List(r.ctx, ocdList, client.InNamespace(namespace))
 	if err != nil {
 		logger.Error(err, "failed to list OperatorConditions")
 		return err
@@ -159,7 +160,7 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 			// operator is not upgradeable
 			msg := fmt.Sprintf("%s:%s", ocd.GetName(), cond.Message)
 			logger.Info("setting operator upgradeable status", "status", cond.Status)
-			return r.OperatorCondition.Set(context.TODO(), cond.Status,
+			return r.OperatorCondition.Set(r.ctx, cond.Status,
 				conditions.WithReason(cond.Reason), conditions.WithMessage(msg))
 		}
 	}
@@ -167,7 +168,7 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 	// all operators are upgradeable
 	status := metav1.ConditionTrue
 	logger.Info("setting operator upgradeable status", "status", status)
-	return r.OperatorCondition.Set(context.TODO(), status,
+	return r.OperatorCondition.Set(r.ctx, status,
 		conditions.WithReason("Dependents"), conditions.WithMessage("No dependent reports not upgradeable status"))
 }
 
@@ -266,7 +267,7 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return []reconcile.Request{}
 			}
 			logger := log.FromContext(ctx)
-			sub, err := GetOdfSubscription(r.Client)
+			sub, err := GetOdfSubscription(ctx, r.Client)
 			if err != nil {
 				logger.Error(err, "failed to get ODF Subscription")
 				return []reconcile.Request{}

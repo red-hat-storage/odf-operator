@@ -17,7 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"reflect"
 	"strings"
 
@@ -69,11 +68,11 @@ func (r *StorageSystemReconciler) isVendorSystemPresent(instance *odfv1alpha1.St
 		vendorSystem = &ibmv1alpha1.FlashSystemCluster{}
 	}
 
-	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.Namespace}, vendorSystem)
+	err := r.Client.Get(r.ctx, types.NamespacedName{Name: instance.Spec.Name, Namespace: instance.Spec.Namespace}, vendorSystem)
 	if err == nil {
 		logger.Info("Vendor system found", "Name", instance.Spec.Name)
 		SetVendorSystemPresentCondition(&instance.Status.Conditions, corev1.ConditionTrue, "Found", "")
-		_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, vendorSystem, func() error {
+		_, err = controllerutil.CreateOrUpdate(r.ctx, r.Client, vendorSystem, func() error {
 			return controllerutil.SetOwnerReference(instance, vendorSystem, r.Scheme)
 		})
 		if err != nil && !errors.IsAlreadyExists(err) {

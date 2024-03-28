@@ -229,7 +229,9 @@ func (d *DeployManager) WaitForCsv(csv *operatorsv1alpha1.ClusterServiceVersion)
 			return false, nil
 		}
 		if existingcsv.Status.Phase != operatorsv1alpha1.CSVPhaseSucceeded {
-			lastReason = fmt.Sprintf("waiting for CSV to succeed, but stuck in %s phase", existingcsv.Status.Phase)
+			// add complete status to lastReason which helps to understand what
+			// went wrong in testing.
+			lastReason = fmt.Sprintf("waiting for CSV to succeed, but stuck in %s phase with status:%+v", existingcsv.Status.Phase, existingcsv.Status)
 			return false, nil
 		}
 		return true, nil

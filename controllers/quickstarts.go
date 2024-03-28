@@ -17,8 +17,6 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
-
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -41,10 +39,10 @@ func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {
 			continue
 		}
 		found := consolev1.ConsoleQuickStart{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: cqs.Name, Namespace: cqs.Namespace}, &found)
+		err = r.Client.Get(r.ctx, types.NamespacedName{Name: cqs.Name, Namespace: cqs.Namespace}, &found)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				err = r.Client.Create(context.TODO(), &cqs)
+				err = r.Client.Create(r.ctx, &cqs)
 				if err != nil {
 					logger.Error(err, "Failed to create quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
 					return nil
@@ -56,7 +54,7 @@ func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {
 			return nil
 		}
 		found.Spec = cqs.Spec
-		err = r.Client.Update(context.TODO(), &found)
+		err = r.Client.Update(r.ctx, &found)
 		if err != nil {
 			logger.Error(err, "Failed to update quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
 			return nil
@@ -90,7 +88,7 @@ func (r *StorageSystemReconciler) deleteQuickStarts(logger logr.Logger, instance
 			continue
 		}
 
-		err = r.Client.Delete(context.TODO(), &cqs)
+		err = r.Client.Delete(r.ctx, &cqs)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				continue
