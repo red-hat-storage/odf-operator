@@ -39,7 +39,7 @@ metadata:
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.16"}]'
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.17"}]'
     olm.skipRange: ""
     operatorframework.io/initialization-resource: |-
       {
@@ -69,7 +69,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: odf-operator.v4.15.0
+  name: odf-operator.v4.16.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -593,4 +593,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 4.15.0
+  version: 4.16.0
