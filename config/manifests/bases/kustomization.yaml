@@ -6,7 +6,7 @@ patchesStrategicMerge:
 - odf-operator.csv.icon.yaml
 - odf-operator.csv.card-description.yaml
 commonAnnotations:
-  olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.16"}]'
+  olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.17"}]'
   olm.skipRange: ""
   operators.operatorframework.io/operator-type: standalone
 patches:
