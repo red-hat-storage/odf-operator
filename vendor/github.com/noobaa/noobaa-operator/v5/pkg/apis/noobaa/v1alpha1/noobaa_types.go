@@ -33,6 +33,7 @@ type AnnotationsSpec map[string]Annotations
 // +kubebuilder:resource:shortName=nb
 // +kubebuilder:printcolumn:name="S3-Endpoints",type="string",JSONPath=".status.services.serviceS3.nodePorts",description="S3 Endpoints"
 // +kubebuilder:printcolumn:name="Sts-Endpoints",type="string",JSONPath=".status.services.serviceSts.nodePorts",description="STS Endpoints"
+// +kubebuilder:printcolumn:name="Syslog-Endpoints",type="string",JSONPath=".status.services.serviceSyslog.nodePorts",description="Syslog Endpoints"
 // +kubebuilder:printcolumn:name="Image",type="string",JSONPath=".status.actualImage",description="Actual Image"
 // +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase",description="Phase"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
@@ -92,6 +93,10 @@ type NooBaaSpec struct {
 	// CoreResources (optional) overrides the default resource requirements for the server container
 	// +optional
 	CoreResources *corev1.ResourceRequirements `json:"coreResources,omitempty"`
+
+	// LogResources (optional) overrides the default resource requirements for the noobaa-log-processor container
+	// +optional
+	LogResources *corev1.ResourceRequirements `json:"logResources,omitempty"`
 
 	// DBResources (optional) overrides the default resource requirements for the db container
 	// +optional
@@ -217,6 +222,10 @@ type NooBaaSpec struct {
 	// Configuration related to autoscaling
 	// +optional
 	Autoscaler AutoscalerSpec `json:"autoscaler,omitempty"`
+
+	// DenyHTTP (optional) if given will deny access to the NooBaa S3 service using HTTP (only HTTPS)
+	// +optional
+	DenyHTTP bool `json:"denyHTTP,omitempty"`
 }
 
 // AutoscalerSpec defines different actoscaling spec such as autoscaler type and prometheus namespace
@@ -323,6 +332,10 @@ type NooBaaStatus struct {
 	// +optional
 	UpgradePhase UpgradePhase `json:"upgradePhase,omitempty"`
 
+	// Upgrade reports the status of the ongoing postgres upgrade process
+	// +optional
+	PostgresUpdatePhase UpgradePhase `json:"postgresUpdatePhase,omitempty"`
+
 	// Readme is a user readable string with explanations on the system
 	// +optional
 	Readme string `json:"readme,omitempty"`
@@ -330,6 +343,10 @@ type NooBaaStatus struct {
 	// LastKeyRotateTime is the time system ran an encryption key rotate
 	// +optional
 	LastKeyRotateTime metav1.Time `json:"lastKeyRotateTime,omitempty"`
+
+	// BeforeUpgradeDbImage is the db image used before last db upgrade
+	// +optional
+	BeforeUpgradeDbImage *string `json:"beforeUpgradeDbImage,omitempty"`
 }
 
 // SystemPhase is a string enum type for system phases
@@ -402,7 +419,8 @@ type ServicesStatus struct {
 	ServiceMgmt ServiceStatus `json:"serviceMgmt"`
 	ServiceS3   ServiceStatus `json:"serviceS3"`
 	// +optional
-	ServiceSts ServiceStatus `json:"serviceSts,omitempty"`
+	ServiceSts    ServiceStatus `json:"serviceSts,omitempty"`
+	ServiceSyslog ServiceStatus `json:"serviceSyslog,omitempty"`
 }
 
 // UserStatus is the status info of a user secret
@@ -472,6 +490,12 @@ const (
 	UpgradePhaseClean UpgradePhase = "Cleanning"
 
 	UpgradePhaseFinished UpgradePhase = "DoneUpgrade"
+
+	UpgradePhaseReverting UpgradePhase = "Reverting"
+
+	UpgradePhaseFailed UpgradePhase = "Failed"
+
+	UpgradePhaseUpgrade UpgradePhase = "Upgrading"
 )
 
 // CleanupPolicySpec specifies the cleanup policy
