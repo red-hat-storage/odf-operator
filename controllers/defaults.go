@@ -38,6 +38,13 @@ var (
 		"OCS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
+		"OCS_CLIENT_SUBSCRIPTION_NAME":                    "ocs-client-operator",
+		"OCS_CLIENT_SUBSCRIPTION_PACKAGE":                 "ocs-client-operator",
+		"OCS_CLIENT_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"OCS_CLIENT_SUBSCRIPTION_STARTINGCSV":             "ocs-client-operator.v4.15.0",
+		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
 		"CSIADDONS_SUBSCRIPTION_NAME":                    "csi-addons",
 		"CSIADDONS_SUBSCRIPTION_PACKAGE":                 "csi-addons",
 		"CSIADDONS_SUBSCRIPTION_CHANNEL":                 "alpha",
@@ -51,6 +58,20 @@ var (
 		"IBM_SUBSCRIPTION_STARTINGCSV":             "ibm-storage-odf-operator.v1.4.1",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
+		"ROOK_SUBSCRIPTION_NAME":                    "rook-ceph-operator",
+		"ROOK_SUBSCRIPTION_PACKAGE":                 "rook-ceph-operator",
+		"ROOK_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.15.0",
+		"ROOK_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
+		"PROMETHEUS_SUBSCRIPTION_NAME":                    "odf-prometheus-operator",
+		"PROMETHEUS_SUBSCRIPTION_PACKAGE":                 "odf-prometheus-operator",
+		"PROMETHEUS_SUBSCRIPTION_CHANNEL":                 "beta",
+		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.10.0",
+		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
@@ -61,6 +82,13 @@ var (
 	OcsSubscriptionStartingCSV            = GetEnvOrDefault("OCS_SUBSCRIPTION_STARTINGCSV")
 	OcsSubscriptionCatalogSource          = GetEnvOrDefault("OCS_SUBSCRIPTION_CATALOGSOURCE")
 	OcsSubscriptionCatalogSourceNamespace = GetEnvOrDefault("OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	OcsClientSubscriptionName                   = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_NAME")
+	OcsClientSubscriptionPackage                = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_PACKAGE")
+	OcsClientSubscriptionChannel                = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_CHANNEL")
+	OcsClientSubscriptionStartingCSV            = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_STARTINGCSV")
+	OcsClientSubscriptionCatalogSource          = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE")
+	OcsClientSubscriptionCatalogSourceNamespace = GetEnvOrDefault("OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 
 	NoobaaSubscriptionName                   = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_NAME")
 	NoobaaSubscriptionPackage                = GetEnvOrDefault("NOOBAA_SUBSCRIPTION_PACKAGE")
@@ -82,6 +110,20 @@ var (
 	IbmSubscriptionStartingCSV            = GetEnvOrDefault("IBM_SUBSCRIPTION_STARTINGCSV")
 	IbmSubscriptionCatalogSource          = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE")
 	IbmSubscriptionCatalogSourceNamespace = GetEnvOrDefault("IBM_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	RookSubscriptionName                   = GetEnvOrDefault("ROOK_SUBSCRIPTION_NAME")
+	RookSubscriptionPackage                = GetEnvOrDefault("ROOK_SUBSCRIPTION_PACKAGE")
+	RookSubscriptionChannel                = GetEnvOrDefault("ROOK_SUBSCRIPTION_CHANNEL")
+	RookSubscriptionStartingCSV            = GetEnvOrDefault("ROOK_SUBSCRIPTION_STARTINGCSV")
+	RookSubscriptionCatalogSource          = GetEnvOrDefault("ROOK_SUBSCRIPTION_CATALOGSOURCE")
+	RookSubscriptionCatalogSourceNamespace = GetEnvOrDefault("ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	PrometheusSubscriptionName                   = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_NAME")
+	PrometheusSubscriptionPackage                = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_PACKAGE")
+	PrometheusSubscriptionChannel                = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_CHANNEL")
+	PrometheusSubscriptionStartingCSV            = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_STARTINGCSV")
+	PrometheusSubscriptionCatalogSource          = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE")
+	PrometheusSubscriptionCatalogSourceNamespace = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 )
 
 const (

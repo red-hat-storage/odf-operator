@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -72,6 +73,16 @@ func TestEnsureSubscription(t *testing.T) {
 
 				Spec: &operatorv1alpha1.SubscriptionSpec{
 					Package: OdfSubscriptionPackage,
+					Config: &operatorv1alpha1.SubscriptionConfig{
+						Tolerations: []corev1.Toleration{
+							{
+								Key:      "node.odf.openshift.io/storage",
+								Operator: "Equal",
+								Value:    "true",
+								Effect:   "NoSchedule",
+							},
+						},
+					},
 				},
 			}
 			err = fakeReconciler.Client.Create(context.TODO(), odfSub)
@@ -81,9 +92,18 @@ func TestEnsureSubscription(t *testing.T) {
 			assert.NoError(t, err)
 
 			for _, expectedSubscription := range subs {
+				if expectedSubscription.Spec.Config == nil {
+					expectedSubscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
+						Tolerations: odfSub.Spec.Config.Tolerations,
+					}
+				} else {
+					expectedSubscription.Spec.Config.Tolerations = getMergedTolerations(odfSub.Spec.Config.Tolerations, expectedSubscription.Spec.Config.Tolerations)
+				}
+
 				actualSubscription := &operatorv1alpha1.Subscription{}
 				err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{Name: expectedSubscription.Name, Namespace: expectedSubscription.Namespace}, actualSubscription)
 				assert.NoError(t, err)
+
 				assert.Equal(t, expectedSubscription.Spec, actualSubscription.Spec)
 			}
 		}

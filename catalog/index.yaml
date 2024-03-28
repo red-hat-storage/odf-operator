@@ -22,6 +22,17 @@ entries:
 
 ---
 defaultChannel: alpha
+name: ocs-client-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ocs-client-operator
+name: alpha
+entries:
+  - name: ocs-client-operator.v4.15.0
+
+---
+defaultChannel: alpha
 name: noobaa-operator
 schema: olm.package
 ---
@@ -52,3 +63,25 @@ package: ibm-storage-odf-operator
 name: stable-v1.4
 entries:
   - name: ibm-storage-odf-operator.v1.4.1
+
+---
+defaultChannel: alpha
+name: rook-ceph-operator
+schema: olm.package
+---
+schema: olm.channel
+package: rook-ceph-operator
+name: alpha
+entries:
+  - name: rook-ceph-operator.v4.15.0
+
+---
+defaultChannel: beta
+name: odf-prometheus-operator
+schema: olm.package
+---
+schema: olm.channel
+package: odf-prometheus-operator
+name: beta
+entries:
+  - name: odf-prometheus-operator.v4.10.0

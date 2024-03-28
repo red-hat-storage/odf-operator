@@ -20,10 +20,16 @@ var (
 	OdfClusterServiceVersion string
 	// OcsClusterServiceVersion is the name of ocs csv
 	OcsClusterServiceVersion string
+	// OcsClientClusterServiceVersion is the name of ocs-client csv
+	OcsClientClusterServiceVersion string
 	// NoobaClusterServiceVersion is the name of Nooba csv
 	NoobaClusterServiceVersion string
 	// CsiaddonsClusterServiceVersion is the name of Csiaddons csv
 	CsiaddonsClusterServiceVersion string
+	// RookClusterServiceVersion is the name of Rook csv
+	RookClusterServiceVersion string
+	// PrometheusClusterService version is the name of the Prometheus csv
+	PrometheusClusterServiceVersion string
 )
 
 var (
@@ -44,15 +50,19 @@ func init() {
 	flag.BoolVar(&OdfClusterUninstall, "odf-operator-uninstall", true, "Uninstall the ODF operator after test completion")
 	flag.StringVar(&OdfClusterServiceVersion, "odf-cluster-service-version", "", "The ODF CSV name which needs to verified")
 	flag.StringVar(&OcsClusterServiceVersion, "ocs-cluster-service-version", "", "The OCS CSV name which needs to verified")
+	flag.StringVar(&OcsClientClusterServiceVersion, "ocs-client-cluster-service-version", "", "The OCS CSV name which needs to verified")
 	flag.StringVar(&NoobaClusterServiceVersion, "nooba-cluster-service-version", "", "The Nooba CSV name which needs to verified")
 	flag.StringVar(&CsiaddonsClusterServiceVersion, "csiaddons-cluster-service-version", "", "The CSI Addon CSV name which needs to verified")
+	flag.StringVar(&RookClusterServiceVersion, "rook-cluster-service-version", "", "The Rook CSV name which needs to verified")
+	flag.StringVar(&PrometheusClusterServiceVersion, "prometheus-cluster-service-version", "", "The Prometheus CSV name which needs to verified")
 	flag.Parse()
 
 	verifyFlags()
 
 	// A list of names of all the csvs that should be installed
-	CsvNames = []string{OdfClusterServiceVersion, OcsClusterServiceVersion,
-		NoobaClusterServiceVersion, CsiaddonsClusterServiceVersion}
+	CsvNames = []string{OdfClusterServiceVersion, OcsClusterServiceVersion, OcsClientClusterServiceVersion,
+		RookClusterServiceVersion, NoobaClusterServiceVersion,
+		CsiaddonsClusterServiceVersion, PrometheusClusterServiceVersion}
 
 	dm, err := deploymanager.NewDeployManager()
 	if err != nil {
@@ -79,11 +89,23 @@ func verifyFlags() {
 		panic("ocs-cluster-service-version is not provided")
 	}
 
+	if OcsClientClusterServiceVersion == "" {
+		panic("ocs-client-cluster-service-version is not provider")
+	}
+
 	if NoobaClusterServiceVersion == "" {
 		panic("nooba-cluster-service-version is not provided")
 	}
 
 	if CsiaddonsClusterServiceVersion == "" {
 		panic("csiaddons-cluster-service-version is not provided")
+	}
+
+	if RookClusterServiceVersion == "" {
+		panic("rook-cluster-service-version is not provided")
+	}
+
+	if PrometheusClusterServiceVersion == "" {
+		panic("prometheus-cluster-service-version is not provided")
 	}
 }

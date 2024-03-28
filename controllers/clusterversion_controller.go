@@ -142,6 +142,16 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 					},
 					Authorize: true,
 				},
+				{
+					Type:  consolev1alpha1.ProxyTypeService,
+					Alias: "rosa-prometheus",
+					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
+						Name:      "prometheus",
+						Namespace: OperatorNamespace,
+						Port:      9339,
+					},
+					Authorize: false,
+				},
 			}
 		}
 		return nil

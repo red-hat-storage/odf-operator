@@ -105,13 +105,23 @@ func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1alph
 					},
 					Authorize: true,
 				},
+				{
+					Type:  consolev1alpha1.ProxyTypeService,
+					Alias: "rosa-prometheus",
+					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
+						Name:      "prometheus",
+						Namespace: serviceNamespace,
+						Port:      9339,
+					},
+					Authorize: false,
+				},
 			},
 		},
 	}
 }
 
 func GetBasePath(clusterVersion string) string {
-	if strings.Contains(clusterVersion, "4.16") {
+	if strings.Contains(clusterVersion, "4.17") {
 		return COMPATIBILITY_BASE_PATH
 	}
 

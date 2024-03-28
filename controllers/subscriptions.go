@@ -42,16 +42,27 @@ import (
 // because fake.Client does not support them.
 func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) (*operatorv1alpha1.Subscription, error) {
 
-	subsList := &operatorv1alpha1.SubscriptionList{}
-	err := cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
+	odfSub, err := GetOdfSubscription(cli)
 	if err != nil {
 		return nil, err
 	}
 
+	if odfSub.Spec.Config == nil {
+		odfSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
+	}
+
+	subsList := &operatorv1alpha1.SubscriptionList{}
+	err = cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
+	if err != nil {
+		return nil, err
+	}
+
+	var subExsist bool
 	var actualSub *operatorv1alpha1.Subscription
 	pkgName := desiredSubscription.Spec.Package
 	for i, sub := range subsList.Items {
 		if sub.Spec.Package == pkgName {
+			subExsist = true
 			if actualSub != nil {
 				foundSubs := []string{actualSub.Name, sub.Name}
 				return nil, fmt.Errorf("multiple Subscriptions found for package '%s': %v", pkgName, foundSubs)
@@ -59,20 +70,69 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 			actualSub = &subsList.Items[i]
 			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
 
-			// If the config is not set, only then set it to the desired value => allow user to override
-			if actualSub.Spec.Config == nil {
+			if actualSub.Spec.Config == nil && desiredSubscription.Spec.Config == nil {
+				actualSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
+				actualSub.Spec.Config.Tolerations = odfSub.Spec.Config.Tolerations
+			} else if actualSub.Spec.Config == nil && desiredSubscription.Spec.Config != nil {
 				actualSub.Spec.Config = desiredSubscription.Spec.Config
+				actualSub.Spec.Config.Tolerations = getMergedTolerations(odfSub.Spec.Config.Tolerations, desiredSubscription.Spec.Config.Tolerations)
+			} else if actualSub.Spec.Config != nil && desiredSubscription.Spec.Config == nil {
+				actualSub.Spec.Config.Tolerations = odfSub.Spec.Config.Tolerations
 			} else if actualSub.Spec.Config != nil && desiredSubscription.Spec.Config != nil {
 				// Combines the environment variables from both subscriptions.
-				// If actualSub already contains an environment variable, its value will be updated with the value from desiredSubscription.
 				actualSub.Spec.Config.Env = getMergedEnvVars(actualSub.Spec.Config.Env, desiredSubscription.Spec.Config.Env)
+				// Combines the Tolerations from odf sub and desired sub.
+				actualSub.Spec.Config.Tolerations = getMergedTolerations(odfSub.Spec.Config.Tolerations, desiredSubscription.Spec.Config.Tolerations)
 			}
 
 			desiredSubscription = actualSub
 		}
 	}
 
+	if !subExsist {
+		if desiredSubscription.Spec.Config == nil {
+			desiredSubscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
+				Tolerations: odfSub.Spec.Config.Tolerations,
+			}
+		} else {
+			desiredSubscription.Spec.Config.Tolerations = getMergedTolerations(odfSub.Spec.Config.Tolerations, desiredSubscription.Spec.Config.Tolerations)
+		}
+	}
+
 	return desiredSubscription, nil
+}
+
+func getMergedTolerations(tol1, tol2 []corev1.Toleration) []corev1.Toleration {
+
+	if len(tol1) == 0 {
+		return append([]corev1.Toleration{}, tol2...)
+	} else if len(tol2) == 0 {
+		return append([]corev1.Toleration{}, tol1...)
+	}
+
+	mergedTolerations := append([]corev1.Toleration{}, tol1...)
+
+	for _, t2 := range tol2 {
+		found := false
+		for i, t1 := range tol1 {
+			if t1.Key == t2.Key && t1.Operator == t2.Operator && t1.Value == t2.Value {
+				found = true
+				break
+			}
+			// If the toleration with the same key but different values is found,
+			// update the existing toleration in tol1 with the new toleration from tol2.
+			if t1.Key == t2.Key && t1.Operator == t2.Operator {
+				tol1[i] = t2
+				found = true
+				break
+			}
+		}
+		if !found {
+			mergedTolerations = append(mergedTolerations, t2)
+		}
+	}
+
+	return mergedTolerations
 }
 
 // getMergedEnvVars updates the value of env variables in the envList1 with that of envList2 and
@@ -163,7 +223,8 @@ func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
 	if kind == VendorFlashSystemCluster() {
 		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
-		csvNames = []string{NoobaaSubscriptionStartingCSV, OcsSubscriptionStartingCSV, CSIAddonsSubscriptionStartingCSV}
+		csvNames = []string{OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
+			CSIAddonsSubscriptionStartingCSV, OcsClientSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV}
 	}
 
 	return csvNames
@@ -300,6 +361,21 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
+	ocsClientSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      OcsClientSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          OcsClientSubscriptionCatalogSource,
+			CatalogSourceNamespace: OcsClientSubscriptionCatalogSourceNamespace,
+			Package:                OcsClientSubscriptionPackage,
+			Channel:                OcsClientSubscriptionChannel,
+			StartingCSV:            OcsClientSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
 	csiAddonsSubscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      CSIAddonsSubscriptionName,
@@ -325,7 +401,38 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{noobaaSubscription, ocsSubscription, csiAddonsSubscription}
+	rookSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      RookSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          RookSubscriptionCatalogSource,
+			CatalogSourceNamespace: RookSubscriptionCatalogSourceNamespace,
+			Package:                RookSubscriptionPackage,
+			Channel:                RookSubscriptionChannel,
+			StartingCSV:            RookSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
+	prometheusSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      PrometheusSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          PrometheusSubscriptionCatalogSource,
+			CatalogSourceNamespace: PrometheusSubscriptionCatalogSourceNamespace,
+			Package:                PrometheusSubscriptionPackage,
+			Channel:                PrometheusSubscriptionChannel,
+			StartingCSV:            PrometheusSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
+	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription,
+		csiAddonsSubscription, ocsClientSubscription, prometheusSubscription}
 }
 
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
