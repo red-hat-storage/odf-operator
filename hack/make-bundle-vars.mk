@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 4.15.0
+VERSION ?= 4.16.0
 
 # MAX_OCP_VERSION variable specifies the maximum supported version of OCP.
 # Its purpose is to add an annotation to the CSV file, blocking OCP upgrades beyond the X+1 version.
@@ -69,7 +69,7 @@ CRD_OPTIONS ?= "crd"
 
 OCS_BUNDLE_NAME ?= ocs-operator
 OCS_BUNDLE_IMG_NAME ?= $(OCS_BUNDLE_NAME)-bundle
-OCS_BUNDLE_IMG_TAG ?= v4.15.0
+OCS_BUNDLE_IMG_TAG ?= v4.16.0
 OCS_BUNDLE_IMG_LOCATION ?= quay.io/ocs-dev
 OCS_BUNDLE_IMG ?= $(OCS_BUNDLE_IMG_LOCATION)/$(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE_IMG_TAG)
 
