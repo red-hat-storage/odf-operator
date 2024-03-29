@@ -62,7 +62,7 @@ var (
 		"ROOK_SUBSCRIPTION_NAME":                    "rook-ceph-operator",
 		"ROOK_SUBSCRIPTION_PACKAGE":                 "rook-ceph-operator",
 		"ROOK_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.15.0",
+		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.16.0",
 		"ROOK_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
