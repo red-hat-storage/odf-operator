@@ -84,4 +84,4 @@ schema: olm.channel
 package: odf-prometheus-operator
 name: beta
 entries:
-  - name: odf-prometheus-operator.v4.10.0
+  - name: odf-prometheus-operator.v4.16.0
