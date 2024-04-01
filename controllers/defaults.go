@@ -41,14 +41,14 @@ var (
 		"OCS_CLIENT_SUBSCRIPTION_NAME":                    "ocs-client-operator",
 		"OCS_CLIENT_SUBSCRIPTION_PACKAGE":                 "ocs-client-operator",
 		"OCS_CLIENT_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"OCS_CLIENT_SUBSCRIPTION_STARTINGCSV":             "ocs-client-operator.v4.15.0",
+		"OCS_CLIENT_SUBSCRIPTION_STARTINGCSV":             "ocs-client-operator.v4.16.0",
 		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
 		"CSIADDONS_SUBSCRIPTION_NAME":                    "csi-addons",
 		"CSIADDONS_SUBSCRIPTION_PACKAGE":                 "csi-addons",
 		"CSIADDONS_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"CSIADDONS_SUBSCRIPTION_STARTINGCSV":             "csi-addons.v0.7.0",
+		"CSIADDONS_SUBSCRIPTION_STARTINGCSV":             "csi-addons.v0.8.0",
 		"CSIADDONS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"CSIADDONS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
@@ -62,14 +62,14 @@ var (
 		"ROOK_SUBSCRIPTION_NAME":                    "rook-ceph-operator",
 		"ROOK_SUBSCRIPTION_PACKAGE":                 "rook-ceph-operator",
 		"ROOK_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.15.0",
+		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.16.0",
 		"ROOK_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
 		"PROMETHEUS_SUBSCRIPTION_NAME":                    "odf-prometheus-operator",
 		"PROMETHEUS_SUBSCRIPTION_PACKAGE":                 "odf-prometheus-operator",
 		"PROMETHEUS_SUBSCRIPTION_CHANNEL":                 "beta",
-		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.10.0",
+		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.16.0",
 		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 	}
