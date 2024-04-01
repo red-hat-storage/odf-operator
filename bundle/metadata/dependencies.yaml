@@ -2,15 +2,15 @@ dependencies:
 - type: olm.package
   value:
     packageName: ocs-operator
-    version: ">=4.15.0 <4.16.0 || 4.16.0"
+    version: ">=4.15.0 <=4.16.0"
 - type: olm.package
   value:
     packageName: rook-ceph-operator
-    version: ">=4.15.0 <4.16.0 || 4.16.0"
+    version: ">=4.15.0 <=4.16.0"
 - type: olm.package
   value:
     packageName: ocs-client-operator
-    version: ">=4.15.0 <4.16.0 || 4.16.0"
+    version: ">=4.15.0 <=4.16.0"
 - type: olm.package
   value:
     packageName: noobaa-operator
@@ -22,4 +22,4 @@ dependencies:
 - type: olm.package
   value:
     packageName: odf-prometheus-operator
-    version: ">=4.15.0 <4.16.0 || 4.16.0"
+    version: ">=4.15.0 <=4.16.0"
