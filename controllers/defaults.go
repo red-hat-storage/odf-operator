@@ -48,7 +48,7 @@ var (
 		"CSIADDONS_SUBSCRIPTION_NAME":                    "csi-addons",
 		"CSIADDONS_SUBSCRIPTION_PACKAGE":                 "csi-addons",
 		"CSIADDONS_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"CSIADDONS_SUBSCRIPTION_STARTINGCSV":             "csi-addons.v0.7.0",
+		"CSIADDONS_SUBSCRIPTION_STARTINGCSV":             "csi-addons.v0.8.0",
 		"CSIADDONS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"CSIADDONS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
