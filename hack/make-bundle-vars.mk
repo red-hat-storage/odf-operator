@@ -54,6 +54,7 @@ IMAGE_TAG ?= latest
 IMAGE_NAME ?= odf-operator
 BUNDLE_IMAGE_NAME ?= $(IMAGE_NAME)-bundle
 CATALOG_IMAGE_NAME ?= $(IMAGE_NAME)-catalog
+CATALOG_DEPS_IMAGE_NAME ?= $(IMAGE_NAME)-catalog-deps
 
 # IMG defines the image used for the operator.
 IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
@@ -63,6 +64,9 @@ BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(BUNDLE_IMAGE_NAME):$(IMA
 
 # CATALOG_IMG defines the image used for the catalog.
 CATALOG_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CATALOG_IMAGE_NAME):$(IMAGE_TAG)
+
+# CATALOG_DEPS_IMG defines the image used for the catalog deps.
+CATALOG_DEPS_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CATALOG_DEPS_IMAGE_NAME):$(IMAGE_TAG)
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd"
