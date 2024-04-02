@@ -182,3 +182,11 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+.PHONY: catalog-deps-build
+catalog-deps-build: catalog ## Build a catalog-deps image.
+	docker build -f catalog.deps.Dockerfile -t $(CATALOG_DEPS_IMG) .
+
+.PHONY: catalog-deps-push
+catalog-deps-push: ## Push a catalog-deps image.
+	$(MAKE) docker-push IMG=$(CATALOG_DEPS_IMG)
