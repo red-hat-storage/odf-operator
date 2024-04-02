@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/metrics"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
@@ -219,7 +220,10 @@ func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.Stor
 
 func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
 
-	csvNames := GetVendorCsvNames(instance.Spec.Kind)
+	csvNames, err := GetVendorCsvNames(r.Client, instance.Spec.Kind)
+	if err != nil {
+		return err
+	}
 
 	var returnErr error
 	for _, csvName := range csvNames {
@@ -259,6 +263,7 @@ func (r *StorageSystemReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&odfv1alpha1.StorageSystem{}, builder.WithPredicates(generationChangedPredicate)).
 		Owns(&operatorv1alpha1.Subscription{}, builder.WithPredicates(generationChangedPredicate, ignoreCreatePredicate)).
+		Owns(&ocsv1.StorageCluster{}, builder.WithPredicates(generationChangedPredicate)).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 1}).
 		Complete(r)
 }
