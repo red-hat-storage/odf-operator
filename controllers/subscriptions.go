@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
@@ -51,6 +52,14 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 		odfSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
 	}
 
+	var isProvider bool
+	if desiredSubscription.Spec.Package == OcsClientSubscriptionPackage {
+		isProvider, err = isProviderMode(cli)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	subsList := &operatorv1alpha1.SubscriptionList{}
 	err = cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
 	if err != nil {
@@ -68,7 +77,10 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 				return nil, fmt.Errorf("multiple Subscriptions found for package '%s': %v", pkgName, foundSubs)
 			}
 			actualSub = &subsList.Items[i]
-			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
+
+			if !isProvider {
+				actualSub.Spec.Channel = desiredSubscription.Spec.Channel
+			}
 
 			if actualSub.Spec.Config == nil && desiredSubscription.Spec.Config == nil {
 				actualSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
@@ -100,6 +112,23 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 	}
 
 	return desiredSubscription, nil
+}
+
+func isProviderMode(cli client.Client) (bool, error) {
+
+	storageclusters := &ocsv1.StorageClusterList{}
+	err := cli.List(context.TODO(), storageclusters)
+	if err != nil {
+		return false, err
+	}
+
+	for _, storagecluster := range storageclusters.Items {
+		if storagecluster.Spec.AllowRemoteStorageConsumers {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func getMergedTolerations(tol1, tol2 []corev1.Toleration) []corev1.Toleration {
@@ -216,18 +245,24 @@ func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, erro
 	return nil, fmt.Errorf("odf-operator subscription not found")
 }
 
-func GetVendorCsvNames(kind odfv1alpha1.StorageKind) []string {
+func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]string, error) {
 
 	var csvNames []string
+	var err error
+	var isProvider bool
 
 	if kind == VendorFlashSystemCluster() {
 		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
 		csvNames = []string{OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
-			CSIAddonsSubscriptionStartingCSV, OcsClientSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV}
+			CSIAddonsSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV}
+
+		if isProvider, err = isProviderMode(cli); !isProvider {
+			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV)
+		}
 	}
 
-	return csvNames
+	return csvNames, err
 }
 
 func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.ClusterServiceVersion, error) {
