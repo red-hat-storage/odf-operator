@@ -121,7 +121,12 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespa
 	}
 
 	for kind := range subsList {
-		for _, csvName := range GetVendorCsvNames(kind) {
+		csvNames, csvErr := GetVendorCsvNames(r.Client, kind)
+		if csvErr != nil {
+			return csvErr
+		}
+
+		for _, csvName := range csvNames {
 			_, csvErr := EnsureVendorCsv(r.Client, csvName)
 			if csvErr != nil {
 				multierr.AppendInto(&err, csvErr)
@@ -140,7 +145,17 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 		return err
 	}
 
-	condNames := append(GetVendorCsvNames(StorageClusterKind), GetVendorCsvNames(FlashSystemKind)...)
+	condNames, err := GetVendorCsvNames(r.Client, StorageClusterKind)
+	if err != nil {
+		return err
+	}
+
+	condNamesFlashSystem, err := GetVendorCsvNames(r.Client, FlashSystemKind)
+	if err != nil {
+		return err
+	}
+
+	condNames = append(condNames, condNamesFlashSystem...)
 
 	condMap := make(map[string]struct{}, len(condNames))
 	for i := range condNames {
