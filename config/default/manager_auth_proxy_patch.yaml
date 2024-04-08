@@ -24,6 +24,7 @@ spec:
           capabilities:
             drop:
               - ALL
+          readOnlyRootFilesystem: true
       - name: manager
         args:
         - "--health-probe-bind-address=:8081"
