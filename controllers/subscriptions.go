@@ -198,6 +198,13 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 		return err
 	}
 
+	// rook is the ocs deps in the 4.16, We should not create the subscription.
+	// We should only update it if it is already there to add tolerations etc.
+	if desiredSubscription.Spec.Package == RookSubscriptionPackage &&
+		desiredSubscription.ObjectMeta.CreationTimestamp.IsZero() {
+		return nil
+	}
+
 	// create/update subscription
 	sub := &operatorv1alpha1.Subscription{}
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
@@ -436,7 +443,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	_ = &operatorv1alpha1.Subscription{
+	rookSubscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      RookSubscriptionName,
 			Namespace: OperatorNamespace,
@@ -466,7 +473,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{ocsSubscription, noobaaSubscription,
+	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription,
 		csiAddonsSubscription, ocsClientSubscription, prometheusSubscription}
 }
 

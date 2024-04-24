@@ -100,6 +100,10 @@ func TestEnsureSubscription(t *testing.T) {
 					expectedSubscription.Spec.Config.Tolerations = getMergedTolerations(odfSub.Spec.Config.Tolerations, expectedSubscription.Spec.Config.Tolerations)
 				}
 
+				if expectedSubscription.Spec.Package == RookSubscriptionPackage {
+					continue
+				}
+
 				actualSubscription := &operatorv1alpha1.Subscription{}
 				err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{Name: expectedSubscription.Name, Namespace: expectedSubscription.Namespace}, actualSubscription)
 				assert.NoError(t, err)
