@@ -136,6 +136,9 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
+install-odf: operator-sdk ## install odf using the hack/install-odf.sh script
+	hack/install-odf.sh $(OPERATOR_SDK) $(BUNDLE_IMG) $(CATALOG_DEPS_IMG) $(STARTING_CSVS)
+
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	cd config/default && $(KUSTOMIZE) edit set image rbac-proxy=$(RBAC_PROXY_IMG)
@@ -198,3 +201,11 @@ catalog-build: catalog ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+.PHONY: catalog-deps-build
+catalog-deps-build: catalog ## Build a catalog-deps image.
+	docker build -f catalog.deps.Dockerfile -t $(CATALOG_DEPS_IMG) .
+
+.PHONY: catalog-deps-push
+catalog-deps-push: ## Push a catalog-deps image.
+	$(MAKE) docker-push IMG=$(CATALOG_DEPS_IMG)
