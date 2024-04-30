@@ -19,3 +19,7 @@ dependencies:
   value:
     packageName: odf-prometheus-operator
     version: ">=4.15.0 <=4.16.0"
+- type: olm.package
+  value:
+    packageName: recipe
+    version: "0.0.1"
