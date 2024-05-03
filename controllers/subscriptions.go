@@ -262,7 +262,7 @@ func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]strin
 		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
 		csvNames = []string{OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
-			CSIAddonsSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV}
+			CSIAddonsSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV, RecipeSubscriptionStartingCSV}
 
 		if isProvider, err = isProviderMode(cli); !isProvider {
 			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV)
@@ -473,8 +473,23 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
+	recipeSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      RecipeSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          RecipeSubscriptionCatalogSource,
+			CatalogSourceNamespace: RecipeSubscriptionCatalogSourceNamespace,
+			Package:                RecipeSubscriptionPackage,
+			Channel:                RecipeSubscriptionChannel,
+			StartingCSV:            RecipeSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
 	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription,
-		csiAddonsSubscription, ocsClientSubscription, prometheusSubscription}
+		csiAddonsSubscription, ocsClientSubscription, prometheusSubscription, recipeSubscription}
 }
 
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster

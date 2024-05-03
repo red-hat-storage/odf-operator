@@ -72,6 +72,13 @@ var (
 		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.16.0",
 		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
+		"RECIPE_SUBSCRIPTION_NAME":                    "recipe",
+		"RECIPE_SUBSCRIPTION_PACKAGE":                 "recipe",
+		"RECIPE_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"RECIPE_SUBSCRIPTION_STARTINGCSV":             "recipe.v0.0.1",
+		"RECIPE_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"RECIPE_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
@@ -124,6 +131,13 @@ var (
 	PrometheusSubscriptionStartingCSV            = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_STARTINGCSV")
 	PrometheusSubscriptionCatalogSource          = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE")
 	PrometheusSubscriptionCatalogSourceNamespace = GetEnvOrDefault("PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	RecipeSubscriptionName                   = GetEnvOrDefault("RECIPE_SUBSCRIPTION_NAME")
+	RecipeSubscriptionPackage                = GetEnvOrDefault("RECIPE_SUBSCRIPTION_PACKAGE")
+	RecipeSubscriptionChannel                = GetEnvOrDefault("RECIPE_SUBSCRIPTION_CHANNEL")
+	RecipeSubscriptionStartingCSV            = GetEnvOrDefault("RECIPE_SUBSCRIPTION_STARTINGCSV")
+	RecipeSubscriptionCatalogSource          = GetEnvOrDefault("RECIPE_SUBSCRIPTION_CATALOGSOURCE")
+	RecipeSubscriptionCatalogSourceNamespace = GetEnvOrDefault("RECIPE_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 )
 
 const (
