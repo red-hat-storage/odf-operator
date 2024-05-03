@@ -85,3 +85,14 @@ package: odf-prometheus-operator
 name: beta
 entries:
   - name: odf-prometheus-operator.v4.16.0
+
+---
+defaultChannel: alpha
+name: recipe
+schema: olm.package
+---
+schema: olm.channel
+package: recipe
+name: alpha
+entries:
+  - name: recipe.v0.0.1
