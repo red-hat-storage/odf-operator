@@ -23,7 +23,6 @@ fi
 oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAMESPACE" csv $CSV_NAMES
 
 oc wait --timeout=5m --for condition=Available -n "$INSTALL_NAMESPACE" deployment \
-    console \
     csi-addons-controller-manager \
     noobaa-operator \
     ocs-client-operator-console \
