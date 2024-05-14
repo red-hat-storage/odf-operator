@@ -436,7 +436,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	_ = &operatorv1alpha1.Subscription{
+	rookSubscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      RookSubscriptionName,
 			Namespace: OperatorNamespace,
@@ -481,7 +481,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{ocsSubscription, noobaaSubscription,
+	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription,
 		csiAddonsSubscription, ocsClientSubscription, prometheusSubscription, recipeSubscription}
 }
 
