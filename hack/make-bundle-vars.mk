@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 4.16.0
+VERSION ?= 4.17.0
 
 # MAX_OCP_VERSION variable specifies the maximum supported version of OCP.
 # Its purpose is to add an annotation to the CSV file, blocking OCP upgrades beyond the X+1 version.
@@ -87,8 +87,8 @@ OCS_CLIENT_BUNDLE_IMG ?= $(OCS_CLIENT_BUNDLE_IMG_LOCATION)/$(OCS_CLIENT_BUNDLE_I
 
 NOOBAA_BUNDLE_NAME ?= noobaa-operator
 NOOBAA_BUNDLE_IMG_NAME ?= $(NOOBAA_BUNDLE_NAME)-bundle
-NOOBAA_BUNDLE_VERSION ?= v5.14.0
-NOOBAA_BUNDLE_IMG_TAG ?= v5.14.0
+NOOBAA_BUNDLE_VERSION ?= v5.17.0
+NOOBAA_BUNDLE_IMG_TAG ?= master-20240514
 NOOBAA_BUNDLE_IMG_LOCATION ?= quay.io/noobaa
 NOOBAA_BUNDLE_IMG ?= $(NOOBAA_BUNDLE_IMG_LOCATION)/$(NOOBAA_BUNDLE_IMG_NAME):$(NOOBAA_BUNDLE_IMG_TAG)
 
@@ -130,7 +130,7 @@ RECIPE_BUNDLE_NAME ?= recipe
 RECIPE_BUNDLE_IMG_NAME ?= $(RECIPE_BUNDLE_NAME)-bundle
 RECIPE_BUNDLE_VERSION ?= v0.0.1
 RECIPE_BUNDLE_IMG_TAG ?= latest
-RECIPE_BUNDLE_IMG_LOCATION ?= quay.io/raghavendra_talur
+RECIPE_BUNDLE_IMG_LOCATION ?= quay.io/ramendr
 RECIPE_BUNDLE_IMG ?= $(RECIPE_BUNDLE_IMG_LOCATION)/$(RECIPE_BUNDLE_IMG_NAME):$(RECIPE_BUNDLE_IMG_TAG)
 
 # A space-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0 example.com/operator-bundle:v0.2.0).
@@ -209,7 +209,7 @@ STARTING_CSVS ?= "$(IMAGE_NAME).v$(VERSION) $(OCS_SUBSCRIPTION_STARTINGCSV) $(RO
 
 # kube rbac proxy image variables
 CLUSTER_ENV ?= openshift
-KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.16.0
 OSE_KUBE_RBAC_PROXY_IMG ?= registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.11.0
 
 ifeq ($(CLUSTER_ENV), openshift)

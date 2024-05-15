@@ -7,7 +7,7 @@ schema: olm.channel
 package: odf-operator
 name: alpha
 entries:
-  - name: odf-operator.v4.16.0
+  - name: odf-operator.v4.17.0
 
 ---
 defaultChannel: alpha
@@ -40,7 +40,7 @@ schema: olm.channel
 package: noobaa-operator
 name: alpha
 entries:
-  - name: noobaa-operator.v5.14.0
+  - name: noobaa-operator.v5.17.0
 
 ---
 defaultChannel: alpha
