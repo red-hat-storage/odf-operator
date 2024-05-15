@@ -19,6 +19,7 @@ package console
 import (
 	"strings"
 
+	consolev1 "github.com/openshift/api/console/v1"
 	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
@@ -28,18 +29,16 @@ import (
 
 const MAIN_BASE_PATH = "/"
 const COMPATIBILITY_BASE_PATH = "/compatibility/"
+const ODF_CONSOLE = "odf-console"
+const CUSTOMER_PORTAL_LINK = "https://access.redhat.com/downloads/content/547"
 
 func GetDeployment(namespace string) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "odf-console",
+			Name:      ODF_CONSOLE,
 			Namespace: namespace,
 		},
 	}
-}
-
-func GetNginxConfiguration() string {
-	return NginxConf
 }
 
 func GetNginxConfConfigMap(namespace string) *apiv1.ConfigMap {
@@ -63,7 +62,7 @@ func GetService(port int, namespace string) *apiv1.Service {
 				"service.alpha.openshift.io/serving-cert-secret-name": "odf-console-serving-cert",
 			},
 			Labels: map[string]string{
-				"app": "odf-console",
+				"app": ODF_CONSOLE,
 			},
 		},
 		Spec: apiv1.ServiceSpec{
@@ -75,9 +74,34 @@ func GetService(port int, namespace string) *apiv1.Service {
 				},
 			},
 			Selector: map[string]string{
-				"app": "odf-console",
+				"app": ODF_CONSOLE,
 			},
 			Type: "ClusterIP",
+		},
+	}
+}
+
+func GetConsolePluginProxy(serviceNamespace string) []consolev1alpha1.ConsolePluginProxy {
+	return []consolev1alpha1.ConsolePluginProxy{
+		{
+			Type:  consolev1alpha1.ProxyTypeService,
+			Alias: "provider-proxy",
+			Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
+				Name:      "ux-backend-proxy",
+				Namespace: serviceNamespace,
+				Port:      8888,
+			},
+			Authorize: true,
+		},
+		{
+			Type:  consolev1alpha1.ProxyTypeService,
+			Alias: "rosa-prometheus",
+			Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
+				Name:      "prometheus",
+				Namespace: serviceNamespace,
+				Port:      9339,
+			},
+			Authorize: false,
 		},
 	}
 }
@@ -85,7 +109,7 @@ func GetService(port int, namespace string) *apiv1.Service {
 func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1alpha1.ConsolePlugin {
 	return &consolev1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "odf-console",
+			Name: ODF_CONSOLE,
 		},
 		Spec: consolev1alpha1.ConsolePluginSpec{
 			DisplayName: "ODF Plugin",
@@ -94,28 +118,7 @@ func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1alph
 				Namespace: serviceNamespace,
 				Port:      int32(consolePort),
 			},
-			Proxy: []consolev1alpha1.ConsolePluginProxy{
-				{
-					Type:  consolev1alpha1.ProxyTypeService,
-					Alias: "provider-proxy",
-					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
-						Name:      "ux-backend-proxy",
-						Namespace: serviceNamespace,
-						Port:      8888,
-					},
-					Authorize: true,
-				},
-				{
-					Type:  consolev1alpha1.ProxyTypeService,
-					Alias: "rosa-prometheus",
-					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
-						Name:      "prometheus",
-						Namespace: serviceNamespace,
-						Port:      9339,
-					},
-					Authorize: false,
-				},
-			},
+			Proxy: GetConsolePluginProxy(serviceNamespace),
 		},
 	}
 }
@@ -126,4 +129,26 @@ func GetBasePath(clusterVersion string) string {
 	}
 
 	return MAIN_BASE_PATH
+}
+
+func GetConsoleCLIDownloadLinks() []consolev1.CLIDownloadLink {
+	return []consolev1.CLIDownloadLink{
+		{
+			Href: CUSTOMER_PORTAL_LINK,
+			Text: "Red Hat Customer Portal",
+		},
+	}
+}
+
+func GetConsoleCLIDownloadCR() *consolev1.ConsoleCLIDownload {
+	return &consolev1.ConsoleCLIDownload{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "odf-cli-downloads",
+		},
+		Spec: consolev1.ConsoleCLIDownloadSpec{
+			Description: "With the Data Foundation CLI tool, you can effectively manage and troubleshoot your Data Foundation environment from a terminal.\n\nYou can find a compatible version and download the CLI tool from the Red Hat Customer Portal:\n",
+			DisplayName: "odf - Data Foundation Command Line Interface (CLI)",
+			Links:       GetConsoleCLIDownloadLinks(),
+		},
+	}
 }
