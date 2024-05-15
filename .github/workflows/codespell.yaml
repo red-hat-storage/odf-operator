@@ -15,7 +15,7 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: codespell-project/actions-codespell@master
+    - uses: codespell-project/actions-codespell@v2
       with:
         exclude_file: go.sum
         check_filenames: true

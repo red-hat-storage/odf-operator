@@ -19,7 +19,7 @@ jobs:
       with:
         go-version-file: go.mod
 
-    - uses: golangci/golangci-lint-action@v4
+    - uses: golangci/golangci-lint-action@v6
       with:
-        version: v1.57.2
+        version: v1.58.0
         args: -E gosec --timeout=6m
