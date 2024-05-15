@@ -21,14 +21,22 @@ import (
 	"fmt"
 
 	configv1 "github.com/openshift/api/config/v1"
+
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/red-hat-storage/odf-operator/console"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
@@ -79,8 +87,56 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
+	enqueueClusterVersionRequest := handler.EnqueueRequestsFromMapFunc(
+		func(context context.Context, obj client.Object) []reconcile.Request {
+			logger := log.FromContext(context)
+
+			// Get the ClusterVersion objects
+			clusterVersionList := &configv1.ClusterVersionList{}
+			err := r.Client.List(context, clusterVersionList)
+			if err != nil {
+				logger.Error(err, "Unable to list ClusterVersion objects")
+				return []reconcile.Request{}
+			}
+
+			// Return name and namespace of the ClusterVersion object
+			request := []reconcile.Request{}
+			for _, cv := range clusterVersionList.Items {
+				request = append(request, reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Namespace: cv.Namespace,
+						Name:      cv.Name,
+					},
+				})
+			}
+
+			return request
+		},
+	)
+
+	deploymentPredicate := predicate.Funcs{
+		CreateFunc:  func(e event.CreateEvent) bool { return false },
+		UpdateFunc:  func(e event.UpdateEvent) bool { return false },
+		GenericFunc: func(event.GenericEvent) bool { return false },
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// for deleting cluster-scoped resources during uninstall
+			// "odf-console" Deployment itself is owned by the CSV
+			return true
+		},
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&configv1.ClusterVersion{}).
+		Watches(
+			&appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      console.ODF_CONSOLE,
+					Namespace: OperatorNamespace,
+				},
+			},
+			enqueueClusterVersionRequest,
+			builder.WithPredicates(deploymentPredicate),
+		).
 		Complete(r)
 }
 
@@ -101,6 +157,28 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	}, odfConsoleDeployment)
 	if err != nil {
 		return err
+	}
+
+	// Deleting cluster-scoped resources which cannot be garbage collected
+	if !odfConsoleDeployment.GetDeletionTimestamp().IsZero() {
+		odfConsolePlugin := console.GetConsolePluginCR(r.ConsolePort, OperatorNamespace)
+		err := r.Client.Delete(context.TODO(), odfConsolePlugin)
+		if err != nil && !errors.IsNotFound(err) {
+			logger.Error(err, "Failed to delete ConsolePlugin", "Name", odfConsolePlugin.ObjectMeta.Name)
+			return err
+		}
+		logger.Info("ConsolePlugin deleted successfully", "Name", odfConsolePlugin.ObjectMeta.Name)
+
+		consoleCLIDownload := console.GetConsoleCLIDownloadCR()
+		err = r.Client.Delete(context.TODO(), consoleCLIDownload)
+		if err != nil && !errors.IsNotFound(err) {
+			logger.Error(err, "Failed to delete ConsoleCLIDownload", "Name", consoleCLIDownload.ObjectMeta.Name)
+			return err
+		}
+		logger.Info("ConsoleCLIDownload deleted successfully", "Name", consoleCLIDownload.ObjectMeta.Name)
+
+		// return early if deletion successful
+		return nil
 	}
 
 	// Create/Update ODF console ConfigMap (nginx configuration)
