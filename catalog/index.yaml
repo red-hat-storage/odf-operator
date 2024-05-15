@@ -40,7 +40,7 @@ schema: olm.channel
 package: noobaa-operator
 name: alpha
 entries:
-  - name: noobaa-operator.v5.14.0
+  - name: noobaa-operator.v5.17.0
 
 ---
 defaultChannel: alpha
