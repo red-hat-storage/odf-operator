@@ -130,7 +130,7 @@ RECIPE_BUNDLE_NAME ?= recipe
 RECIPE_BUNDLE_IMG_NAME ?= $(RECIPE_BUNDLE_NAME)-bundle
 RECIPE_BUNDLE_VERSION ?= v0.0.1
 RECIPE_BUNDLE_IMG_TAG ?= latest
-RECIPE_BUNDLE_IMG_LOCATION ?= quay.io/raghavendra_talur
+RECIPE_BUNDLE_IMG_LOCATION ?= quay.io/ramendr
 RECIPE_BUNDLE_IMG ?= $(RECIPE_BUNDLE_IMG_LOCATION)/$(RECIPE_BUNDLE_IMG_NAME):$(RECIPE_BUNDLE_IMG_TAG)
 
 # A space-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0 example.com/operator-bundle:v0.2.0).
