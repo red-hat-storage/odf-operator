@@ -73,9 +73,19 @@ rules:
 - apiGroups:
   - console.openshift.io
   resources:
+  - consoleclidownloads
+  verbs:
+  - create
+  - delete
+  - get
+  - update
+- apiGroups:
+  - console.openshift.io
+  resources:
   - consoleplugins
   verbs:
   - create
+  - delete
   - get
   - update
 - apiGroups:
