@@ -22,11 +22,12 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 
-	appsv1 "k8s.io/api/apps/v1"
+	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	k8sUtil "k8s.io/client-go/tools/record/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -92,6 +93,11 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		func(context context.Context, obj client.Object) []reconcile.Request {
 			logger := log.FromContext(context)
 
+			instance, _ := obj.(*operatorv1alpha1.Subscription)
+			logger.Info("TEST TEST TEST TEST: Inside enqueueClusterVersionRequest")
+			logger.Info(fmt.Sprintf("TEST TEST TEST TEST: obj Kind '%s'", instance.Kind))
+			logger.Info(fmt.Sprintf("TEST TEST TEST TEST: obj deletionTimeStamp '%s'", instance.ObjectMeta.DeletionTimestamp))
+
 			// Get the ClusterVersion objects
 			clusterVersionList := &configv1.ClusterVersionList{}
 			err := r.Client.List(context, clusterVersionList)
@@ -115,13 +121,22 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		},
 	)
 
-	deploymentPredicate := predicate.Funcs{
+	subscriptionPredicate := predicate.Funcs{
 		CreateFunc:  func(e event.CreateEvent) bool { return false },
 		UpdateFunc:  func(e event.UpdateEvent) bool { return false },
 		GenericFunc: func(event.GenericEvent) bool { return false },
 		DeleteFunc: func(e event.DeleteEvent) bool {
+			instance, ok := e.Object.(*operatorv1alpha1.Subscription)
+			if !ok {
+				return false
+			}
+
+			// ignore if not a odf-operator subscription
+			if instance.Spec.Package != "odf-operator" || instance.Namespace != OperatorNamespace {
+				return false
+			}
+
 			// for deleting cluster-scoped resources during uninstall
-			// "odf-console" Deployment itself is owned by the CSV
 			return true
 		},
 	}
@@ -129,14 +144,9 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&configv1.ClusterVersion{}).
 		Watches(
-			&appsv1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      console.ODF_CONSOLE,
-					Namespace: OperatorNamespace,
-				},
-			},
+			&operatorv1alpha1.Subscription{},
 			enqueueClusterVersionRequest,
-			builder.WithPredicates(deploymentPredicate),
+			builder.WithPredicates(subscriptionPredicate),
 		).
 		Complete(r)
 }
@@ -150,6 +160,8 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	// Customer portal link (CLI Tool download)
 	portalLink := console.CUSTOMER_PORTAL_LINK
 
+	logger.Info("TEST TEST TEST TEST: Inside ensureConsolePlugin")
+
 	// Get ODF console Deployment
 	odfConsoleDeployment := console.GetDeployment(OperatorNamespace)
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
@@ -160,8 +172,29 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 		return err
 	}
 
-	// Deleting cluster-scoped resources which cannot be garbage collected
-	if !odfConsoleDeployment.GetDeletionTimestamp().IsZero() {
+	logger.Info("TEST TEST TEST TEST: Fetched the Deployment")
+
+	sub, err := GetOdfSubscription(r.Client)
+	if err != nil && !errors.IsNotFound(err) {
+		logger.Error(err, "failed to get ODF Subscription")
+		logger.Info(fmt.Sprintf("TEST TEST TEST TEST: Subscription err reason '%s'", errors.ReasonForError(err)))
+		logger.Info(fmt.Sprintf("TEST TEST TEST TEST: Subscription err code is 404 ?? '%t'", k8sUtil.IsKeyNotFoundError(err)))
+		return err
+	}
+
+	logger.Info("TEST TEST TEST TEST: Fetched the Subscription")
+	logger.Info(fmt.Sprintf("TEST TEST TEST TEST: Subscription name '%s'", sub.Name))
+	logger.Info(fmt.Sprintf("TEST TEST TEST TEST: Subscription namespace '%s'", sub.Namespace))
+	logger.Info(fmt.Sprintf("TEST TEST TEST TEST: Subscription deletionTimeStamp '%s'", sub.ObjectMeta.DeletionTimestamp))
+
+	// Deleting cluster-scoped resources which cannot be garbage collected,
+	// when either Subscription is marked for deletion or already deleted during this block's execution
+	if errors.IsNotFound(err) || k8sUtil.IsKeyNotFoundError(err) || !sub.GetDeletionTimestamp().IsZero() {
+
+		logger.Info("TEST TEST TEST TEST: Inside deletion condition")
+		logger.Info(fmt.Sprintf("TEST TEST TEST TEST: errors.IsNotFound(err) ?? '%t'", errors.IsNotFound(err)))
+		logger.Info(fmt.Sprintf("TEST TEST TEST TEST: k8sUtil.IsKeyNotFoundError(err) ?? '%t'", k8sUtil.IsKeyNotFoundError(err)))
+
 		odfConsolePlugin := console.GetConsolePluginCR(r.ConsolePort, OperatorNamespace)
 		err := r.Client.Delete(context.TODO(), odfConsolePlugin)
 		if err != nil && !errors.IsNotFound(err) {
@@ -235,6 +268,8 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
+
+	logger.Info("TEST TEST TEST TEST: returning from ensureConsolePlugin")
 
 	return nil
 }
