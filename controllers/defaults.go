@@ -34,7 +34,7 @@ var (
 		"OCS_SUBSCRIPTION_NAME":                    "ocs-operator",
 		"OCS_SUBSCRIPTION_PACKAGE":                 "ocs-operator",
 		"OCS_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"OCS_SUBSCRIPTION_STARTINGCSV":             "ocs-operator.v4.16.0",
+		"OCS_SUBSCRIPTION_STARTINGCSV":             "ocs-operator.v4.17.0",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
@@ -69,7 +69,7 @@ var (
 		"PROMETHEUS_SUBSCRIPTION_NAME":                    "odf-prometheus-operator",
 		"PROMETHEUS_SUBSCRIPTION_PACKAGE":                 "odf-prometheus-operator",
 		"PROMETHEUS_SUBSCRIPTION_CHANNEL":                 "beta",
-		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.16.0",
+		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.17.0",
 		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
