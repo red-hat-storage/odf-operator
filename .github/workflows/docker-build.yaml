@@ -71,6 +71,6 @@ jobs:
         OPM_RENDER_OPTS: --use-http
       run: |
         docker run -d -p 5000:5000 --name registry registry:2
-        make bundle-build bundle-push catalog-build
+        make bundle-build bundle-push catalog-build catalog-deps-build
         msg='Uncommitted catalog changes. run `make catalog` and commit results.'
         git diff --exit-code catalog || (echo -e '\e[31m'"$msg"; exit 1)
