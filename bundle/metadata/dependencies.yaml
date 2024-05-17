@@ -2,7 +2,7 @@ dependencies:
 - type: olm.package
   value:
     packageName: ocs-operator
-    version: ">=4.15.0 <=4.16.0"
+    version: ">=4.16.0 <=4.17.0"
 - type: olm.package
   value:
     packageName: rook-ceph-operator
