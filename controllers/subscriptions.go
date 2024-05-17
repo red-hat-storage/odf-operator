@@ -53,7 +53,9 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 	}
 
 	var isProvider bool
-	if desiredSubscription.Spec.Package == OcsClientSubscriptionPackage {
+	if desiredSubscription.Spec.Package == OcsClientSubscriptionPackage ||
+		desiredSubscription.Spec.Package == CSIAddonsSubscriptionPackage {
+
 		isProvider, err = isProviderMode(cli)
 		if err != nil {
 			return nil, err
@@ -262,10 +264,10 @@ func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]strin
 		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
 		csvNames = []string{OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
-			CSIAddonsSubscriptionStartingCSV, PrometheusSubscriptionStartingCSV, RecipeSubscriptionStartingCSV}
+			PrometheusSubscriptionStartingCSV, RecipeSubscriptionStartingCSV}
 
 		if isProvider, err = isProviderMode(cli); !isProvider {
-			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV)
+			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV, CSIAddonsSubscriptionStartingCSV)
 		}
 	}
 
