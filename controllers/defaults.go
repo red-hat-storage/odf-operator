@@ -41,7 +41,7 @@ var (
 		"OCS_CLIENT_SUBSCRIPTION_NAME":                    "ocs-client-operator",
 		"OCS_CLIENT_SUBSCRIPTION_PACKAGE":                 "ocs-client-operator",
 		"OCS_CLIENT_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"OCS_CLIENT_SUBSCRIPTION_STARTINGCSV":             "ocs-client-operator.v4.16.0",
+		"OCS_CLIENT_SUBSCRIPTION_STARTINGCSV":             "ocs-client-operator.v4.17.0",
 		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
