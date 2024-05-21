@@ -148,7 +148,7 @@ install-odf: operator-sdk ## install odf using the hack/install-odf.sh script
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	cd config/default && $(KUSTOMIZE) edit set image rbac-proxy=$(RBAC_PROXY_IMG)
-	cd config/console && $(KUSTOMIZE) edit set image odf-console=$(ODF_CONSOLE_IMG)
+	cd config/console/deployment && $(KUSTOMIZE) edit set image odf-console=$(ODF_CONSOLE_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
@@ -167,7 +167,7 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cd config/default && $(KUSTOMIZE) edit set image rbac-proxy=$(RBAC_PROXY_IMG)
-	cd config/console && $(KUSTOMIZE) edit set image odf-console=$(ODF_CONSOLE_IMG)
+	cd config/console/deployment && $(KUSTOMIZE) edit set image odf-console=$(ODF_CONSOLE_IMG)
 	cd config/manifests/bases && $(KUSTOMIZE) edit add annotation --force \
 		'olm.skipRange':"$(SKIP_RANGE)" \
 	        'operators.operatorframework.io/operator-type':"$(OPERATOR_TYPE)" \
