@@ -1,0 +1,13 @@
+apiVersion: console.openshift.io/v1
+kind: ConsoleCLIDownload
+metadata:
+  name: odf-cli-downloads
+spec:
+  description: |
+    With the Data Foundation CLI tool, you can effectively manage and troubleshoot your Data Foundation environment from a terminal.
+
+    You can find a compatible version and download the CLI tool from the Red Hat Customer Portal:
+  displayName: odf - Data Foundation Command Line Interface (CLI)
+  links:
+  - href: https://access.redhat.com/downloads/content/547
+    text: Red Hat Customer Portal
