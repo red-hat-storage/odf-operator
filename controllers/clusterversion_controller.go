@@ -30,7 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/console"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
@@ -49,6 +48,7 @@ type ClusterVersionReconciler struct {
 //+kubebuilder:rbac:groups="apps",resources=deployments/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;update
+//+kubebuilder:rbac:groups=console.openshift.io,resources=consoleclidownloads,verbs=get;create;update
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -89,7 +89,10 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	logger := log.FromContext(context.TODO())
 	// The base path to where the request are sent
 	basePath := console.GetBasePath(clusterVersion)
-	nginxConf := console.GetNginxConfiguration()
+	nginxConf := console.NginxConf
+
+	// Customer portal link (CLI Tool download)
+	portalLink := console.CUSTOMER_PORTAL_LINK
 
 	// Get ODF console Deployment
 	odfConsoleDeployment := console.GetDeployment(OperatorNamespace)
@@ -131,28 +134,23 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 			odfConsolePlugin.Spec.Service.BasePath = basePath
 		}
 		if odfConsolePlugin.Spec.Proxy == nil {
-			odfConsolePlugin.Spec.Proxy = []consolev1alpha1.ConsolePluginProxy{
-				{
-					Type:  consolev1alpha1.ProxyTypeService,
-					Alias: "provider-proxy",
-					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
-						Name:      "ux-backend-proxy",
-						Namespace: OperatorNamespace,
-						Port:      8888,
-					},
-					Authorize: true,
-				},
-				{
-					Type:  consolev1alpha1.ProxyTypeService,
-					Alias: "rosa-prometheus",
-					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
-						Name:      "prometheus",
-						Namespace: OperatorNamespace,
-						Port:      9339,
-					},
-					Authorize: false,
-				},
-			}
+			odfConsolePlugin.Spec.Proxy = console.GetConsolePluginProxy(OperatorNamespace)
+		}
+		return nil
+	})
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+
+	// Create/Update ConsoleCLIDownload (CLI Tool download)
+	consoleCLIDownload := console.GetConsoleCLIDownloadCR()
+	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, consoleCLIDownload, func() error {
+		if currentPortalLink := consoleCLIDownload.Spec.Links[0].Href; currentPortalLink != portalLink {
+			logger.Info(fmt.Sprintf("Set the customer portal link for CLI Tool '%s'", portalLink))
+			consoleCLIDownload.Spec.Links[0].Href = portalLink
+		}
+		if len(consoleCLIDownload.Spec.Links) != 1 {
+			consoleCLIDownload.Spec.Links = console.GetConsoleCLIDownloadLinks()
 		}
 		return nil
 	})
