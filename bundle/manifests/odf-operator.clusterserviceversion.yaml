@@ -35,11 +35,11 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2024-05-03T06:08:22Z"
+    createdAt: "2024-05-21T10:23:39Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.17"}]'
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.18"}]'
     olm.skipRange: ""
     operatorframework.io/initialization-resource: |-
       {
@@ -69,7 +69,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: odf-operator.v4.16.0
+  name: odf-operator.v4.17.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -211,6 +211,14 @@ spec:
           verbs:
           - get
           - patch
+          - update
+        - apiGroups:
+          - console.openshift.io
+          resources:
+          - consoleclidownloads
+          verbs:
+          - create
+          - get
           - update
         - apiGroups:
           - console.openshift.io
@@ -595,4 +603,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 4.16.0
+  version: 4.17.0

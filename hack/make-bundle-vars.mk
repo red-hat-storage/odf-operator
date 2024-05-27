@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 4.16.0
+VERSION ?= 4.17.0
 
 # MAX_OCP_VERSION variable specifies the maximum supported version of OCP.
 # Its purpose is to add an annotation to the CSV file, blocking OCP upgrades beyond the X+1 version.
@@ -73,22 +73,22 @@ CRD_OPTIONS ?= "crd"
 
 OCS_BUNDLE_NAME ?= ocs-operator
 OCS_BUNDLE_IMG_NAME ?= $(OCS_BUNDLE_NAME)-bundle
-OCS_BUNDLE_VERSION ?= v4.16.0
-OCS_BUNDLE_IMG_TAG ?= release-4.16-b1d5c27
+OCS_BUNDLE_VERSION ?= v4.17.0
+OCS_BUNDLE_IMG_TAG ?= main-34fff28
 OCS_BUNDLE_IMG_LOCATION ?= quay.io/ocs-dev
 OCS_BUNDLE_IMG ?= $(OCS_BUNDLE_IMG_LOCATION)/$(OCS_BUNDLE_IMG_NAME):$(OCS_BUNDLE_IMG_TAG)
 
 OCS_CLIENT_BUNDLE_NAME ?= ocs-client-operator
 OCS_CLIENT_BUNDLE_IMG_NAME ?= $(OCS_CLIENT_BUNDLE_NAME)-bundle
-OCS_CLIENT_BUNDLE_VERSION ?= v4.16.0
-OCS_CLIENT_BUNDLE_IMG_TAG ?= release-4.16-7c5526d
+OCS_CLIENT_BUNDLE_VERSION ?= v4.17.0
+OCS_CLIENT_BUNDLE_IMG_TAG ?= main-1e930
 OCS_CLIENT_BUNDLE_IMG_LOCATION ?= quay.io/ocs-dev
 OCS_CLIENT_BUNDLE_IMG ?= $(OCS_CLIENT_BUNDLE_IMG_LOCATION)/$(OCS_CLIENT_BUNDLE_IMG_NAME):$(OCS_CLIENT_BUNDLE_IMG_TAG)
 
 NOOBAA_BUNDLE_NAME ?= noobaa-operator
 NOOBAA_BUNDLE_IMG_NAME ?= $(NOOBAA_BUNDLE_NAME)-bundle
-NOOBAA_BUNDLE_VERSION ?= v5.14.0
-NOOBAA_BUNDLE_IMG_TAG ?= v5.14.0
+NOOBAA_BUNDLE_VERSION ?= v5.17.0
+NOOBAA_BUNDLE_IMG_TAG ?= master-20240514
 NOOBAA_BUNDLE_IMG_LOCATION ?= quay.io/noobaa
 NOOBAA_BUNDLE_IMG ?= $(NOOBAA_BUNDLE_IMG_LOCATION)/$(NOOBAA_BUNDLE_IMG_NAME):$(NOOBAA_BUNDLE_IMG_TAG)
 
@@ -113,16 +113,16 @@ ODF_CONSOLE_IMG ?= $(ODF_CONSOLE_IMG_LOCATION)/$(ODF_CONSOLE_IMG_NAME):$(ODF_CON
 
 ROOK_BUNDLE_NAME ?= rook-ceph-operator
 ROOK_BUNDLE_IMG_NAME ?= $(ROOK_BUNDLE_NAME)-bundle
-ROOK_BUNDLE_VERSION ?= v4.16.0
-ROOK_BUNDLE_IMG_TAG ?= release-4.16-19c3bb812
+ROOK_BUNDLE_VERSION ?= v4.17.0
+ROOK_BUNDLE_IMG_TAG ?= master-75180f4f3
 ROOK_BUNDLE_IMG_LOCATION ?= quay.io/ocs-dev
 ROOK_BUNDLE_IMG ?= $(ROOK_BUNDLE_IMG_LOCATION)/$(ROOK_BUNDLE_IMG_NAME):$(ROOK_BUNDLE_IMG_TAG)
 
 # To be changed when odf-prometheus-operator bundle exists
 PROMETHEUS_BUNDLE_NAME ?= odf-prometheus-operator
 PROMETHEUS_BUNDLE_IMG_NAME ?= $(PROMETHEUS_BUNDLE_NAME)-bundle
-PROMETHEUS_BUNDLE_VERSION ?= v4.16.0
-PROMETHEUS_BUNDLE_IMG_TAG ?= main-d5fbc29
+PROMETHEUS_BUNDLE_VERSION ?= v4.17.0
+PROMETHEUS_BUNDLE_IMG_TAG ?= main-d82716f
 PROMETHEUS_BUNDLE_IMG_LOCATION ?= quay.io/ocs-dev
 PROMETHEUS_BUNDLE_IMG ?= $(PROMETHEUS_BUNDLE_IMG_LOCATION)/$(PROMETHEUS_BUNDLE_IMG_NAME):$(PROMETHEUS_BUNDLE_IMG_TAG)
 
@@ -130,7 +130,7 @@ RECIPE_BUNDLE_NAME ?= recipe
 RECIPE_BUNDLE_IMG_NAME ?= $(RECIPE_BUNDLE_NAME)-bundle
 RECIPE_BUNDLE_VERSION ?= v0.0.1
 RECIPE_BUNDLE_IMG_TAG ?= latest
-RECIPE_BUNDLE_IMG_LOCATION ?= quay.io/raghavendra_talur
+RECIPE_BUNDLE_IMG_LOCATION ?= quay.io/ramendr
 RECIPE_BUNDLE_IMG ?= $(RECIPE_BUNDLE_IMG_LOCATION)/$(RECIPE_BUNDLE_IMG_NAME):$(RECIPE_BUNDLE_IMG_TAG)
 
 # A space-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0 example.com/operator-bundle:v0.2.0).
@@ -209,7 +209,7 @@ STARTING_CSVS ?= "$(IMAGE_NAME).v$(VERSION) $(OCS_SUBSCRIPTION_STARTINGCSV) $(RO
 
 # kube rbac proxy image variables
 CLUSTER_ENV ?= openshift
-KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.16.0
 OSE_KUBE_RBAC_PROXY_IMG ?= registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.11.0
 
 ifeq ($(CLUSTER_ENV), openshift)
