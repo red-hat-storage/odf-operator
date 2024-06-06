@@ -18,6 +18,7 @@ package v1
 
 import (
 	"os"
+	"time"
 
 	nbv1 "github.com/noobaa/noobaa-operator/v5/pkg/apis/noobaa/v1alpha1"
 	quotav1 "github.com/openshift/api/quota/v1"
@@ -45,7 +46,6 @@ type StorageClusterSpec struct {
 	// Resources follows the conventions of and is mapped to CephCluster.Spec.Resources
 	Resources          map[string]corev1.ResourceRequirements `json:"resources,omitempty"`
 	Encryption         EncryptionSpec                         `json:"encryption,omitempty"`
-	OSDStore           rookCephv1.OSDStore                    `json:"osdStore,omitempty"`
 	StorageDeviceSets  []StorageDeviceSet                     `json:"storageDeviceSets,omitempty"`
 	MonPVCTemplate     *corev1.PersistentVolumeClaim          `json:"monPVCTemplate,omitempty"`
 	MonDataDirHostPath string                                 `json:"monDataDirHostPath,omitempty"`
@@ -110,29 +110,15 @@ type StorageClusterSpec struct {
 	// DefaultStorageProfile is the default storage profile to use for
 	// the storageclassrequest as StorageProfile is optional.
 	DefaultStorageProfile string `json:"defaultStorageProfile,omitempty"`
-
-	StorageProfiles []StorageProfile `json:"storageProfiles,omitempty"`
-}
-
-// StorageProfile is the storage profile to use for the storageclassrequest.
-type StorageProfile struct {
-	// +kubebuilder:validation:Required
-	// Name of the storage profile.
-	Name string `json:"name"`
-	// +kubebuilder:validation:Required
-	// DeviceClass is the deviceclass name.
-	DeviceClass string `json:"deviceClass"`
-	// configurations to use for cephfilesystem.
-	SharedFilesystemConfiguration SharedFilesystemConfigurationSpec `json:"sharedFilesystemConfiguration,omitempty"`
-	// configurations to use for  profile specific blockpool.
-	BlockPoolConfiguration BlockPoolConfigurationSpec `json:"blockPoolConfiguration,omitempty"`
 }
 
 type SharedFilesystemConfigurationSpec struct {
+	// +kubebuilder:validation:Optional
 	Parameters map[string]string `json:"parameters,omitempty"`
 }
 
 type BlockPoolConfigurationSpec struct {
+	// +kubebuilder:validation:Optional
 	Parameters map[string]string `json:"parameters,omitempty"`
 }
 
@@ -172,6 +158,14 @@ type ManagedResourcesSpec struct {
 // ManageCephCluster defines how to reconcile the Ceph cluster definition
 type ManageCephCluster struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
+	// WaitTimeoutForHealthyOSDInMinutes defines the time the operator would wait before an OSD can be stopped for upgrade or restart.
+	// If `continueUpgradeAfterChecksEvenIfNotHealthy` is `false` and the timeout exceeds and OSD is not ok to stop, then the operator
+	// would skip upgrade for the current OSD and proceed with the next one.
+	// If `continueUpgradeAfterChecksEvenIfNotHealthy` is `true`, then operator would continue with the upgrade of an OSD even if its
+	// not ok to stop after the timeout.
+	// This timeout won't be applied if `skipUpgradeChecks` is `true`.
+	// The default wait timeout is 10 minutes.
+	WaitTimeoutForHealthyOSDInMinutes time.Duration `json:"waitTimeoutForHealthyOSDInMinutes,omitempty"`
 }
 
 // ManageCephConfig defines how to reconcile the Ceph configuration
@@ -230,6 +224,7 @@ type ManageCephObjectStores struct {
 	DisableStorageClass bool   `json:"disableStorageClass,omitempty"`
 	GatewayInstances    int32  `json:"gatewayInstances,omitempty"`
 	DisableRoute        bool   `json:"disableRoute,omitempty"`
+	HostNetwork         *bool  `json:"hostNetwork,omitempty"`
 	// StorageClassName specifies the name of the storage class created for ceph obc's
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
