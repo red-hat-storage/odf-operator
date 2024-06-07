@@ -1,0 +1,32 @@
+---
+name: aws-cleanup
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    if: >
+      github.repository == 'red-hat-storage/odf-operator' &&
+      github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - uses: unfor19/install-aws-cli-action@v1
+      with:
+        version: 2
+
+    - name: setup aws cli
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        aws configure aws_access_key_id $AWS_ACCESS_KEY_ID
+        aws configure aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+
+    - name: run cleanup script
+      run: hack/aws-cleanup.sh
