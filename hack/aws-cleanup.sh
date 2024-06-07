@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Calculate age in hours from given time
 calculate_age() {
     local launch_time=$1
