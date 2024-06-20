@@ -18,6 +18,7 @@ package v1
 
 import (
 	"os"
+	"time"
 
 	nbv1 "github.com/noobaa/noobaa-operator/v5/pkg/apis/noobaa/v1alpha1"
 	quotav1 "github.com/openshift/api/quota/v1"
@@ -115,7 +116,7 @@ type StorageClusterSpec struct {
 	// storageDeviceSets section of the CR.
 	BackingStorageClasses []BackingStorageClass `json:"backingStorageClasses,omitempty"`
 	// DefaultStorageProfile is the default storage profile to use for
-	// the storageclassrequest as StorageProfile is optional.
+	// the storagerequest as StorageProfile is optional.
 	DefaultStorageProfile string `json:"defaultStorageProfile,omitempty"`
 }
 
@@ -176,6 +177,27 @@ type ManageCephCluster struct {
 	MgrCount int `json:"mgrCount,omitempty"`
 	// +kubebuilder:validation:Enum=3;5
 	MonCount int `json:"monCount,omitempty"`
+	// WaitTimeoutForHealthyOSDInMinutes defines the time the operator would wait before an OSD can be stopped for upgrade or restart.
+	// If `continueUpgradeAfterChecksEvenIfNotHealthy` is `false` and the timeout exceeds and OSD is not ok to stop, then the operator
+	// would skip upgrade for the current OSD and proceed with the next one.
+	// If `continueUpgradeAfterChecksEvenIfNotHealthy` is `true`, then operator would continue with the upgrade of an OSD even if its
+	// not ok to stop after the timeout.
+	// This timeout won't be applied if `skipUpgradeChecks` is `true`.
+	// The default wait timeout is 10 minutes.
+	WaitTimeoutForHealthyOSDInMinutes time.Duration `json:"waitTimeoutForHealthyOSDInMinutes,omitempty"`
+	// Whether or not upgrade should continue even if a check fails
+	// This means Ceph's status could be degraded and we don't recommend upgrading but you might decide otherwise
+	// Use at your OWN risk
+	SkipUpgradeChecks bool `json:"skipUpgradeChecks,omitempty"`
+	// Whether or not continue if PGs are not clean during an upgrade
+	ContinueUpgradeAfterChecksEvenIfNotHealthy *bool `json:"continueUpgradeAfterChecksEvenIfNotHealthy,omitempty"`
+	// Whether or not requires PGs are clean before an OSD upgrade. If set to `true` OSD upgrade process won't start until PGs are healthy.
+	// This configuration will be ignored if `skipUpgradeChecks` is `true`.
+	UpgradeOSDRequiresHealthyPGs bool `json:"upgradeOSDRequiresHealthyPGs,omitempty"`
+	// A duration in minutes that determines how long an entire failureDomain like `region/zone/host` will be held in `noout` (in addition to the
+	// default DOWN/OUT interval) when it is draining. This is only relevant when  `managePodBudgets` is `true` in cephCluster CR.
+	// The default value is `30` minutes.
+	OsdMaintenanceTimeout time.Duration `json:"osdMaintenanceTimeout,omitempty"`
 }
 
 // ManageCephConfig defines how to reconcile the Ceph configuration
@@ -271,8 +293,7 @@ type ManageCephToolbox struct {
 type ManageCephRBDMirror struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
 	// +kubebuilder:default=1
-	// +kubebuilder:validation:Minimum=0
-	// +kubebuilder:validation:Maximum=1
+	// +kubebuilder:validation:Minimum=1
 	DaemonCount int `json:"daemonCount,omitempty"`
 }
 
@@ -403,6 +424,10 @@ type MultiCloudGatewaySpec struct {
 	// Allows Noobaa to connect to an external Postgres server
 	// +optional
 	ExternalPgConfig *ExternalPGSpec `json:"externalPgConfig,omitempty"`
+
+	// DenyHTTP (optional) if given will deny access to the NooBaa S3 service using HTTP (only HTTPS)
+	// +optional
+	DenyHTTP bool `json:"denyHTTP,omitempty"`
 }
 
 type ExternalPGSpec struct {
@@ -660,7 +685,7 @@ type OverprovisionControlSpec struct {
 	Selector         quotav1.ClusterResourceQuotaSelector `json:"selector,omitempty"`
 }
 
-func (r *StorageCluster) NewToolsDeployment(tolerations []corev1.Toleration) *appsv1.Deployment {
+func (r *StorageCluster) NewToolsDeployment(tolerations []corev1.Toleration, nodeAffinity *corev1.NodeAffinity) *appsv1.Deployment {
 
 	var replicaOne int32 = 1
 
@@ -733,6 +758,9 @@ func (r *StorageCluster) NewToolsDeployment(tolerations []corev1.Toleration) *ap
 						},
 					},
 					Tolerations: tolerations,
+					Affinity: &corev1.Affinity{
+						NodeAffinity: nodeAffinity,
+					},
 					Volumes: []corev1.Volume{
 						{Name: "ceph-config", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
 						{Name: "mon-endpoint-volume", VolumeSource: corev1.VolumeSource{
