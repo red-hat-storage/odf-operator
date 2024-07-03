@@ -129,9 +129,11 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	// Create/Update ODF console ConsolePlugin
 	odfConsolePlugin := console.GetConsolePluginCR(r.ConsolePort, OperatorNamespace)
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsolePlugin, func() error {
-		if currentBasePath := odfConsolePlugin.Spec.Service.BasePath; currentBasePath != basePath {
-			logger.Info(fmt.Sprintf("Set the BasePath for odf-console plugin as '%s'", basePath))
-			odfConsolePlugin.Spec.Service.BasePath = basePath
+		if odfConsolePlugin.Spec.Backend.Service != nil {
+			if currentBasePath := odfConsolePlugin.Spec.Backend.Service.BasePath; currentBasePath != basePath {
+				logger.Info(fmt.Sprintf("Set the BasePath for odf-console plugin as '%s'", basePath))
+				odfConsolePlugin.Spec.Backend.Service.BasePath = basePath
+			}
 		}
 		if odfConsolePlugin.Spec.Proxy == nil {
 			odfConsolePlugin.Spec.Proxy = console.GetConsolePluginProxy(OperatorNamespace)
