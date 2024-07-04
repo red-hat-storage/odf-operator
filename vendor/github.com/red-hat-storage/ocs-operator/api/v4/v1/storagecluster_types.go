@@ -198,6 +198,21 @@ type ManageCephCluster struct {
 	// default DOWN/OUT interval) when it is draining. This is only relevant when  `managePodBudgets` is `true` in cephCluster CR.
 	// The default value is `30` minutes.
 	OsdMaintenanceTimeout time.Duration `json:"osdMaintenanceTimeout,omitempty"`
+	// FullRatio is the ratio at which the cluster is considered full and ceph will stop accepting writes. Default is 0.95.
+	// +kubebuilder:validation:Minimum=0.0
+	// +kubebuilder:validation:Maximum=1.0
+	// +nullable
+	FullRatio *float64 `json:"fullRatio,omitempty"`
+	// NearFullRatio is the ratio at which the cluster is considered nearly full and will raise a ceph health warning. Default is 0.85.
+	// +kubebuilder:validation:Minimum=0.0
+	// +kubebuilder:validation:Maximum=1.0
+	// +nullable
+	NearFullRatio *float64 `json:"nearFullRatio,omitempty"`
+	// BackfillFullRatio is the ratio at which the cluster is too full for backfill. Backfill will be disabled if above this threshold. Default is 0.90.
+	// +kubebuilder:validation:Minimum=0.0
+	// +kubebuilder:validation:Maximum=1.0
+	// +nullable
+	BackfillFullRatio *float64 `json:"backfillFullRatio,omitempty"`
 }
 
 // ManageCephConfig defines how to reconcile the Ceph configuration
@@ -275,8 +290,7 @@ type ManageCephObjectStores struct {
 	// StorageClassName specifies the name of the storage class created for ceph obc's
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
-	StorageClassName string   `json:"storageClassName,omitempty"`
-	VirtualHostnames []string `json:"virtualHostnames,omitempty"`
+	StorageClassName string `json:"storageClassName,omitempty"`
 }
 
 // ManageCephObjectStoreUsers defines how to reconcile CephObjectStoreUsers
@@ -568,6 +582,9 @@ type StorageClusterStatus struct {
 
 	// Images holds the image reconcile status for all images reconciled by the operator
 	Images ImagesStatus `json:"images,omitempty"`
+
+	// DefaultCephDeviceClass holds the default ceph device class to be used for the pools
+	DefaultCephDeviceClass string `json:"defaultCephDeviceClass,omitempty"`
 
 	// KMSServerConnection holds the connection state to the KMS server.
 	KMSServerConnection KMSServerConnectionStatus `json:"kmsServerConnection,omitempty"`

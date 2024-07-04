@@ -20,7 +20,6 @@ import (
 	"strings"
 
 	consolev1 "github.com/openshift/api/console/v1"
-	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -81,42 +80,51 @@ func GetService(port int, namespace string) *apiv1.Service {
 	}
 }
 
-func GetConsolePluginProxy(serviceNamespace string) []consolev1alpha1.ConsolePluginProxy {
-	return []consolev1alpha1.ConsolePluginProxy{
+func GetConsolePluginProxy(serviceNamespace string) []consolev1.ConsolePluginProxy {
+	return []consolev1.ConsolePluginProxy{
 		{
-			Type:  consolev1alpha1.ProxyTypeService,
 			Alias: "provider-proxy",
-			Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
-				Name:      "ux-backend-proxy",
-				Namespace: serviceNamespace,
-				Port:      8888,
+			Endpoint: consolev1.ConsolePluginProxyEndpoint{
+				Type: consolev1.ProxyTypeService,
+				Service: &consolev1.ConsolePluginProxyServiceConfig{
+					Name:      "ux-backend-proxy",
+					Namespace: serviceNamespace,
+					Port:      8888,
+				},
 			},
-			Authorize: true,
+			Authorization: consolev1.UserToken,
 		},
 		{
-			Type:  consolev1alpha1.ProxyTypeService,
 			Alias: "rosa-prometheus",
-			Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
-				Name:      "prometheus",
-				Namespace: serviceNamespace,
-				Port:      9339,
+			Endpoint: consolev1.ConsolePluginProxyEndpoint{
+				Type: consolev1.ProxyTypeService,
+				Service: &consolev1.ConsolePluginProxyServiceConfig{
+					Name:      "prometheus",
+					Namespace: serviceNamespace,
+					Port:      9339,
+				},
 			},
-			Authorize: false,
+			Authorization: consolev1.None,
 		},
 	}
 }
 
-func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1alpha1.ConsolePlugin {
-	return &consolev1alpha1.ConsolePlugin{
+func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1.ConsolePlugin {
+	return &consolev1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ODF_CONSOLE,
 		},
-		Spec: consolev1alpha1.ConsolePluginSpec{
+		Spec: consolev1.ConsolePluginSpec{
 			DisplayName: "ODF Plugin",
-			Service: consolev1alpha1.ConsolePluginService{
-				Name:      "odf-console-service",
-				Namespace: serviceNamespace,
-				Port:      int32(consolePort),
+			Backend: consolev1.ConsolePluginBackend{
+				Service: &consolev1.ConsolePluginService{
+					Name:      "odf-console-service",
+					Namespace: serviceNamespace,
+					Port:      int32(consolePort),
+				},
+			},
+			I18n: consolev1.ConsolePluginI18n{
+				LoadType: consolev1.Empty,
 			},
 			Proxy: GetConsolePluginProxy(serviceNamespace),
 		},
