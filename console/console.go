@@ -122,6 +122,7 @@ func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1.Con
 					Namespace: serviceNamespace,
 					Port:      int32(consolePort),
 				},
+				Type: consolev1.Service,
 			},
 			I18n: consolev1.ConsolePluginI18n{
 				LoadType: consolev1.Empty,
