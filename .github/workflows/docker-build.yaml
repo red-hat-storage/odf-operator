@@ -48,7 +48,7 @@ jobs:
         # We are using `--ignore-matching-lines` flag with the pattern `createdAt`
         # to exclude lines with the timestamp from being considered, as the CSV file
         # consistently receives a new timestamp during generation with operator-sdk 1.26 onwards.
-        git diff --exit-code --ignore-matching-lines createdAt || (echo -e '\e[31m'"$msg"; exit 1)
+        git diff --exit-code --ignore-matching-lines createdAt bundle || (echo -e '\e[31m'"$msg"; exit 1)
 
   catalog-build:
     runs-on: ubuntu-latest
@@ -71,4 +71,6 @@ jobs:
         OPM_RENDER_OPTS: --use-http
       run: |
         docker run -d -p 5000:5000 --name registry registry:2
-        make bundle-build bundle-push catalog-build
+        make bundle-build bundle-push catalog-build catalog-deps-build
+        msg='Uncommitted catalog changes. run `make catalog` and commit results.'
+        git diff --exit-code catalog || (echo -e '\e[31m'"$msg"; exit 1)
