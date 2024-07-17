@@ -1,5 +1,5 @@
-# github.com/IBM/ibm-storage-odf-operator v1.4.1
-## explicit; go 1.18
+# github.com/IBM/ibm-storage-odf-operator v1.5.0
+## explicit; go 1.20
 github.com/IBM/ibm-storage-odf-operator/api/v1alpha1
 # github.com/Masterminds/semver/v3 v3.2.1
 ## explicit; go 1.18
@@ -387,8 +387,8 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/protobuf v1.33.0
-## explicit; go 1.17
+# google.golang.org/protobuf v1.34.2
+## explicit; go 1.20
 google.golang.org/protobuf/encoding/protodelim
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -396,6 +396,7 @@ google.golang.org/protobuf/internal/descfmt
 google.golang.org/protobuf/internal/descopts
 google.golang.org/protobuf/internal/detrand
 google.golang.org/protobuf/internal/editiondefaults
+google.golang.org/protobuf/internal/editionssupport
 google.golang.org/protobuf/internal/encoding/defval
 google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
