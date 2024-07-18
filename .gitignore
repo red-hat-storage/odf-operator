@@ -25,8 +25,4 @@ testbin/*
 *~
 
 # catalog manifests
-catalog/csiaddons.yaml
-catalog/ibm.yaml
-catalog/noobaa.yaml
-catalog/ocs.yaml
 catalog/odf.yaml
