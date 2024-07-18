@@ -35,6 +35,7 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
+    createdAt: "2024-07-18T13:54:24Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.14"}]'
@@ -57,7 +58,7 @@ metadata:
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.openshift.io/valid-subscription: '["OpenShift Platform Plus","OpenShift
       Data Foundation Essentials","OpenShift Data Foundation Advanced"]'
-    operators.operatorframework.io/builder: operator-sdk-v1.13.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.31.0
     operators.operatorframework.io/operator-type: standalone
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/red-hat-storage/odf-operator
@@ -368,7 +369,10 @@ spec:
           - create
         serviceAccountName: odf-operator-controller-manager
       deployments:
-      - name: odf-operator-controller-manager
+      - label:
+          app.kubernetes.io/name: odf-operator
+          control-plane: controller-manager
+        name: odf-operator-controller-manager
         spec:
           replicas: 1
           selector:
@@ -448,7 +452,9 @@ spec:
                 key: node.ocs.openshift.io/storage
                 operator: Equal
                 value: "true"
-      - name: odf-console
+      - label:
+          app: odf-console
+        name: odf-console
         spec:
           selector:
             matchLabels:
