@@ -20,11 +20,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
+	"strings"
 
 	"go.uber.org/multierr"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -266,8 +270,50 @@ func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]strin
 		csvNames = []string{OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
 			PrometheusSubscriptionStartingCSV, RecipeSubscriptionStartingCSV}
 
-		if isProvider, err = isProviderMode(cli); !isProvider {
+		isProvider, err = isProviderMode(cli)
+		if err != nil {
+			return csvNames, err
+		}
+
+		if !isProvider {
 			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV, CSIAddonsSubscriptionStartingCSV)
+		}
+
+		// In provider mode, upgrades of the ocs-client-operator and csiaddons are managed by the provider, not the odf-operator.
+		// This can result in these operators lagging behind the odf-operator, with different CSV versions.
+		// Therefore, we need to fetch the CSV name from the operator deployment.
+		// We are only fetching the ocs-client-operator CSV name and ignoring the csiaddons
+		// Because the ocs-client-operator is essential when enabling provider mode as we need to bring it up.
+
+		// Fetch the CSV name from the client operator deployment and append it to the csv list
+		if isProvider {
+			// get ocs-client-operator deployment with label
+			deployments := &appsv1.DeploymentList{}
+			err = cli.List(context.TODO(), deployments, &client.ListOptions{
+				Namespace:     OperatorNamespace,
+				LabelSelector: labels.SelectorFromSet(map[string]string{"app": "ocs-client-operator"}),
+			})
+
+			if err != nil {
+				return csvNames, err
+			}
+
+			if len(deployments.Items) == 0 {
+				return csvNames, fmt.Errorf("ocs-client-operator deployment not found")
+			}
+
+			// get owner ref index from deployment
+			ownerRefIndex := slices.IndexFunc(deployments.Items[0].OwnerReferences, func(o metav1.OwnerReference) bool {
+				return o.Kind == "ClusterServiceVersion"
+			})
+			if ownerRefIndex == -1 {
+				return csvNames, fmt.Errorf("ClusterServiceVersion owner reference not found in ocs-client-operator deployment")
+			}
+
+			ownerRef := deployments.Items[0].OwnerReferences[ownerRefIndex]
+
+			// get csv name from owner ref
+			csvNames = append(csvNames, ownerRef.Name)
 		}
 	}
 
@@ -292,6 +338,24 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 	}
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
 		csvObj.OwnerReferences = []metav1.OwnerReference{}
+
+		// Shut down the OCS client operator CSV pods in non provider mode
+		if strings.HasPrefix(csvName, "ocs-client-operator") {
+			isProvider, err := isProviderMode(cli)
+			if err != nil {
+				return err
+			}
+
+			var replicas int32 = 0
+			if isProvider {
+				replicas = 1
+			}
+
+			for i := range csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+				csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec.Replicas = &replicas
+			}
+		}
+
 		return SetOdfSubControllerReference(cli, csvObj)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
