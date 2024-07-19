@@ -118,6 +118,9 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
+install-odf: operator-sdk ## install odf using the hack/install-odf.sh script
+	hack/install-odf.sh $(OPERATOR_SDK) $(BUNDLE_IMG) $(CATALOG_DEPS_IMG) $(STARTING_CSVS)
+
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	cd config/default && $(KUSTOMIZE) edit set image rbac-proxy=$(RBAC_PROXY_IMG)
@@ -172,13 +175,27 @@ bundle-push: ## Push the bundle image.
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
-.PHONY: catalog-build
-catalog-build: opm ## Build a catalog image.
-	$(OPM) render --output=yaml $(BUNDLE_IMGS) $(OPM_RENDER_OPTS) > catalog/bundle.yaml
+.PHONY: catalog
+catalog: opm ## Generate catalog manifests and then validate generated files.
+	$(OPM) render --output=yaml $(BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf.yaml
+	$(OPM) render --output=yaml $(OCS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs.yaml
+	$(OPM) render --output=yaml $(IBM_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm.yaml
+	$(OPM) render --output=yaml $(NOOBAA_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/noobaa.yaml
+	$(OPM) render --output=yaml $(CSIADDONS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/csiaddons.yaml
 	$(OPM) validate catalog
+
+.PHONY: catalog-build
+catalog-build: catalog ## Build a catalog image.
 	docker build -f catalog.Dockerfile -t $(CATALOG_IMG) .
 
-# Push the catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+.PHONY: catalog-deps-build
+catalog-deps-build: catalog ## Build a catalog-deps image.
+	docker build -f catalog.deps.Dockerfile -t $(CATALOG_DEPS_IMG) .
+
+.PHONY: catalog-deps-push
+catalog-deps-push: ## Push a catalog-deps image.
+	$(MAKE) docker-push IMG=$(CATALOG_DEPS_IMG)
