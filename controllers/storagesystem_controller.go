@@ -263,7 +263,9 @@ func (r *StorageSystemReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&odfv1alpha1.StorageSystem{}, builder.WithPredicates(generationChangedPredicate)).
 		Owns(&operatorv1alpha1.Subscription{}, builder.WithPredicates(generationChangedPredicate, ignoreCreatePredicate)).
-		Owns(&ocsv1.StorageCluster{}, builder.WithPredicates(generationChangedPredicate)).
+		// Although we own the storage cluster, we are not a controller owner.
+		// Not being a controller owner requires us to pass builder.MatchEveryOwner.
+		Owns(&ocsv1.StorageCluster{}, builder.MatchEveryOwner, builder.WithPredicates(generationChangedPredicate)).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 1}).
 		Complete(r)
 }
