@@ -45,7 +45,6 @@ import (
 	//+kubebuilder:scaffold:imports
 	configv1 "github.com/openshift/api/config/v1"
 	consolev1 "github.com/openshift/api/console/v1"
-	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metrics "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
@@ -67,7 +66,6 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 
 	utilruntime.Must(consolev1.AddToScheme(scheme))
-	utilruntime.Must(consolev1alpha1.AddToScheme(scheme))
 	utilruntime.Must(extv1.AddToScheme(scheme))
 	utilruntime.Must(configv1.AddToScheme(scheme))
 

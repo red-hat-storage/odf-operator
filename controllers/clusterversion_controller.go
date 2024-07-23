@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	configv1 "github.com/openshift/api/config/v1"
+	consolev1 "github.com/openshift/api/console/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	consolev1alpha1 "github.com/openshift/api/console/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/console"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
@@ -126,31 +126,37 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 	// Create/Update ODF console ConsolePlugin
 	odfConsolePlugin := console.GetConsolePluginCR(r.ConsolePort, OperatorNamespace)
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsolePlugin, func() error {
-		if currentBasePath := odfConsolePlugin.Spec.Service.BasePath; currentBasePath != basePath {
-			logger.Info(fmt.Sprintf("Set the BasePath for odf-console plugin as '%s'", basePath))
-			odfConsolePlugin.Spec.Service.BasePath = basePath
+		if odfConsolePlugin.Spec.Backend.Service != nil {
+			if currentBasePath := odfConsolePlugin.Spec.Backend.Service.BasePath; currentBasePath != basePath {
+				logger.Info(fmt.Sprintf("Set the BasePath for odf-console plugin as '%s'", basePath))
+				odfConsolePlugin.Spec.Backend.Service.BasePath = basePath
+			}
 		}
 		if odfConsolePlugin.Spec.Proxy == nil {
-			odfConsolePlugin.Spec.Proxy = []consolev1alpha1.ConsolePluginProxy{
+			odfConsolePlugin.Spec.Proxy = []consolev1.ConsolePluginProxy{
 				{
-					Type:  consolev1alpha1.ProxyTypeService,
 					Alias: "provider-proxy",
-					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
-						Name:      "ux-backend-proxy",
-						Namespace: OperatorNamespace,
-						Port:      8888,
+					Endpoint: consolev1.ConsolePluginProxyEndpoint{
+						Type: consolev1.ProxyTypeService,
+						Service: &consolev1.ConsolePluginProxyServiceConfig{
+							Name:      "ux-backend-proxy",
+							Namespace: OperatorNamespace,
+							Port:      8888,
+						},
 					},
-					Authorize: true,
+					Authorization: consolev1.UserToken,
 				},
 				{
-					Type:  consolev1alpha1.ProxyTypeService,
 					Alias: "rosa-prometheus",
-					Service: consolev1alpha1.ConsolePluginProxyServiceConfig{
-						Name:      "prometheus",
-						Namespace: OperatorNamespace,
-						Port:      9339,
+					Endpoint: consolev1.ConsolePluginProxyEndpoint{
+						Type: consolev1.ProxyTypeService,
+						Service: &consolev1.ConsolePluginProxyServiceConfig{
+							Name:      "prometheus",
+							Namespace: OperatorNamespace,
+							Port:      9339,
+						},
 					},
-					Authorize: false,
+					Authorization: consolev1.None,
 				},
 			}
 		}
