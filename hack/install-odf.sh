@@ -20,7 +20,15 @@ fi
 
 "$OPERATOR_SDK" run bundle "$BUNDLE_IMG" --timeout=10m --security-context-config restricted -n "$INSTALL_NAMESPACE" --index-image "$CATALOG_DEPS_IMG"
 
-oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAMESPACE" csv $CSV_NAMES
+oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAMESPACE" csv $CSV_NAMES || {
+
+    echo "CSV $CSV_NAMES did not succeed, describing CSV"
+    oc get csv -n "$INSTALL_NAMESPACE"
+    oc get pods -n "$INSTALL_NAMESPACE"
+    oc describe csv -n "$INSTALL_NAMESPACE"
+    oc describe pods -n "$INSTALL_NAMESPACE"
+    exit 1
+}
 
 oc wait --timeout=5m --for condition=Available -n "$INSTALL_NAMESPACE" deployment \
     csi-addons-controller-manager \
