@@ -283,7 +283,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20240328064129-39415c481f57
+# github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20240604084517-6d6952cea819
 ## explicit; go 1.21
 github.com/red-hat-storage/ocs-operator/api/v4/v1
 # github.com/rook/rook/pkg/apis v0.0.0-20240327231646-b6b89a012a95

@@ -12,7 +12,7 @@ require (
 	github.com/openshift/custom-resource-status v1.1.2
 	github.com/operator-framework/api v0.22.0
 	github.com/prometheus/client_golang v1.19.0
-	github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20240328064129-39415c481f57
+	github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20240604084517-6d6952cea819
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/multierr v1.11.0
 	k8s.io/api v0.29.3
