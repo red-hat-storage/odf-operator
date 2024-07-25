@@ -1,6 +1,7 @@
 package deploymanager
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -185,7 +186,7 @@ func (d *DeployManager) WaitForCatalogSource(catalogsource *operatorsv1alpha1.Ca
 
 	lastReason := ""
 
-	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	err := utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
 		existingCatalogSource := &operatorsv1alpha1.CatalogSource{}
 		err = d.Client.Get(d.Ctx, client.ObjectKeyFromObject(catalogsource), existingCatalogSource)
 		if err != nil {
@@ -220,7 +221,7 @@ func (d *DeployManager) WaitForCsv(csv *operatorsv1alpha1.ClusterServiceVersion)
 
 	lastReason := ""
 
-	err := utilwait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	err := utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
 		existingcsv := &operatorsv1alpha1.ClusterServiceVersion{}
 		err = d.Client.Get(d.Ctx, client.ObjectKeyFromObject(csv), existingcsv)
 		if err != nil {
