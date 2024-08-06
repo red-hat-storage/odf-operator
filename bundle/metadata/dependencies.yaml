@@ -21,6 +21,10 @@ dependencies:
     version: ">=0.7.0 <=0.8.0"
 - type: olm.package
   value:
+    packageName: cephcsi-operator
+    version: ">=4.16.0 <=4.17.0"
+- type: olm.package
+  value:
     packageName: odf-prometheus-operator
     version: ">=4.16.0 <=4.17.0"
 - type: olm.package
