@@ -54,6 +54,17 @@ entries:
   - name: csi-addons.v0.8.0
 
 ---
+defaultChannel: alpha
+name: cephcsi-operator
+schema: olm.package
+---
+schema: olm.channel
+package: cephcsi-operator
+name: alpha
+entries:
+  - name: cephcsi-operator.v4.17.0
+
+---
 defaultChannel: stable-v1.5
 name: ibm-storage-odf-operator
 schema: olm.package

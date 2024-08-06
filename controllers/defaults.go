@@ -52,6 +52,13 @@ var (
 		"CSIADDONS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"CSIADDONS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
+		"CEPHCSI_SUBSCRIPTION_NAME":                    "cephcsi-operator",
+		"CEPHCSI_SUBSCRIPTION_PACKAGE":                 "cephcsi-operator",
+		"CEPHCSI_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"CEPHCSI_SUBSCRIPTION_STARTINGCSV":             "cephcsi-operator.v4.17.0",
+		"CEPHCSI_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"CEPHCSI_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
 		"IBM_SUBSCRIPTION_NAME":                    "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_PACKAGE":                 "ibm-storage-odf-operator",
 		"IBM_SUBSCRIPTION_CHANNEL":                 "stable-v1.4",
@@ -110,6 +117,13 @@ var (
 	CSIAddonsSubscriptionStartingCSV            = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_STARTINGCSV")
 	CSIAddonsSubscriptionCatalogSource          = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_CATALOGSOURCE")
 	CSIAddonsSubscriptionCatalogSourceNamespace = GetEnvOrDefault("CSIADDONS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
+
+	CephCSISubscriptionName                   = GetEnvOrDefault("CEPHCSI_SUBSCRIPTION_NAME")
+	CephCSISubscriptionPackage                = GetEnvOrDefault("CEPHCSI_SUBSCRIPTION_PACKAGE")
+	CephCSISubscriptionChannel                = GetEnvOrDefault("CEPHCSI_SUBSCRIPTION_CHANNEL")
+	CephCSISubscriptionStartingCSV            = GetEnvOrDefault("CEPHCSI_SUBSCRIPTION_STARTINGCSV")
+	CephCSISubscriptionCatalogSource          = GetEnvOrDefault("CEPHCSI_SUBSCRIPTION_CATALOGSOURCE")
+	CephCSISubscriptionCatalogSourceNamespace = GetEnvOrDefault("CEPHCSI_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 
 	IbmSubscriptionName                   = GetEnvOrDefault("IBM_SUBSCRIPTION_NAME")
 	IbmSubscriptionPackage                = GetEnvOrDefault("IBM_SUBSCRIPTION_PACKAGE")
