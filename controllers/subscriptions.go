@@ -58,7 +58,8 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 
 	var isProvider bool
 	if desiredSubscription.Spec.Package == OcsClientSubscriptionPackage ||
-		desiredSubscription.Spec.Package == CSIAddonsSubscriptionPackage {
+		desiredSubscription.Spec.Package == CSIAddonsSubscriptionPackage ||
+		desiredSubscription.Spec.Package == CephCSISubscriptionPackage {
 
 		isProvider, err = isProviderMode(cli)
 		if err != nil {
@@ -269,7 +270,7 @@ func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]strin
 		}
 
 		if !isProvider {
-			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV, CSIAddonsSubscriptionStartingCSV)
+			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV, CSIAddonsSubscriptionStartingCSV, CephCSISubscriptionStartingCSV)
 		}
 
 		// In provider mode, upgrades of the ocs-client-operator and csiaddons are managed by the provider, not the odf-operator.
@@ -502,6 +503,31 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
+	cephCsiSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      CephCSISubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          CephCSISubscriptionCatalogSource,
+			CatalogSourceNamespace: CephCSISubscriptionCatalogSourceNamespace,
+			Package:                CephCSISubscriptionPackage,
+			Channel:                CephCSISubscriptionChannel,
+			StartingCSV:            CephCSISubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+			Config: &operatorv1alpha1.SubscriptionConfig{
+				Tolerations: []corev1.Toleration{
+					{
+						Key:      "node.ocs.openshift.io/storage",
+						Operator: "Equal",
+						Value:    "true",
+						Effect:   "NoSchedule",
+					},
+				},
+			},
+		},
+	}
+
 	rookSubscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      RookSubscriptionName,
@@ -548,7 +574,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 	}
 
 	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription,
-		csiAddonsSubscription, ocsClientSubscription, prometheusSubscription, recipeSubscription}
+		csiAddonsSubscription, cephCsiSubscription, ocsClientSubscription, prometheusSubscription, recipeSubscription}
 }
 
 // GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
