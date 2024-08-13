@@ -26,6 +26,8 @@ var (
 	NoobaClusterServiceVersion string
 	// CsiaddonsClusterServiceVersion is the name of Csiaddons csv
 	CsiaddonsClusterServiceVersion string
+	// CephCsiClusterServiceVersion is the name of Csiaddons csv
+	CephCsiClusterServiceVersion string
 	// RookClusterServiceVersion is the name of Rook csv
 	RookClusterServiceVersion string
 	// PrometheusClusterService version is the name of the Prometheus csv
@@ -55,6 +57,7 @@ func init() {
 	flag.StringVar(&OcsClientClusterServiceVersion, "ocs-client-cluster-service-version", "", "The OCS CSV name which needs to verified")
 	flag.StringVar(&NoobaClusterServiceVersion, "nooba-cluster-service-version", "", "The Nooba CSV name which needs to verified")
 	flag.StringVar(&CsiaddonsClusterServiceVersion, "csiaddons-cluster-service-version", "", "The CSI Addon CSV name which needs to verified")
+	flag.StringVar(&CephCsiClusterServiceVersion, "cephcsi-cluster-service-version", "", "The CEPH CSI CSV name which needs to verified")
 	flag.StringVar(&RookClusterServiceVersion, "rook-cluster-service-version", "", "The Rook CSV name which needs to verified")
 	flag.StringVar(&PrometheusClusterServiceVersion, "prometheus-cluster-service-version", "", "The Prometheus CSV name which needs to verified")
 	flag.StringVar(&RecipeClusterServiceVersion, "recipe-cluster-service-version", "", "The Recipe CSV name which needs to verified")
@@ -63,9 +66,11 @@ func init() {
 	verifyFlags()
 
 	// A list of names of all the csvs that should be installed
-	CsvNames = []string{OdfClusterServiceVersion, OcsClusterServiceVersion, OcsClientClusterServiceVersion,
+	CsvNames = []string{OdfClusterServiceVersion,
+		OcsClusterServiceVersion, OcsClientClusterServiceVersion,
 		RookClusterServiceVersion, NoobaClusterServiceVersion,
-		CsiaddonsClusterServiceVersion, PrometheusClusterServiceVersion, RecipeClusterServiceVersion}
+		CsiaddonsClusterServiceVersion, CephCsiClusterServiceVersion,
+		PrometheusClusterServiceVersion, RecipeClusterServiceVersion}
 
 	dm, err := deploymanager.NewDeployManager()
 	if err != nil {
@@ -102,6 +107,10 @@ func verifyFlags() {
 
 	if CsiaddonsClusterServiceVersion == "" {
 		panic("csiaddons-cluster-service-version is not provided")
+	}
+
+	if CephCsiClusterServiceVersion == "" {
+		panic("cephcsi-cluster-service-version is not provided")
 	}
 
 	if RookClusterServiceVersion == "" {

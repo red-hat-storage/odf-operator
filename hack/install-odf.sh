@@ -33,6 +33,7 @@ oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAM
 oc wait --timeout=5m --for condition=Available -n "$INSTALL_NAMESPACE" deployment \
     csi-addons-controller-manager \
     noobaa-operator \
+    ocscsi-controller-manager \
     ocs-client-operator-console \
     ocs-client-operator-controller-manager \
     ocs-operator \
