@@ -159,6 +159,12 @@ spec:
           - update
           - watch
         - apiGroups:
+          - admissionregistration.k8s.io
+          resources:
+          - validatingwebhookconfigurations
+          verbs:
+          - delete
+        - apiGroups:
           - apiextensions.k8s.io
           resources:
           - customresourcedefinitions
