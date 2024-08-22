@@ -27,7 +27,7 @@ var (
 		"NOOBAA_SUBSCRIPTION_NAME":                    "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_PACKAGE":                 "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"NOOBAA_SUBSCRIPTION_STARTINGCSV":             "noobaa-operator.v5.17.0",
+		"NOOBAA_SUBSCRIPTION_STARTINGCSV":             "noobaa-operator.v5.18.0",
 		"NOOBAA_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"NOOBAA_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
