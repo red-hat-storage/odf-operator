@@ -108,6 +108,28 @@ delete_elb_load_balancer() {
 }
 
 
+# Delete the s3 bucket older than 3 hours
+delete_s3_bucket() {
+    local region=$1
+    local s3_bucket_name=$2
+
+    # Get the creation date of the s3 bucket
+    creation_date=$(aws s3api list-buckets --region "$region" \
+        --query "Buckets[?Name=='$s3_bucket_name'].{CreationDate:CreationDate}" --output text)
+
+    # If creation_date is empty return
+    [[ -z "$creation_date" ]] && return
+
+    age_hours=$(calculate_age "$creation_date")
+
+    # Delete the s3 bucket if older than 3 hours
+    if [ "$age_hours" -gt 3 ]; then
+        echo "Deleting the s3 bucket $s3_bucket_name in region $region with creation date $creation_date"
+        aws s3 rb s3://"$s3_bucket_name" --region "$region" --force
+    fi
+}
+
+
 for region in us-east-1 us-east-2 us-west-1 us-west-2; do
     # List ec2 instances which are running
     for instance_id in $(aws ec2 describe-instances --region "$region" \
@@ -155,5 +177,13 @@ for region in us-east-1 us-east-2 us-west-1 us-west-2; do
     #    echo "Deleting the vpc $vpc_id in region $region"
     #    aws ec2 delete-vpc --region "$region" --vpc-id "$vpc_id"
     #done
+
+    # List s3 buckets starting with nb that belongs to noobaa
+    for bucket_name in $(aws s3api list-buckets --region "$region" \
+        --query "Buckets[?starts_with(Name, 'nb')].Name" --output text); do
+
+        # Delete the s3 buckets starting with nb
+        delete_s3_bucket "$region" "$bucket_name"
+    done
 
 done
