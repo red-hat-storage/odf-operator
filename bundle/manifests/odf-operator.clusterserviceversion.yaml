@@ -35,7 +35,7 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2024-08-13T12:37:31Z"
+    createdAt: "2024-08-30T07:08:13Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
@@ -222,13 +222,6 @@ spec:
           - console.openshift.io
           resources:
           - consoleclidownloads
-          verbs:
-          - create
-          - get
-          - update
-        - apiGroups:
-          - console.openshift.io
-          resources:
           - consoleplugins
           verbs:
           - create
@@ -312,55 +305,8 @@ spec:
           - operators.coreos.com
           resources:
           - catalogsources
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - operators.coreos.com
-          resources:
           - clusterserviceversions
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - clusterserviceversions/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - operators.coreos.com
-          resources:
           - installplans
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - operatorconditions
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - operators.coreos.com
-          resources:
           - subscriptions
           verbs:
           - create
@@ -373,9 +319,18 @@ spec:
         - apiGroups:
           - operators.coreos.com
           resources:
+          - clusterserviceversions/finalizers
           - subscriptions/finalizers
           verbs:
           - update
+        - apiGroups:
+          - operators.coreos.com
+          resources:
+          - operatorconditions
+          verbs:
+          - get
+          - list
+          - watch
         - apiGroups:
           - operators.coreos.com
           resources:
