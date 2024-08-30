@@ -679,7 +679,7 @@ type Module struct {
 
 type ModuleSettings struct {
 	// BalancerMode sets the `balancer` module with different modes like `upmap`, `crush-compact` etc
-	// +kubebuilder:validation:Enum="";crush-compat;upmap;upmap-read
+	// +kubebuilder:validation:Enum="";crush-compat;upmap;read;upmap-read
 	BalancerMode string `json:"balancerMode,omitempty"`
 }
 
@@ -1473,6 +1473,14 @@ type ObjectStoreSpec struct {
 	// +nullable
 	Gateway GatewaySpec `json:"gateway"`
 
+	// The protocol specification
+	// +optional
+	Protocols ProtocolSpec `json:"protocols,omitempty"`
+
+	// The authentication configuration
+	// +optional
+	Auth AuthSpec `json:"auth,omitempty"`
+
 	// The multisite info
 	// +optional
 	// +nullable
@@ -1497,7 +1505,10 @@ type ObjectStoreSpec struct {
 	// +optional
 	AllowUsersInNamespaces []string `json:"allowUsersInNamespaces,omitempty"`
 
-	// Hosting settings for the object store
+	// Hosting settings for the object store.
+	// A common use case for hosting configuration is to inform Rook of endpoints that support DNS
+	// wildcards, which in turn allows virtual host-style bucket addressing.
+	// +nullable
 	// +optional
 	Hosting *ObjectStoreHostingSpec `json:"hosting,omitempty"`
 }
@@ -1626,6 +1637,12 @@ type GatewaySpec struct {
 	// +nullable
 	// +optional
 	DashboardEnabled *bool `json:"dashboardEnabled,omitempty"`
+
+	// AdditionalVolumeMounts allows additional volumes to be mounted to the RGW pod.
+	// The root directory for each additional volume mount is `/var/rgw`.
+	// Example: for an additional mount at subPath `ldap`, mounted from a secret that has key
+	// `bindpass.secret`, the file would reside at `/var/rgw/ldap/bindpass.secret`.
+	AdditionalVolumeMounts AdditionalVolumeMounts `json:"additionalVolumeMounts,omitempty"`
 }
 
 // EndpointAddress is a tuple that describes a single IP address or host name. This is a subset of
@@ -1640,6 +1657,86 @@ type EndpointAddress struct {
 	// +optional
 	Hostname string `json:"hostname,omitempty" protobuf:"bytes,3,opt,name=hostname"`
 }
+
+// ProtocolSpec represents a Ceph Object Store protocol specification
+type ProtocolSpec struct {
+	// The spec for S3
+	// +optional
+	// +nullable
+	S3 *S3Spec `json:"s3,omitempty"`
+
+	// The spec for Swift
+	// +optional
+	// +nullable
+	Swift *SwiftSpec `json:"swift"`
+}
+
+// S3Spec represents Ceph Object Store specification for the S3 API
+type S3Spec struct {
+	// Whether to enable S3. This defaults to true (even if protocols.s3 is not present in the CRD). This maintains backwards compatibility – by default S3 is enabled.
+	// +nullable
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
+	// Whether to use Keystone for authentication. This option maps directly to the rgw_s3_auth_use_keystone option. Enabling it allows generating S3 credentials via an OpenStack API call, see the docs. If not given, the defaults of the corresponding RGW option apply.
+	// +nullable
+	// +optional
+	AuthUseKeystone *bool `json:"authUseKeystone,omitempty"`
+}
+
+// SwiftSpec represents Ceph Object Store specification for the Swift API
+type SwiftSpec struct {
+	// Whether or not the Swift account name should be included in the Swift API URL. If set to false (the default), then the Swift API will listen on a URL formed like http://host:port/<rgw_swift_url_prefix>/v1. If set to true, the Swift API URL will be http://host:port/<rgw_swift_url_prefix>/v1/AUTH_<account_name>. You must set this option to true (and update the Keystone service catalog) if you want radosgw to support publicly-readable containers and temporary URLs.
+	// +nullable
+	// +optional
+	AccountInUrl *bool `json:"accountInUrl,omitempty"`
+	// The URL prefix for the Swift API, to distinguish it from the S3 API endpoint. The default is swift, which makes the Swift API available at the URL http://host:port/swift/v1 (or http://host:port/swift/v1/AUTH_%(tenant_id)s if rgw swift account in url is enabled).
+	// +nullable
+	// +optional
+	UrlPrefix *string `json:"urlPrefix,omitempty"`
+	// Enables the Object Versioning of OpenStack Object Storage API. This allows clients to put the X-Versions-Location attribute on containers that should be versioned.
+	// +nullable
+	// +optional
+	VersioningEnabled *bool `json:"versioningEnabled,omitempty"`
+}
+
+// AuthSpec represents the authentication protocol configuration of a Ceph Object Store Gateway
+type AuthSpec struct {
+	// The spec for Keystone
+	// +optional
+	// +nullable
+	Keystone *KeystoneSpec `json:"keystone,omitempty"`
+}
+
+// KeystoneSpec represents the Keystone authentication configuration of a Ceph Object Store Gateway
+type KeystoneSpec struct {
+	// The URL for the Keystone server.
+	Url string `json:"url"`
+	// The name of the secret containing the credentials for the service user account used by RGW. It has to be in the same namespace as the object store resource.
+	ServiceUserSecretName string `json:"serviceUserSecretName"`
+	// The roles requires to serve requests.
+	AcceptedRoles []string `json:"acceptedRoles"`
+	// Create new users in their own tenants of the same name. Possible values are true, false, swift and s3. The latter have the effect of splitting the identity space such that only the indicated protocol will use implicit tenants.
+	// +optional
+	ImplicitTenants ImplicitTenantSetting `json:"implicitTenants,omitempty"`
+	// The maximum number of entries in each Keystone token cache.
+	// +optional
+	// +nullable
+	TokenCacheSize *int `json:"tokenCacheSize,omitempty"`
+	// The number of seconds between token revocation checks.
+	// +optional
+	// +nullable
+	RevocationInterval *int `json:"revocationInterval,omitempty"`
+}
+
+type ImplicitTenantSetting string
+
+const (
+	ImplicitTenantSwift   ImplicitTenantSetting = "swift"
+	ImplicitTenantS3      ImplicitTenantSetting = "s3"
+	ImplicitTenantTrue    ImplicitTenantSetting = "true"
+	ImplicitTenantFalse   ImplicitTenantSetting = "false"
+	ImplicitTenantDefault ImplicitTenantSetting = ""
+)
 
 // ZoneSpec represents a Ceph Object Store Gateway Zone specification
 type ZoneSpec struct {
@@ -1675,14 +1772,45 @@ type ObjectEndpoints struct {
 
 // ObjectStoreHostingSpec represents the hosting settings for the object store
 type ObjectStoreHostingSpec struct {
-	// A list of DNS names in which bucket can be accessed via virtual host path. These names need to valid according RFC-1123.
-	// Each domain requires wildcard support like ingress loadbalancer.
-	// Do not include the wildcard itself in the list of hostnames (e.g. use "mystore.example.com" instead of "*.mystore.example.com").
-	// Add all hostnames including user-created Kubernetes Service endpoints to the list.
-	// CephObjectStore Service Endpoints and CephObjectZone customEndpoints are automatically added to the list.
+	// AdvertiseEndpoint is the default endpoint Rook will return for resources dependent on this
+	// object store. This endpoint will be returned to CephObjectStoreUsers, Object Bucket Claims,
+	// and COSI Buckets/Accesses.
+	// By default, Rook returns the endpoint for the object store's Kubernetes service using HTTPS
+	// with `gateway.securePort` if it is defined (otherwise, HTTP with `gateway.port`).
+	// +nullable
+	// +optional
+	AdvertiseEndpoint *ObjectEndpointSpec `json:"advertiseEndpoint,omitempty"`
+	// A list of DNS host names on which object store gateways will accept client S3 connections.
+	// When specified, object store gateways will reject client S3 connections to hostnames that are
+	// not present in this list, so include all endpoints.
+	// The object store's advertiseEndpoint and Kubernetes service endpoint, plus CephObjectZone
+	// `customEndpoints` are automatically added to the list but may be set here again if desired.
+	// Each DNS name must be valid according RFC-1123.
+	// If the DNS name corresponds to an endpoint with DNS wildcard support, do not include the
+	// wildcard itself in the list of hostnames.
+	// E.g., use "mystore.example.com" instead of "*.mystore.example.com".
 	// The feature is supported only for Ceph v18 and later versions.
 	// +optional
 	DNSNames []string `json:"dnsNames,omitempty"`
+}
+
+// ObjectEndpointSpec represents an object store endpoint
+type ObjectEndpointSpec struct {
+	// DnsName is the DNS name (in RFC-1123 format) of the endpoint.
+	// If the DNS name corresponds to an endpoint with DNS wildcard support, do not include the
+	// wildcard itself in the list of hostnames.
+	// E.g., use "mystore.example.com" instead of "*.mystore.example.com".
+	// +kubebuilder:validation:MinLength=1
+	// +required
+	DnsName string `json:"dnsName"`
+	// Port is the port on which S3 connections can be made for this endpoint.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +required
+	Port int32 `json:"port"`
+	// UseTls defines whether the endpoint uses TLS (HTTPS) or not (HTTP).
+	// +required
+	UseTls bool `json:"useTls"`
 }
 
 // +genclient
@@ -2355,9 +2483,10 @@ type SSSDSidecar struct {
 	SSSDConfigFile SSSDSidecarConfigFile `json:"sssdConfigFile"`
 
 	// AdditionalFiles defines any number of additional files that should be mounted into the SSSD
-	// sidecar. These files may be referenced by the sssd.conf config file.
+	// sidecar with a directory root of `/etc/sssd/rook-additional/`.
+	// These files may be referenced by the sssd.conf config file.
 	// +optional
-	AdditionalFiles []SSSDSidecarAdditionalFile `json:"additionalFiles,omitempty"`
+	AdditionalFiles AdditionalVolumeMounts `json:"additionalFiles,omitempty"`
 
 	// Resources allow specifying resource requests/limits on the SSSD sidecar container.
 	// +optional
@@ -2385,11 +2514,13 @@ type SSSDSidecarConfigFile struct {
 	VolumeSource *ConfigFileVolumeSource `json:"volumeSource,omitempty"`
 }
 
-// SSSDSidecarAdditionalFile represents the source from where additional files for the the SSSD
-// configuration should come from and are made available.
-type SSSDSidecarAdditionalFile struct {
-	// SubPath defines the sub-path in `/etc/sssd/rook-additional/` where the additional file(s)
-	// will be placed. Each subPath definition must be unique and must not contain ':'.
+// AdditionalVolumeMount represents the source from where additional files in pod containers
+// should come from and what subdirectory they are made available in.
+type AdditionalVolumeMount struct {
+	// SubPath defines the sub-path (subdirectory) of the directory root where the volumeSource will
+	// be mounted. All files/keys in the volume source's volume will be mounted to the subdirectory.
+	// This is not the same as the Kubernetes `subPath` volume mount option.
+	// Each subPath definition must be unique and must not contain ':'.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	// +kubebuilder:validation:Pattern=`^[^:]+$`
@@ -2398,11 +2529,13 @@ type SSSDSidecarAdditionalFile struct {
 	// VolumeSource accepts a pared down version of the standard Kubernetes VolumeSource for the
 	// additional file(s) like what is normally used to configure Volumes for a Pod. Fore example, a
 	// ConfigMap, Secret, or HostPath. Each VolumeSource adds one or more additional files to the
-	// SSSD sidecar container in the `/etc/sssd/rook-additional/<subPath>` directory.
-	// Be aware that some files may need to have a specific file mode like 0600 due to requirements
-	// by SSSD for some files. For example, CA or TLS certificates.
+	// container `<directory-root>/<subPath>` directory.
+	// Be aware that some files may need to have a specific file mode like 0600 due to application
+	// requirements. For example, CA or TLS certificates.
 	VolumeSource *ConfigFileVolumeSource `json:"volumeSource"`
 }
+
+type AdditionalVolumeMounts []AdditionalVolumeMount
 
 // NetworkSpec for Ceph includes backward compatibility code
 // +kubebuilder:validation:XValidation:message="at least one network selector must be specified when using multus",rule="!has(self.provider) || (self.provider != 'multus' || (self.provider == 'multus' && size(self.selectors) > 0))"
@@ -2861,6 +2994,14 @@ type StorageScopeSpec struct {
 	// +optional
 	// +nullable
 	BackfillFullRatio *float64 `json:"backfillFullRatio,omitempty"`
+	// Whether to allow updating the device class after the OSD is initially provisioned
+	// +optional
+	AllowDeviceClassUpdate bool `json:"allowDeviceClassUpdate,omitempty"`
+	// Whether Rook will resize the OSD CRUSH weight when the OSD PVC size is increased.
+	// This allows cluster data to be rebalanced to make most effective use of new OSD space.
+	// The default is false since data rebalancing can cause temporary cluster slowdown.
+	// +optional
+	AllowOsdCrushWeightUpdate bool `json:"allowOsdCrushWeightUpdate,omitempty"`
 }
 
 // OSDStore is the backend storage type used for creating the OSDs
@@ -2942,7 +3083,7 @@ type Placement struct {
 	// the triple <key,value,effect> using the matching operator <operator>
 	// +optional
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
-	// TopologySpreadConstraint specifies how to spread matching pods among the given topology
+	// TopologySpreadConstraints specifies how to spread matching pods among the given topology
 	// +optional
 	TopologySpreadConstraints []v1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
 }
