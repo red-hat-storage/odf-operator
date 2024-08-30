@@ -14,11 +14,11 @@ dependencies:
 - type: olm.package
   value:
     packageName: noobaa-operator
-    version: ">=5.16.0 <=5.17.0"
+    version: ">=5.17.0 <=5.18.0"
 - type: olm.package
   value:
     packageName: csi-addons
-    version: ">=0.7.0 <=0.8.0"
+    version: ">=0.8.0 <=0.9.1"
 - type: olm.package
   value:
     packageName: cephcsi-operator
