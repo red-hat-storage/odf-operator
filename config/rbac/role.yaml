@@ -80,13 +80,6 @@ rules:
   - console.openshift.io
   resources:
   - consoleclidownloads
-  verbs:
-  - create
-  - get
-  - update
-- apiGroups:
-  - console.openshift.io
-  resources:
   - consoleplugins
   verbs:
   - create
@@ -170,55 +163,8 @@ rules:
   - operators.coreos.com
   resources:
   - catalogsources
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - operators.coreos.com
-  resources:
   - clusterserviceversions
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - operators.coreos.com
-  resources:
-  - clusterserviceversions/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - operators.coreos.com
-  resources:
   - installplans
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - operators.coreos.com
-  resources:
-  - operatorconditions
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - operators.coreos.com
-  resources:
   - subscriptions
   verbs:
   - create
@@ -231,9 +177,18 @@ rules:
 - apiGroups:
   - operators.coreos.com
   resources:
+  - clusterserviceversions/finalizers
   - subscriptions/finalizers
   verbs:
   - update
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - operatorconditions
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - operators.coreos.com
   resources:
