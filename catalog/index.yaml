@@ -40,7 +40,7 @@ schema: olm.channel
 package: noobaa-operator
 name: alpha
 entries:
-  - name: noobaa-operator.v5.17.0
+  - name: noobaa-operator.v5.18.0
 
 ---
 defaultChannel: alpha
@@ -51,7 +51,7 @@ schema: olm.channel
 package: csi-addons
 name: alpha
 entries:
-  - name: csi-addons.v0.8.0
+  - name: csi-addons.v0.9.1
 
 ---
 defaultChannel: alpha
