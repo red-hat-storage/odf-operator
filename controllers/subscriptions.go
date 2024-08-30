@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"go.uber.org/multierr"
+	admv1 "k8s.io/api/admissionregistration/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -353,6 +354,16 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 
 			for i := range csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 				csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec.Replicas = &replicas
+			}
+
+			if replicas == 0 {
+				// delete the subscription webhook created by the ocs-client-operator
+				// we can not delete the webhook by the ocs-client-operator itself because the client operator is down
+				webhook := &admv1.ValidatingWebhookConfiguration{}
+				webhook.Name = "subscription.ocs.openshift.io"
+				if err = cli.Delete(context.TODO(), webhook); err != nil && !errors.IsNotFound(err) {
+					return err
+				}
 			}
 		}
 
