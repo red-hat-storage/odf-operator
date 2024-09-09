@@ -20,26 +20,41 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+
+// +kubebuilder:validation:Enum=flashsystemcluster.odf.ibm.com/v1alpha1;storagecluster.ocs.openshift.io/v1
+// StorageVendor captures the type of storage vendor
+type StorageKind string
 
 // StorageSystemSpec defines the desired state of StorageSystem
 type StorageSystemSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of StorageSystem. Edit storagesystem_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	//+kubebuilder:validation:Required
+	// Name describes the name of managed storage vendor CR
+	Name string `json:"name,omitempty"`
+
+	//+kubebuilder:validation:Required
+	// NameSpace describes the namespace of managed storage vendor CR
+	NameSpace string `json:"nameSpace,omitempty"`
+
+	//+kubebuilder:validation:Required
+	// Kind describes the kind of storage vendor
+	Kind StorageKind `json:"kind,omitempty"`
 }
 
 // StorageSystemStatus defines the observed state of StorageSystem
 type StorageSystemStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Message string `json:"message,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:shortName=storsys
+//+kubebuilder:printcolumn:JSONPath=".spec.kind",name=storage-system-kind,type=string
+//+kubebuilder:printcolumn:JSONPath=".spec.name",name=storage-system-name,type=string
+//+operator-sdk:csv:customresourcedefinitions:resources={{StorageCluster,v1,storageclusters.ocs.openshift.io},{FlashSystemCluster,v1alpha1,flashsystemclusters.odf.ibm.com}}
 
 // StorageSystem is the Schema for the storagesystems API
 type StorageSystem struct {
