@@ -121,6 +121,10 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespa
 	}
 
 	for kind := range subsList {
+		if err := ScaleDownClientOperator(r.Client, kind); err != nil {
+			return err
+		}
+
 		csvNames, csvErr := GetVendorCsvNames(r.Client, kind)
 		if csvErr != nil {
 			return csvErr

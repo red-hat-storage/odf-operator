@@ -220,6 +220,9 @@ func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.Stor
 }
 
 func (r *StorageSystemReconciler) isVendorCsvReady(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
+	if err := ScaleDownClientOperator(r.Client, instance.Spec.Kind); err != nil {
+		return err
+	}
 
 	csvNames, err := GetVendorCsvNames(r.Client, instance.Spec.Kind)
 	if err != nil {

@@ -253,6 +253,60 @@ func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, erro
 	return nil, fmt.Errorf("odf-operator subscription not found")
 }
 
+// Scales down deployments in all client-op CSVs for non-provider mode deployments
+func ScaleDownClientOperator(cli client.Client, kind odfv1alpha1.StorageKind) error {
+	if kind != VendorStorageCluster() {
+		return nil
+	}
+
+	isProvider, err := isProviderMode(cli)
+	if err != nil {
+		return err
+	}
+	// no change in desired state for provider mode, scaling down is required for non-provider mode only irrespective of any other conditions
+	if isProvider {
+		return nil
+	}
+
+	ctx := context.Background()
+	csvList := &operatorv1alpha1.ClusterServiceVersionList{}
+	labelKey := fmt.Sprintf("operators.coreos.com/ocs-client-operator.%s", OperatorNamespace)
+	if err = cli.List(ctx,
+		csvList,
+		client.InNamespace(OperatorNamespace),
+		client.MatchingLabels(map[string]string{labelKey: ""})); err != nil {
+		return err
+	}
+
+	var replicas int32 = 0
+	for csvIdx := range csvList.Items {
+		csv := &csvList.Items[csvIdx]
+		for deploymentIdx := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+			csvDeployment := &csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[deploymentIdx]
+			csvDeployment.Spec.Replicas = &replicas
+
+			// TODO: It is observed when there are two CSVs, installing & replacing phase only updating the
+			// replicas in CSV for the deployments isn't scaling down corresponding deployment.
+			// If we running in non-provider mode we can scale these deployments w/o any side-effects
+			deployment := &appsv1.Deployment{}
+			deployment.Name = csvDeployment.Name
+			deployment.Namespace = OperatorNamespace
+			if err := cli.Get(ctx, client.ObjectKeyFromObject(deployment), deployment); err != nil {
+				return fmt.Errorf("failed to get deployment with name %s: %v", deployment.Name, err)
+			}
+			deployment.Spec.Replicas = &replicas
+			if err := cli.Update(ctx, deployment); err != nil {
+				return fmt.Errorf("failed to set deployment replicas of %s to 0: %v", deployment.Name, err)
+			}
+		}
+		if err = cli.Update(ctx, csv); err != nil {
+			return fmt.Errorf("failed to set deployment replicas in csv %s to 0: %v", csv.Name, err)
+		}
+	}
+
+	return nil
+}
+
 func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]string, error) {
 
 	var csvNames []string
