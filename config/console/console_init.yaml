@@ -11,6 +11,7 @@ spec:
       labels:
         app: odf-console
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: odf-console
           image: odf-console:latest
