@@ -54,15 +54,15 @@ entries:
   - name: csi-addons.v0.8.0
 
 ---
-defaultChannel: stable-v1.5
+defaultChannel: stable-v1.6
 name: ibm-storage-odf-operator
 schema: olm.package
 ---
 schema: olm.channel
 package: ibm-storage-odf-operator
-name: stable-v1.5
+name: stable-v1.6
 entries:
-  - name: ibm-storage-odf-operator.v1.5.0
+  - name: ibm-storage-odf-operator.v1.6.0
 
 ---
 defaultChannel: alpha
