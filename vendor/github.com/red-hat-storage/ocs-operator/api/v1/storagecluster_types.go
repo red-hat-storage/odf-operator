@@ -18,6 +18,7 @@ package v1
 
 import (
 	"os"
+	"time"
 
 	nbv1 "github.com/noobaa/noobaa-operator/v5/pkg/apis/noobaa/v1alpha1"
 	quotav1 "github.com/openshift/api/quota/v1"
@@ -85,6 +86,12 @@ type StorageClusterSpec struct {
 	// AllowRemoteStorageConsumers Indicates that the OCS cluster should deploy the needed
 	// components to enable connections from remote consumers.
 	AllowRemoteStorageConsumers bool `json:"allowRemoteStorageConsumers,omitempty"`
+
+	// ProviderAPIServerServiceType Indicates the ServiceType for OCS Provider API Server Service.
+	// The supported values are NodePort or LoadBalancer. The default ServiceType is NodePort if the value is empty.
+	// This will only be used when AllowRemoteStorageConsumers is set to true
+	ProviderAPIServerServiceType corev1.ServiceType `json:"providerAPIServerServiceType,omitempty"`
+
 	// EnableCephTools toggles on whether or not the ceph tools pod
 	// should be deployed.
 	// Defaults to false
@@ -165,6 +172,14 @@ type ManagedResourcesSpec struct {
 // ManageCephCluster defines how to reconcile the Ceph cluster definition
 type ManageCephCluster struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
+	// WaitTimeoutForHealthyOSDInMinutes defines the time the operator would wait before an OSD can be stopped for upgrade or restart.
+	// If `continueUpgradeAfterChecksEvenIfNotHealthy` is `false` and the timeout exceeds and OSD is not ok to stop, then the operator
+	// would skip upgrade for the current OSD and proceed with the next one.
+	// If `continueUpgradeAfterChecksEvenIfNotHealthy` is `true`, then operator would continue with the upgrade of an OSD even if its
+	// not ok to stop after the timeout.
+	// This timeout won't be applied if `skipUpgradeChecks` is `true`.
+	// The default wait timeout is 10 minutes.
+	WaitTimeoutForHealthyOSDInMinutes time.Duration `json:"waitTimeoutForHealthyOSDInMinutes,omitempty"`
 }
 
 // ManageCephConfig defines how to reconcile the Ceph configuration
