@@ -3,7 +3,7 @@ module github.com/red-hat-storage/odf-operator
 go 1.21
 
 require (
-	github.com/IBM/ibm-storage-odf-operator v1.5.0
+	github.com/IBM/ibm-storage-odf-operator v1.5.1
 	github.com/ghodss/yaml v1.0.1-0.20220118164431-d8423dcdf344
 	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.14.0
