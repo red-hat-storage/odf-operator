@@ -3,12 +3,12 @@ module github.com/red-hat-storage/odf-operator
 go 1.22.0
 
 require (
-	github.com/IBM/ibm-storage-odf-operator v1.5.0
+	github.com/IBM/ibm-storage-odf-operator v1.6.0
 	github.com/ghodss/yaml v1.0.1-0.20220118164431-d8423dcdf344
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.20.1
-	github.com/onsi/gomega v1.34.1
-	github.com/openshift/api v0.0.0-20240828125535-01b3675ba7b3
+	github.com/onsi/gomega v1.34.2
+	github.com/openshift/api v0.0.0-20240926211938-f89ab92f1597
 	github.com/openshift/custom-resource-status v1.1.3-0.20220503160415-f2fdb4999d87
 	github.com/operator-framework/api v0.26.0
 	github.com/prometheus/client_golang v1.20.2
@@ -46,7 +46,7 @@ require (
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
+	github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
