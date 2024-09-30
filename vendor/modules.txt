@@ -1,5 +1,5 @@
-# github.com/IBM/ibm-storage-odf-operator v1.5.0
-## explicit; go 1.20
+# github.com/IBM/ibm-storage-odf-operator v1.6.0
+## explicit; go 1.22.0
 github.com/IBM/ibm-storage-odf-operator/api/v1alpha1
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
@@ -106,8 +106,8 @@ github.com/google/go-cmp/cmp/internal/value
 ## explicit; go 1.12
 github.com/google/gofuzz
 github.com/google/gofuzz/bytesource
-# github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8
-## explicit; go 1.19
+# github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5
+## explicit; go 1.22
 github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
 ## explicit
@@ -237,8 +237,8 @@ github.com/onsi/ginkgo/v2/internal/parallel_support
 github.com/onsi/ginkgo/v2/internal/testingtproxy
 github.com/onsi/ginkgo/v2/reporters
 github.com/onsi/ginkgo/v2/types
-# github.com/onsi/gomega v1.34.1
-## explicit; go 1.20
+# github.com/onsi/gomega v1.34.2
+## explicit; go 1.22
 github.com/onsi/gomega
 github.com/onsi/gomega/format
 github.com/onsi/gomega/internal
@@ -249,7 +249,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openshift/api v0.0.0-20240828125535-01b3675ba7b3
+# github.com/openshift/api v0.0.0-20240926211938-f89ab92f1597
 ## explicit; go 1.22.0
 github.com/openshift/api/config/v1
 github.com/openshift/api/console/v1
@@ -339,9 +339,7 @@ go.uber.org/zap/zapcore
 golang.org/x/crypto/pbkdf2
 # golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
 ## explicit; go 1.20
-golang.org/x/exp/constraints
 golang.org/x/exp/maps
-golang.org/x/exp/slices
 # golang.org/x/net v0.28.0
 ## explicit; go 1.18
 golang.org/x/net/context
