@@ -18,6 +18,7 @@ package v1
 
 import (
 	"os"
+	"time"
 
 	nbv1 "github.com/noobaa/noobaa-operator/v5/pkg/apis/noobaa/v1alpha1"
 	quotav1 "github.com/openshift/api/quota/v1"
@@ -176,6 +177,14 @@ type ManageCephCluster struct {
 	MgrCount int `json:"mgrCount,omitempty"`
 	// +kubebuilder:validation:Enum=3;5
 	MonCount int `json:"monCount,omitempty"`
+	// WaitTimeoutForHealthyOSDInMinutes defines the time the operator would wait before an OSD can be stopped for upgrade or restart.
+	// If `continueUpgradeAfterChecksEvenIfNotHealthy` is `false` and the timeout exceeds and OSD is not ok to stop, then the operator
+	// would skip upgrade for the current OSD and proceed with the next one.
+	// If `continueUpgradeAfterChecksEvenIfNotHealthy` is `true`, then operator would continue with the upgrade of an OSD even if its
+	// not ok to stop after the timeout.
+	// This timeout won't be applied if `skipUpgradeChecks` is `true`.
+	// The default wait timeout is 10 minutes.
+	WaitTimeoutForHealthyOSDInMinutes time.Duration `json:"waitTimeoutForHealthyOSDInMinutes,omitempty"`
 }
 
 // ManageCephConfig defines how to reconcile the Ceph configuration
@@ -211,6 +220,14 @@ type ManageCephBlockPools struct {
 // ManageCephNonResilientPools defines how to reconcile ceph non-resilient pools
 type ManageCephNonResilientPools struct {
 	Enable bool `json:"enable,omitempty"`
+	// Count is the number of devices in this set
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default=1
+	Count int `json:"count,omitempty"`
+	// ResourceRequirements (requests/limits) for the devices
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// VolumeClaimTemplates is a PVC template for the underlying storage devices
+	VolumeClaimTemplate corev1.PersistentVolumeClaim `json:"volumeClaimTemplate,omitempty"`
 	// StorageClassName specifies the name of the storage class created for ceph non-resilient pools
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
@@ -237,6 +254,7 @@ type ManageCephObjectStores struct {
 	DisableStorageClass bool   `json:"disableStorageClass,omitempty"`
 	GatewayInstances    int    `json:"gatewayInstances,omitempty"`
 	DisableRoute        bool   `json:"disableRoute,omitempty"`
+	HostNetwork         *bool  `json:"hostNetwork,omitempty"`
 	// StorageClassName specifies the name of the storage class created for ceph obc's
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
@@ -257,6 +275,8 @@ type ManageCephToolbox struct {
 type ManageCephRBDMirror struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
 	// +kubebuilder:default=1
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=1
 	DaemonCount int `json:"daemonCount,omitempty"`
 }
 
@@ -396,6 +416,9 @@ type ExternalPGSpec struct {
 	// AllowSelfSignedCerts will allow the Postgres server to use self signed certificates to authenticate
 	// +optional
 	AllowSelfSignedCerts bool `json:"allowSelfSignedCerts,omitempty"`
+	// EnableTLS will allow the postgres server to connect via TLS/SSL
+	// +optional
+	EnableTLS bool `json:"enableTls,omitempty"`
 	// TLSSecret stores the secret name which contains the client side certificates if enabled
 	// +optional
 	TLSSecretName string `json:"tlsSecretName,omitempty"`
@@ -513,6 +536,9 @@ type StorageClusterStatus struct {
 
 	// KMSServerConnection holds the connection state to the KMS server.
 	KMSServerConnection KMSServerConnectionStatus `json:"kmsServerConnection,omitempty"`
+
+	// CurrentMonCount holds the value of ceph mons configured in ceph cluster.
+	CurrentMonCount int `json:"currentMonCount,omitempty"`
 }
 
 // ImagesStatus maps every component image name it's reconciliation status information
