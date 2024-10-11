@@ -25,6 +25,8 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	admrv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -33,9 +35,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/internal/controller"
+	odfwebhook "github.com/red-hat-storage/odf-operator/internal/webhook"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -48,6 +52,8 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(odfv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(opv1a1.AddToScheme(scheme))
+	utilruntime.Must(admrv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -123,12 +129,23 @@ func main() {
 	}
 
 	if err = (&controller.StorageSystemReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: "openshift-storage",
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageSystem")
 		os.Exit(1)
 	}
+
+	if err = (&odfwebhook.ClusterServiceVersionDefaulter{
+		Client:            mgr.GetClient(),
+		Decoder:           admission.NewDecoder(mgr.GetScheme()),
+		OperatorNamespace: "openshift-storage",
+	}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterServiceVersion")
+		os.Exit(1)
+	}
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
