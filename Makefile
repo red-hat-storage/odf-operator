@@ -35,6 +35,7 @@ IMAGE_TAG_BASE ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/odf-operator
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:$(IMAGE_TAG)
+BUNDLE_IMG_DEPS ?= $(IMAGE_TAG_BASE)-deps-bundle:$(IMAGE_TAG)
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -268,6 +269,14 @@ endif
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+	# Dependencies bundle
+	$(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS) \
+		--kustomize-dir config/bundles --input-dir config/bundles --output-dir bundle-deps --package odf-operator-deps
+	@cp config/bundles/dependencies.yaml bundle-deps/metadata/
+	$(OPERATOR_SDK) bundle validate bundle-deps
+	@cp bundle.Dockerfile bundle.deps.Dockerfile
+
+	# Main odf-operator bundle
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
@@ -276,10 +285,12 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	docker build -f bundle.deps.Dockerfile -t $(BUNDLE_IMG_DEPS) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
 	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
+	$(MAKE) docker-push IMG=$(BUNDLE_IMG_DEPS)
 
 .PHONY: opm
 OPM = $(LOCALBIN)/opm
