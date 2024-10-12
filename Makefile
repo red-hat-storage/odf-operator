@@ -34,6 +34,8 @@ IMAGE_TAG_BASE ?= openshift.io/odf-operator
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
+BUNDLE_IMG_INTERNAL ?= $(IMAGE_TAG_BASE)-internal-bundle:v$(VERSION)
+BUNDLE_IMG_EXTERNAL ?= $(IMAGE_TAG_BASE)-external-bundle:v$(VERSION)
 
 # BUNDLE_GEN_FLAGS are the flags passed to the operator-sdk generate bundle command
 BUNDLE_GEN_FLAGS ?= -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
@@ -267,6 +269,19 @@ endif
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+	# Internal dependencies bundle
+	$(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS) \
+		--kustomize-dir config/bundles/internal --input-dir config/bundles/internal --output-dir bundle-internal --package odf-operator-internal
+	$(OPERATOR_SDK) bundle validate ./bundle-internal
+	@cp bundle.Dockerfile bundle.internal.Dockerfile
+
+	# External dependencies bundle
+	$(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS) \
+		--kustomize-dir config/bundles/external --input-dir config/bundles/external --output-dir bundle-external --package odf-operator-external
+	$(OPERATOR_SDK) bundle validate ./bundle-external
+	@cp bundle.Dockerfile bundle.external.Dockerfile
+
+	# Main odf-operator bundle
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
@@ -275,10 +290,14 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	docker build -f bundle.internal.Dockerfile -t $(BUNDLE_IMG_INTERNAL) .
+	docker build -f bundle.external.Dockerfile -t $(BUNDLE_IMG_EXTERNAL) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
 	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
+	$(MAKE) docker-push IMG=$(BUNDLE_IMG_INTERNAL)
+	$(MAKE) docker-push IMG=$(BUNDLE_IMG_EXTERNAL)
 
 .PHONY: opm
 OPM = $(LOCALBIN)/opm
