@@ -262,7 +262,7 @@ func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]strin
 	if kind == VendorFlashSystemCluster() {
 		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
-		csvNames = []string{OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
+		csvNames = []string{OdfDepsSubscriptionStartingCSV, OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
 			PrometheusSubscriptionStartingCSV, RecipeSubscriptionStartingCSV}
 
 		isProvider, err = isProviderMode(cli)
@@ -432,6 +432,22 @@ func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscriptio
 
 // GetStorageClusterSubscription return subscription for StorageCluster
 func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
+
+	odfDepsSubscription := &operatorv1alpha1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      OdfDepsSubscriptionName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &operatorv1alpha1.SubscriptionSpec{
+			CatalogSource:          OdfDepsSubscriptionCatalogSource,
+			CatalogSourceNamespace: OdfDepsSubscriptionCatalogSourceNamespace,
+			Package:                OdfDepsSubscriptionPackage,
+			Channel:                OdfDepsSubscriptionChannel,
+			StartingCSV:            OdfDepsSubscriptionStartingCSV,
+			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
+		},
+	}
+
 	noobaaSubscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      NoobaaSubscriptionName,
@@ -584,7 +600,7 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{ocsSubscription, rookSubscription, noobaaSubscription,
+	return []*operatorv1alpha1.Subscription{odfDepsSubscription, ocsSubscription, rookSubscription, noobaaSubscription,
 		csiAddonsSubscription, cephCsiSubscription, ocsClientSubscription, prometheusSubscription, recipeSubscription}
 }
 
