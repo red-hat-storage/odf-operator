@@ -24,6 +24,13 @@ var (
 	DefaultValMap = map[string]string{
 		"OPERATOR_NAMESPACE": "openshift-storage",
 
+		"ODF_DEPS_SUBSCRIPTION_NAME":                    "odf-dependencies",
+		"ODF_DEPS_SUBSCRIPTION_PACKAGE":                 "odf-dependencies",
+		"ODF_DEPS_SUBSCRIPTION_CHANNEL":                 "alpha",
+		"ODF_DEPS_SUBSCRIPTION_STARTINGCSV":             "odf-dependencies.v4.18.0",
+		"ODF_DEPS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
+		"ODF_DEPS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
+
 		"NOOBAA_SUBSCRIPTION_NAME":                    "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_PACKAGE":                 "noobaa-operator",
 		"NOOBAA_SUBSCRIPTION_CHANNEL":                 "alpha",
@@ -89,6 +96,13 @@ var (
 	}
 
 	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
+
+	OdfDepsSubscriptionName                   = GetEnvOrDefault("ODF_DEPS_SUBSCRIPTION_NAME")
+	OdfDepsSubscriptionPackage                = GetEnvOrDefault("ODF_DEPS_SUBSCRIPTION_PACKAGE")
+	OdfDepsSubscriptionChannel                = GetEnvOrDefault("ODF_DEPS_SUBSCRIPTION_CHANNEL")
+	OdfDepsSubscriptionStartingCSV            = GetEnvOrDefault("ODF_DEPS_SUBSCRIPTION_STARTINGCSV")
+	OdfDepsSubscriptionCatalogSource          = GetEnvOrDefault("ODF_DEPS_SUBSCRIPTION_CATALOGSOURCE")
+	OdfDepsSubscriptionCatalogSourceNamespace = GetEnvOrDefault("ODF_DEPS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE")
 
 	OcsSubscriptionName                   = GetEnvOrDefault("OCS_SUBSCRIPTION_NAME")
 	OcsSubscriptionPackage                = GetEnvOrDefault("OCS_SUBSCRIPTION_PACKAGE")
