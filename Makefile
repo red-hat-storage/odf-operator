@@ -168,6 +168,10 @@ deploy-with-olm: kustomize ## Deploy controller to the K8s cluster via OLM
 undeploy-with-olm: ## Undeploy controller from the K8s cluster
 	$(KUSTOMIZE) build config/install | kubectl delete -f -
 
+# Make target to ignore (git checkout) changes if there are only timestamp changes in the bundle
+checkout-bundle-timestamp:
+	(git diff --quiet --ignore-matching-lines createdAt bundle && git checkout --quiet bundle) || true
+
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests -q
@@ -182,6 +186,7 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	$(OPERATOR_SDK) bundle validate ./bundle
+	@$(MAKE) --no-print-directory checkout-bundle-timestamp
 
 .PHONY: bundle-build
 bundle-build: bundle ## Build the bundle image.
