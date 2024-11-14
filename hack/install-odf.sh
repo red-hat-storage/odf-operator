@@ -20,6 +20,15 @@ fi
 
 "$OPERATOR_SDK" run bundle "$BUNDLE_IMG" --timeout=10m --security-context-config restricted -n "$INSTALL_NAMESPACE" --index-image "$CATALOG_DEPS_IMG"
 
+# Check for the presence of the CSVs in the cluster for up to 5 minutes,
+# Since 'oc wait' exits immediately if the resource is not found.
+for i in {1..30}; do
+    if oc get -n "$INSTALL_NAMESPACE" csv $CSV_NAMES &> /dev/null; then
+        break
+    fi
+    sleep 10
+done
+
 oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAMESPACE" csv $CSV_NAMES || {
 
     echo "CSV $CSV_NAMES did not succeed, describing CSV"
