@@ -111,6 +111,14 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 	}
 
 	if !subExsist {
+		// Set the catalog source for the odf-dependencies subscription to match that of the odf-operator subscription
+		// This ensures that the odf-dependencies subscription uses the same catalog source across all environments,
+		// including offline and test environments where the catalog name may vary.
+		if desiredSubscription.Spec.Package == OdfDepsSubscriptionPackage {
+			desiredSubscription.Spec.CatalogSource = odfSub.Spec.CatalogSource
+			desiredSubscription.Spec.CatalogSourceNamespace = odfSub.Spec.CatalogSourceNamespace
+		}
+
 		if desiredSubscription.Spec.Config == nil {
 			desiredSubscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
 				Tolerations: odfSub.Spec.Config.Tolerations,
@@ -208,6 +216,12 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 	desiredSubscription, err = CheckExistingSubscriptions(cli, desiredSubscription)
 	if err != nil {
 		return err
+	}
+
+	// Skip creating (only update) subscriptions other than odf-dependencies
+	// It will allow OLM to manage their creation via dependency resolution
+	if desiredSubscription.Spec.Package != OdfDepsSubscriptionPackage && desiredSubscription.CreationTimestamp.IsZero() {
+		return nil
 	}
 
 	// create/update subscription
