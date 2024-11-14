@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 var (
@@ -52,6 +53,8 @@ func NewDeployManager() (*DeployManager, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	return &DeployManager{
 		Client: client,
