@@ -50,6 +50,7 @@ spec:
             drop:
               - ALL
           readOnlyRootFilesystem: true
+        # ref https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
         livenessProbe:
           httpGet:
             path: /healthz
@@ -62,6 +63,7 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 90
         resources:
           limits:
             cpu: 200m

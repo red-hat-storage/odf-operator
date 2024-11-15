@@ -171,7 +171,24 @@ func main() {
 		setupLog.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+
+	// The console plugin depends on CRDs provided by these CSVs.
+	// Checking only the odf-dependencies CSV is insufficient,
+	// because, based on observations, the presence of all required CRDs
+	// is not guaranteed even when the odf-dependencies CSV is in a succeeded state.
+	csvsToBeSuceeded := []string{
+		controllers.OcsSubscriptionStartingCSV,
+		controllers.RookSubscriptionStartingCSV,
+		controllers.NoobaaSubscriptionStartingCSV,
+	}
+	if err := mgr.AddReadyzCheck(
+		"readyz",
+		util.CheckCSVPhase(
+			mgr.GetClient(),
+			operatorNamespace,
+			csvsToBeSuceeded...,
+		),
+	); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
