@@ -45,10 +45,7 @@ jobs:
       run: |
         make bundle-build
         msg='Uncommitted bundle changes. run `make bundle` and commit results.'
-        # We are using `--ignore-matching-lines` flag with the pattern `createdAt`
-        # to exclude lines with the timestamp from being considered, as the CSV file
-        # consistently receives a new timestamp during generation with operator-sdk 1.26 onwards.
-        git diff --exit-code --ignore-matching-lines createdAt bundle || (echo -e '\e[31m'"$msg"; exit 1)
+        git diff --exit-code bundle || (echo -e '\e[31m'"$msg"; exit 1)
 
   catalog-build:
     runs-on: ubuntu-latest

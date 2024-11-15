@@ -34,14 +34,14 @@ var (
 		"OCS_SUBSCRIPTION_NAME":                    "ocs-operator",
 		"OCS_SUBSCRIPTION_PACKAGE":                 "ocs-operator",
 		"OCS_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"OCS_SUBSCRIPTION_STARTINGCSV":             "ocs-operator.v4.17.0",
+		"OCS_SUBSCRIPTION_STARTINGCSV":             "ocs-operator.v4.18.0",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
 		"OCS_CLIENT_SUBSCRIPTION_NAME":                    "ocs-client-operator",
 		"OCS_CLIENT_SUBSCRIPTION_PACKAGE":                 "ocs-client-operator",
 		"OCS_CLIENT_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"OCS_CLIENT_SUBSCRIPTION_STARTINGCSV":             "ocs-client-operator.v4.17.0",
+		"OCS_CLIENT_SUBSCRIPTION_STARTINGCSV":             "ocs-client-operator.v4.18.0",
 		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
@@ -55,7 +55,7 @@ var (
 		"CEPHCSI_SUBSCRIPTION_NAME":                    "cephcsi-operator",
 		"CEPHCSI_SUBSCRIPTION_PACKAGE":                 "cephcsi-operator",
 		"CEPHCSI_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"CEPHCSI_SUBSCRIPTION_STARTINGCSV":             "cephcsi-operator.v4.17.0",
+		"CEPHCSI_SUBSCRIPTION_STARTINGCSV":             "cephcsi-operator.v4.18.0",
 		"CEPHCSI_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"CEPHCSI_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
@@ -69,14 +69,14 @@ var (
 		"ROOK_SUBSCRIPTION_NAME":                    "rook-ceph-operator",
 		"ROOK_SUBSCRIPTION_PACKAGE":                 "rook-ceph-operator",
 		"ROOK_SUBSCRIPTION_CHANNEL":                 "alpha",
-		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.17.0",
+		"ROOK_SUBSCRIPTION_STARTINGCSV":             "rook-ceph-operator.v4.18.0",
 		"ROOK_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"ROOK_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 
 		"PROMETHEUS_SUBSCRIPTION_NAME":                    "odf-prometheus-operator",
 		"PROMETHEUS_SUBSCRIPTION_PACKAGE":                 "odf-prometheus-operator",
 		"PROMETHEUS_SUBSCRIPTION_CHANNEL":                 "beta",
-		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.17.0",
+		"PROMETHEUS_SUBSCRIPTION_STARTINGCSV":             "odf-prometheus-operator.v4.18.0",
 		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE":           "odf-catalogsource",
 		"PROMETHEUS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE": "openshift-marketplace",
 

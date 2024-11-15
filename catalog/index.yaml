@@ -7,7 +7,7 @@ schema: olm.channel
 package: odf-operator
 name: alpha
 entries:
-  - name: odf-operator.v4.17.0
+  - name: odf-operator.v4.18.0
 
 ---
 defaultChannel: alpha
@@ -18,7 +18,7 @@ schema: olm.channel
 package: ocs-operator
 name: alpha
 entries:
-  - name: ocs-operator.v4.17.0
+  - name: ocs-operator.v4.18.0
 
 ---
 defaultChannel: alpha
@@ -29,7 +29,7 @@ schema: olm.channel
 package: ocs-client-operator
 name: alpha
 entries:
-  - name: ocs-client-operator.v4.17.0
+  - name: ocs-client-operator.v4.18.0
 
 ---
 defaultChannel: alpha
@@ -62,7 +62,7 @@ schema: olm.channel
 package: cephcsi-operator
 name: alpha
 entries:
-  - name: cephcsi-operator.v4.17.0
+  - name: cephcsi-operator.v4.18.0
 
 ---
 defaultChannel: stable-v1.6
@@ -84,7 +84,7 @@ schema: olm.channel
 package: rook-ceph-operator
 name: alpha
 entries:
-  - name: rook-ceph-operator.v4.17.0
+  - name: rook-ceph-operator.v4.18.0
 
 ---
 defaultChannel: beta
@@ -95,7 +95,7 @@ schema: olm.channel
 package: odf-prometheus-operator
 name: beta
 entries:
-  - name: odf-prometheus-operator.v4.17.0
+  - name: odf-prometheus-operator.v4.18.0
 
 ---
 defaultChannel: alpha
