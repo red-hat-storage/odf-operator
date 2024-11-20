@@ -86,7 +86,7 @@ type StorageClusterSpec struct {
 	Arbiter ArbiterSpec `json:"arbiter,omitempty"`
 	// Mirroring specifies data mirroring configuration for the storage cluster.
 	// This configuration will only be applied to resources managed by the operator.
-	Mirroring MirroringSpec `json:"mirroring,omitempty"`
+	Mirroring *MirroringSpec `json:"mirroring,omitempty"`
 	// OverprovisionControl specifies the allowed hard-limit PVs overprovisioning relative to
 	// the effective usable storage capacity.
 	OverprovisionControl []OverprovisionControlSpec `json:"overprovisionControl,omitempty"`
@@ -198,21 +198,22 @@ type ManageCephCluster struct {
 	// default DOWN/OUT interval) when it is draining. This is only relevant when  `managePodBudgets` is `true` in cephCluster CR.
 	// The default value is `30` minutes.
 	OsdMaintenanceTimeout time.Duration `json:"osdMaintenanceTimeout,omitempty"`
-	// FullRatio is the ratio at which the cluster is considered full and ceph will stop accepting writes. Default is 0.95.
-	// +kubebuilder:validation:Minimum=0.0
-	// +kubebuilder:validation:Maximum=1.0
-	// +nullable
-	FullRatio *float64 `json:"fullRatio,omitempty"`
-	// NearFullRatio is the ratio at which the cluster is considered nearly full and will raise a ceph health warning. Default is 0.85.
+	// NearFullRatio is the ratio at which the cluster is considered nearly full and will raise a ceph health warning. Default is 0.75.
 	// +kubebuilder:validation:Minimum=0.0
 	// +kubebuilder:validation:Maximum=1.0
 	// +nullable
 	NearFullRatio *float64 `json:"nearFullRatio,omitempty"`
-	// BackfillFullRatio is the ratio at which the cluster is too full for backfill. Backfill will be disabled if above this threshold. Default is 0.90.
+	// BackfillFullRatio is the ratio at which the cluster is too full for backfill. Backfill will be disabled if above this threshold. Default is 0.80.
 	// +kubebuilder:validation:Minimum=0.0
 	// +kubebuilder:validation:Maximum=1.0
 	// +nullable
 	BackfillFullRatio *float64 `json:"backfillFullRatio,omitempty"`
+	// FullRatio is the ratio at which the cluster is considered full and ceph will stop accepting writes. Default is 0.85.
+	// +kubebuilder:validation:Minimum=0.0
+	// +kubebuilder:validation:Maximum=1.0
+	// +nullable
+	FullRatio *float64 `json:"fullRatio,omitempty"`
+
 	// Whether to allow updating the device class after the OSD is initially provisioned
 	AllowDeviceClassUpdate bool `json:"allowDeviceClassUpdate,omitempty"`
 }
@@ -401,6 +402,10 @@ type StorageDeviceSet struct {
 	DataPVCTemplate     corev1.PersistentVolumeClaim  `json:"dataPVCTemplate"`
 	MetadataPVCTemplate *corev1.PersistentVolumeClaim `json:"metadataPVCTemplate,omitempty"`
 	WalPVCTemplate      *corev1.PersistentVolumeClaim `json:"walPVCTemplate,omitempty"`
+
+	// Whether to encrypt the deviceSet or not
+	// +optional
+	Encrypted *bool `json:"encrypted,omitempty"`
 }
 
 // TODO: Fill in the members when the actual configurable options are defined in rook-ceph
