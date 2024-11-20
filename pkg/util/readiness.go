@@ -19,6 +19,7 @@ package util
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -26,6 +27,7 @@ import (
 )
 
 func CheckCSVPhase(c client.Client, namespace string, csvNames ...string) healthz.Checker {
+
 	csvMap := map[string]struct{}{}
 	for _, name := range csvNames {
 		csvMap[name] = struct{}{}
@@ -35,6 +37,14 @@ func CheckCSVPhase(c client.Client, namespace string, csvNames ...string) health
 		if err := c.List(r.Context(), csvList, client.InNamespace(namespace)); err != nil {
 			return err
 		}
+
+		// Check if it is upgrade from 4.17 to 4.18
+		// The new CSVs won't exists while upgrading
+		// They will exists only after new operator has created a new subscription
+		if AreMultipleOdfOperatorCsvsPresent(csvList) {
+			return nil
+		}
+
 		for idx := range csvList.Items {
 			csv := &csvList.Items[idx]
 			_, exists := csvMap[csv.Name]
@@ -53,4 +63,17 @@ func CheckCSVPhase(c client.Client, namespace string, csvNames ...string) health
 		}
 		return nil
 	}
+}
+
+func AreMultipleOdfOperatorCsvsPresent(csvs *opv1a1.ClusterServiceVersionList) bool {
+
+	count := 0
+
+	for _, csv := range csvs.Items {
+		if strings.HasPrefix(csv.Name, "odf-operator") {
+			count += 1
+		}
+	}
+
+	return count > 1
 }
