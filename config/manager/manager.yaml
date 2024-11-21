@@ -43,6 +43,7 @@ spec:
         - configMapRef:
             name: manager-config
         image: controller:latest
+        imagePullPolicy: Always
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

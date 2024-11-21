@@ -35,7 +35,7 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2024-11-14T03:00:40Z"
+    createdAt: "2024-11-21T13:20:34Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
@@ -405,6 +405,7 @@ spec:
                 - configMapRef:
                     name: odf-operator-manager-config
                 image: quay.io/ocs-dev/odf-operator:latest
+                imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
                     path: /healthz
