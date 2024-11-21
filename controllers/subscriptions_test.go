@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -60,6 +61,9 @@ func TestEnsureSubscription(t *testing.T) {
 				for _, subscription := range subs {
 					sub := subscription.DeepCopy()
 					sub.Spec.Channel = "fake-channel"
+					// Set the creation timestamp to a non-zero value to simulate that the subscription already exists
+					// This is required because the fake client does not set the creation timestamp
+					sub.CreationTimestamp = metav1.Now()
 					err = fakeReconciler.Client.Create(context.TODO(), sub)
 					assert.NoError(t, err)
 				}
@@ -101,10 +105,27 @@ func TestEnsureSubscription(t *testing.T) {
 				}
 
 				actualSubscription := &operatorv1alpha1.Subscription{}
-				err = fakeReconciler.Client.Get(context.TODO(), types.NamespacedName{Name: expectedSubscription.Name, Namespace: expectedSubscription.Namespace}, actualSubscription)
-				assert.NoError(t, err)
+				err = fakeReconciler.Client.Get(context.TODO(),
+					types.NamespacedName{Name: expectedSubscription.Name, Namespace: expectedSubscription.Namespace}, actualSubscription)
 
-				assert.Equal(t, expectedSubscription.Spec, actualSubscription.Spec)
+				// create case
+				if !tc.subscriptionAlreadyExist {
+					if expectedSubscription.Spec.Package == OdfDepsSubscriptionPackage {
+						assert.NoError(t, err)
+						// Set odf-dependencies catalog and catalog namespace same as odf-operator in expected subscription
+						// That is what being set by controller and verify the same
+						expectedSubscription.Spec.CatalogSource = odfSub.Spec.CatalogSource
+						expectedSubscription.Spec.CatalogSourceNamespace = odfSub.Spec.CatalogSourceNamespace
+						assert.Equal(t, expectedSubscription.Spec, actualSubscription.Spec)
+					} else {
+						assert.Error(t, err)
+						assert.True(t, errors.IsNotFound(err))
+					}
+					// update case
+				} else if tc.subscriptionAlreadyExist {
+					assert.NoError(t, err)
+					assert.Equal(t, expectedSubscription.Spec, actualSubscription.Spec)
+				}
 			}
 		}
 	}

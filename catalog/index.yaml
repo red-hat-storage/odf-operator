@@ -11,6 +11,17 @@ entries:
 
 ---
 defaultChannel: alpha
+name: odf-dependencies
+schema: olm.package
+---
+schema: olm.channel
+package: odf-dependencies
+name: alpha
+entries:
+  - name: odf-dependencies.v4.18.0
+
+---
+defaultChannel: alpha
 name: ocs-operator
 schema: olm.package
 ---

@@ -18,6 +18,8 @@ var (
 	OdfClusterUninstall bool
 	// OdfClusterServiceVersion is the name of odf csv
 	OdfClusterServiceVersion string
+	// OdfDepsClusterServiceVersion is the name of the odf-dependency csv
+	OdfDepsClusterServiceVersion string
 	// OcsClusterServiceVersion is the name of ocs csv
 	OcsClusterServiceVersion string
 	// OcsClientClusterServiceVersion is the name of ocs-client csv
@@ -53,6 +55,7 @@ func init() {
 	flag.BoolVar(&OdfOperatorInstall, "odf-operator-install", true, "Install the ODF operator before starting tests")
 	flag.BoolVar(&OdfClusterUninstall, "odf-operator-uninstall", true, "Uninstall the ODF operator after test completion")
 	flag.StringVar(&OdfClusterServiceVersion, "odf-cluster-service-version", "", "The ODF CSV name which needs to verified")
+	flag.StringVar(&OdfDepsClusterServiceVersion, "odf-deps-cluster-service-version", "", "The ODF deps CSV name which needs to verified")
 	flag.StringVar(&OcsClusterServiceVersion, "ocs-cluster-service-version", "", "The OCS CSV name which needs to verified")
 	flag.StringVar(&OcsClientClusterServiceVersion, "ocs-client-cluster-service-version", "", "The OCS CSV name which needs to verified")
 	flag.StringVar(&NoobaClusterServiceVersion, "nooba-cluster-service-version", "", "The Nooba CSV name which needs to verified")
@@ -91,6 +94,10 @@ func verifyFlags() {
 
 	if OdfClusterServiceVersion == "" {
 		panic("odf-cluster-service-version is not provided")
+	}
+
+	if OdfDepsClusterServiceVersion == "" {
+		panic("odf-deps-cluster-service-version is not provided")
 	}
 
 	if OcsClusterServiceVersion == "" {

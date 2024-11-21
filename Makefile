@@ -64,6 +64,12 @@ e2e-test: ginkgo ## Run end to end functional tests.
 	./hack/e2e-test.sh
 
 define MANAGER_ENV_VARS
+ODF_DEPS_SUBSCRIPTION_NAME=$(ODF_DEPS_SUBSCRIPTION_NAME)
+ODF_DEPS_SUBSCRIPTION_PACKAGE=$(ODF_DEPS_SUBSCRIPTION_PACKAGE)
+ODF_DEPS_SUBSCRIPTION_CHANNEL=$(ODF_DEPS_SUBSCRIPTION_CHANNEL)
+ODF_DEPS_SUBSCRIPTION_STARTINGCSV=$(ODF_DEPS_SUBSCRIPTION_STARTINGCSV)
+ODF_DEPS_SUBSCRIPTION_CATALOGSOURCE=$(ODF_DEPS_SUBSCRIPTION_CATALOGSOURCE)
+ODF_DEPS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE=$(ODF_DEPS_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE)
 NOOBAA_SUBSCRIPTION_NAME=$(NOOBAA_SUBSCRIPTION_NAME)
 NOOBAA_SUBSCRIPTION_PACKAGE=$(NOOBAA_SUBSCRIPTION_PACKAGE)
 NOOBAA_SUBSCRIPTION_CHANNEL=$(NOOBAA_SUBSCRIPTION_CHANNEL)
@@ -170,10 +176,18 @@ undeploy-with-olm: ## Undeploy controller from the K8s cluster
 
 # Make target to ignore (git checkout) changes if there are only timestamp changes in the bundle
 checkout-bundle-timestamp:
-	(git diff --quiet --ignore-matching-lines createdAt bundle && git checkout --quiet bundle) || true
+	(git diff --quiet --ignore-matching-lines createdAt bundle/odf-operator && git checkout --quiet bundle/odf-operator) || true
+	(git diff --quiet --ignore-matching-lines createdAt bundle/odf-dependencies && git checkout --quiet bundle/odf-dependencies) || true
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+	# Dependencies bundle
+	$(KUSTOMIZE) build config/bundle | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
+		--output-dir bundle/odf-dependencies --package odf-dependencies
+	$(OPERATOR_SDK) bundle validate bundle/odf-dependencies
+	@mv bundle.Dockerfile bundle.deps.Dockerfile
+
+	# Main odf-operator bundle
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cd config/default && $(KUSTOMIZE) edit set image rbac-proxy=$(RBAC_PROXY_IMG)
@@ -184,17 +198,20 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
 		$(KUSTOMIZE) edit add patch --name odf-operator.v0.0.0 --kind ClusterServiceVersion \
 		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
-	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	$(OPERATOR_SDK) bundle validate ./bundle
+	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
+		--output-dir bundle/odf-operator
+	$(OPERATOR_SDK) bundle validate bundle/odf-operator
 	@$(MAKE) --no-print-directory checkout-bundle-timestamp
 
 .PHONY: bundle-build
 bundle-build: bundle ## Build the bundle image.
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	docker build -f bundle.deps.Dockerfile -t $(ODF_DEPS_BUNDLE_IMG) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
 	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
+	$(MAKE) docker-push IMG=$(ODF_DEPS_BUNDLE_IMG)
 
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
@@ -202,6 +219,7 @@ bundle-push: ## Push the bundle image.
 .PHONY: catalog
 catalog: opm ## Generate catalog manifests and then validate generated files.
 	$(OPM) render --output=yaml $(BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf.yaml
+	$(OPM) render --output=yaml $(ODF_DEPS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf-dependencies.yaml
 	$(OPM) render --output=yaml $(OCS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs.yaml
 	$(OPM) render --output=yaml $(OCS_CLIENT_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs-client.yaml
 	$(OPM) render --output=yaml $(IBM_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm.yaml
