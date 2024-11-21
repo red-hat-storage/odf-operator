@@ -24,7 +24,10 @@ jobs:
         fetch-depth: 0
 
     - name: Build operator docker image
-      run: make docker-build
+      run: |
+        make docker-build
+        msg='Uncommitted generated changes. run `make docker-build` and commit results.'
+        git diff --exit-code . || (echo -e '\e[31m'"$msg"; exit 1)
 
   bundle-build:
     runs-on: ubuntu-latest
