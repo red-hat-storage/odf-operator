@@ -182,6 +182,11 @@ checkout-bundle-timestamp:
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	# Dependencies bundle
+	cd config/bundle && $(KUSTOMIZE) edit add annotation --force \
+		'olm.skipRange':"$(SKIP_RANGE)" \
+		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
+		$(KUSTOMIZE) edit add patch --name odf-dependencies.v0.0.0 --kind ClusterServiceVersion \
+		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
 	$(KUSTOMIZE) build config/bundle | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
 		--output-dir bundle/odf-dependencies --package odf-dependencies
 	$(OPERATOR_SDK) bundle validate bundle/odf-dependencies
