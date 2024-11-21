@@ -194,7 +194,6 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 	cd config/console && $(KUSTOMIZE) edit set image odf-console=$(ODF_CONSOLE_IMG)
 	cd config/manifests/bases && $(KUSTOMIZE) edit add annotation --force \
 		'olm.skipRange':"$(SKIP_RANGE)" \
-	        'operators.operatorframework.io/operator-type':"$(OPERATOR_TYPE)" \
 		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
 		$(KUSTOMIZE) edit add patch --name odf-operator.v0.0.0 --kind ClusterServiceVersion \
 		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'

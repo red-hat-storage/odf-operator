@@ -30,13 +30,6 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # OPM_RENDER_OPTS will be used while rendering bundle images
 OPM_RENDER_OPTS ?=
 
-# Each CSV has the option to specify an annotation 'operators.operatorframework.io/operator-type',
-# which is an annotation that is (only!) read by the OLM Console UI to determine the visibility of
-# the Operator package/bundle in the Operator Hub UI.
-#
-# Current supported values are 'standalone' (visible) and 'non-standalone' (not visible)
-OPERATOR_TYPE ?= standalone
-
 # Each CSV has a replaces parameter that indicates which Operator it replaces.
 # This builds a graph of CSVs that can be queried by OLM, and updates can be
 # shared between channels. Channels can be thought of as entry points into
