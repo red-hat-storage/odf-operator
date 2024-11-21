@@ -11,7 +11,7 @@ controller-gen: ## Download controller-gen locally if necessary.
 
 KUSTOMIZE = $(BIN_DIR)/kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.5)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.7)
 
 GINKGO = $(BIN_DIR)/ginkgo
 ginkgo: ## Download ginkgo locally if necessary.
