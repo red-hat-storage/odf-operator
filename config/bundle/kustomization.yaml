@@ -1,2 +1,12 @@
 resources:
 - csv.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonAnnotations:
+  olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.19"}]'
+  olm.skipRange: ""
+patches:
+- patch: '[{"op": "replace", "path": "/spec/replaces", "value": ""}]'
+  target:
+    kind: ClusterServiceVersion
+    name: odf-dependencies.v0.0.0

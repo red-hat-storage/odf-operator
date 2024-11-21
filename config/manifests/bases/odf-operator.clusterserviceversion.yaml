@@ -28,6 +28,7 @@ metadata:
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.openshift.io/valid-subscription: '["OpenShift Platform Plus","OpenShift
       Data Foundation Essentials","OpenShift Data Foundation Advanced"]'
+    operators.operatorframework.io/operator-type: standalone
     repository: https://github.com/red-hat-storage/odf-operator
     support: Red Hat
     vendors.odf.openshift.io/kind: '["storagecluster.ocs.openshift.io/v1", "flashsystemcluster.odf.ibm.com/v1alpha1"]'
