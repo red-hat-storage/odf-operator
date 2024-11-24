@@ -8,7 +8,6 @@ patchesStrategicMerge:
 commonAnnotations:
   olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.19"}]'
   olm.skipRange: ""
-  operators.operatorframework.io/operator-type: standalone
 patches:
 - patch: '[{"op": "replace", "path": "/spec/replaces", "value": ""}]'
   target:
