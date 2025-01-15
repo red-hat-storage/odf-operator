@@ -99,6 +99,13 @@ var (
 		},
 	}
 
+	PkgNames = func() (pkgNames []string) {
+		for _, resMap := range ResourceMappingList {
+			pkgNames = append(pkgNames, resMap.PkgNames...)
+		}
+		return
+	}()
+
 	createOnlyPredicate = predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return true
