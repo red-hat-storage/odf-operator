@@ -38,7 +38,7 @@ import (
 type ClusterVersionReconciler struct {
 	client.Client
 	Scheme      *runtime.Scheme
-	ConsolePort int
+	ConsolePort int32
 }
 
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions,verbs=get;list;watch;create;update;patch;delete

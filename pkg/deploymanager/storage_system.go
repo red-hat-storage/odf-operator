@@ -107,7 +107,7 @@ func (d *DeployManager) CheckStorageSystemCondition() error {
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf(lastReason)
+		return fmt.Errorf("%s", lastReason)
 	}
 
 	return nil
@@ -175,7 +175,7 @@ func (d *DeployManager) DeleteStorageSystemAndWait() error {
 	})
 
 	if err != nil {
-		return fmt.Errorf(lastReason)
+		return fmt.Errorf("%s", lastReason)
 	}
 
 	return nil

@@ -160,7 +160,7 @@ func main() {
 	if err = (&controllers.ClusterVersionReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
-		ConsolePort: odfConsolePort,
+		ConsolePort: int32(odfConsolePort), //nolint:gosec
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterVersion")
 		os.Exit(1)

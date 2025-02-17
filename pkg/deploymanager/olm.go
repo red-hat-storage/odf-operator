@@ -207,7 +207,7 @@ func (d *DeployManager) WaitForCatalogSource(catalogsource *operatorsv1alpha1.Ca
 	})
 
 	if err != nil {
-		return fmt.Errorf(lastReason)
+		return fmt.Errorf("%s", lastReason)
 	}
 
 	return nil
@@ -236,7 +236,7 @@ func (d *DeployManager) WaitForCsv(csv *operatorsv1alpha1.ClusterServiceVersion)
 	})
 
 	if err != nil {
-		return fmt.Errorf(lastReason)
+		return fmt.Errorf("%s", lastReason)
 	}
 
 	return nil
