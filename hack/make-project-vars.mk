@@ -8,5 +8,5 @@ GOARCH ?= $(shell go env GOARCH)
 GOPROXY ?= direct,https://proxy.golang.org
 
 GO_LINT_IMG_LOCATION ?= golangci/golangci-lint
-GO_LINT_IMG_TAG ?= v1.49.0
+GO_LINT_IMG_TAG ?= v1.64.5
 GO_LINT_IMG ?= $(GO_LINT_IMG_LOCATION):$(GO_LINT_IMG_TAG)

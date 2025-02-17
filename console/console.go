@@ -52,7 +52,7 @@ func GetNginxConfConfigMap(namespace string) *apiv1.ConfigMap {
 	}
 }
 
-func GetService(port int, namespace string) *apiv1.Service {
+func GetService(port int32, namespace string) *apiv1.Service {
 	return &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "odf-console-service",
@@ -68,7 +68,7 @@ func GetService(port int, namespace string) *apiv1.Service {
 			Ports: []apiv1.ServicePort{
 				{Protocol: "TCP",
 					TargetPort: intstr.IntOrString{IntVal: int32(port)},
-					Port:       int32(port),
+					Port:       port,
 					Name:       "console-port",
 				},
 			},
@@ -121,7 +121,7 @@ func GetConsolePluginProxy(serviceNamespace string) []consolev1.ConsolePluginPro
 	}
 }
 
-func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1.ConsolePlugin {
+func GetConsolePluginCR(consolePort int32, serviceNamespace string) *consolev1.ConsolePlugin {
 	return &consolev1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: ODF_CONSOLE,
@@ -132,7 +132,7 @@ func GetConsolePluginCR(consolePort int, serviceNamespace string) *consolev1.Con
 				Service: &consolev1.ConsolePluginService{
 					Name:      "odf-console-service",
 					Namespace: serviceNamespace,
-					Port:      int32(consolePort),
+					Port:      consolePort,
 				},
 				Type: consolev1.Service,
 			},
