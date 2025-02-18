@@ -127,16 +127,6 @@ type CSIDriverSpec struct {
 	ReadAffinity *rookCephv1.ReadAffinitySpec `json:"readAffinity,omitempty"`
 }
 
-type SharedFilesystemConfigurationSpec struct {
-	// +kubebuilder:validation:Optional
-	Parameters map[string]string `json:"parameters,omitempty"`
-}
-
-type BlockPoolConfigurationSpec struct {
-	// +kubebuilder:validation:Optional
-	Parameters map[string]string `json:"parameters,omitempty"`
-}
-
 // BackingStorageClass defines the backing storageclass for StorageDeviceSet
 type BackingStorageClass struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -216,6 +206,9 @@ type ManageCephCluster struct {
 
 	// Whether to allow updating the device class after the OSD is initially provisioned
 	AllowDeviceClassUpdate bool `json:"allowDeviceClassUpdate,omitempty"`
+
+	// CephClusterHealthCheckSpec represent the healthcheck for Ceph daemons
+	HealthCheck *rookCephv1.CephClusterHealthCheckSpec `json:"healthCheck,omitempty"`
 }
 
 // ManageCephConfig defines how to reconcile the Ceph configuration
@@ -246,6 +239,8 @@ type ManageCephBlockPools struct {
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	VirtualizationStorageClassName string `json:"virtualizationStorageClassName,omitempty"`
+	// PoolSpec specifies the pool specification for the default cephBlockPool
+	PoolSpec rookCephv1.PoolSpec `json:"poolSpec,omitempty"`
 }
 
 // ManageCephNonResilientPools defines how to reconcile ceph non-resilient pools
@@ -294,6 +289,8 @@ type ManageCephObjectStores struct {
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	StorageClassName string `json:"storageClassName,omitempty"`
+	// DataPoolSpec specifies the pool specification for the default cephObjectStore data pool
+	DataPoolSpec rookCephv1.PoolSpec `json:"dataPoolSpec,omitempty"`
 }
 
 // ManageCephObjectStoreUsers defines how to reconcile CephObjectStoreUsers
@@ -475,6 +472,11 @@ type NFSSpec struct {
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
 	StorageClassName string `json:"storageClassName,omitempty"`
+	// LogLevel set logging level
+	// Log levels: NIV_NULL | NIV_FATAL | NIV_MAJ | NIV_CRIT | NIV_WARN | NIV_EVENT | NIV_INFO | NIV_DEBUG | NIV_MID_DEBUG | NIV_FULL_DEBUG | NB_LOG_LEVEL
+	// +optional
+	LogLevel          string `json:"logLevel,omitempty"`
+	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
 }
 
 // MonitoringSpec controls the configuration of resources for exposing OCS metrics
