@@ -313,7 +313,9 @@ infrastructures.config.openshift.io:
   FeatureGates:
   - AWSClusterHostedDNS
   - BareMetalLoadBalancer
+  - DyanmicServiceEndpointIBMCloud
   - GCPClusterHostedDNS
+  - GCPCustomAPIEndpoints
   - GCPLabelsTags
   - HighlyAvailableArbiter
   - NutanixMultiSubnets
