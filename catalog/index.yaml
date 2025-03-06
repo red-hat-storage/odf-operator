@@ -7,7 +7,7 @@ schema: olm.channel
 package: odf-operator
 name: alpha
 entries:
-  - name: odf-operator.v4.18.0
+  - name: odf-operator.v4.19.0
 
 ---
 defaultChannel: alpha
@@ -18,7 +18,7 @@ schema: olm.channel
 package: odf-dependencies
 name: alpha
 entries:
-  - name: odf-dependencies.v4.18.0
+  - name: odf-dependencies.v4.19.0
 
 ---
 defaultChannel: alpha
