@@ -18,6 +18,17 @@ else
     oc create ns "$INSTALL_NAMESPACE"
 fi
 
+echo "Running inside OpenShift CI (Prow) $JOB_NAME"
+
+echo "Running inside OpenShift CI (Prow) $CI"
+
+echo "Running inside a Kubernetes/OpenShift CI environment $KUBERNETES_SERVICE_HOST"
+
+echo "Running inside OpenShift CI (Prow) $PROW_JOB_ID"
+
+echo " builder Namespace $OPENSHIFT_BUILD_NAMESPACE"
+
+
 "$OPERATOR_SDK" run bundle "$BUNDLE_IMG" --timeout=10m --security-context-config restricted -n "$INSTALL_NAMESPACE" --index-image "$CATALOG_DEPS_IMG"
 
 # Check for the presence of the CSVs in the cluster for up to 5 minutes,
