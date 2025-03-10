@@ -193,6 +193,14 @@ spec:
           verbs:
           - update
         - apiGroups:
+          - ceph.rook.io
+          resources:
+          - cephclusters
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - config.openshift.io
           resources:
           - clusterversions
@@ -237,6 +245,23 @@ spec:
           - get
           - list
           - update
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - alertmanagers
+          - prometheuses
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - noobaa.io
+          resources:
+          - noobaas
+          verbs:
+          - get
+          - list
+          - watch
         - apiGroups:
           - ocs.openshift.io
           resources:
