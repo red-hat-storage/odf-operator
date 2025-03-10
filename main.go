@@ -121,10 +121,10 @@ func main() {
 	}
 
 	storageSystemReconciler := &controllers.StorageSystemReconciler{
-		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
-		Scheme:   mgr.GetScheme(),
-		Recorder: controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageSystem controller")),
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		Recorder:          controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageSystem controller")),
+		OperatorNamespace: operatorNamespace,
 	}
 	if err = storageSystemReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageSystem")
@@ -144,6 +144,7 @@ func main() {
 	subscriptionReconciler := &controllers.SubscriptionReconciler{
 		Client:            mgr.GetClient(),
 		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: operatorNamespace,
 		ConditionName:     conditionName,
 		OperatorCondition: condition,
 	}
@@ -168,6 +169,15 @@ func main() {
 		ConsolePort: int32(odfConsolePort), //nolint:gosec
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterVersion")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.OperatorScalerReconciler{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: operatorNamespace,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OperatorScaler")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
