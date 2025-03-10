@@ -193,6 +193,14 @@ spec:
           verbs:
           - update
         - apiGroups:
+          - ceph.rook.io
+          resources:
+          - cephclusters
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - config.openshift.io
           resources:
           - clusterversions
@@ -237,6 +245,23 @@ spec:
           - get
           - list
           - update
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - alertmanagers
+          - prometheuses
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - noobaa.io
+          resources:
+          - noobaas
+          verbs:
+          - get
+          - list
+          - watch
         - apiGroups:
           - ocs.openshift.io
           resources:
@@ -396,6 +421,10 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
+                ports:
+                - containerPort: 9443
+                  name: webhook-server
+                  protocol: TCP
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -416,6 +445,10 @@ spec:
                     drop:
                     - ALL
                   readOnlyRootFilesystem: true
+                volumeMounts:
+                - mountPath: /tmp/k8s-webhook-server/serving-certs
+                  name: cert
+                  readOnly: true
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: odf-operator-controller-manager
@@ -425,6 +458,11 @@ spec:
                 key: node.ocs.openshift.io/storage
                 operator: Equal
                 value: "true"
+              volumes:
+              - name: cert
+                secret:
+                  defaultMode: 420
+                  secretName: webhook-server-cert
       - label:
           app: odf-console
         name: odf-console

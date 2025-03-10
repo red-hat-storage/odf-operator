@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorv2 "github.com/operator-framework/api/pkg/operators/v2"
@@ -42,6 +43,7 @@ import (
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/controllers"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
+	"github.com/red-hat-storage/odf-operator/webhook"
 
 	//+kubebuilder:scaffold:imports
 	configv1 "github.com/openshift/api/config/v1"
@@ -121,10 +123,10 @@ func main() {
 	}
 
 	storageSystemReconciler := &controllers.StorageSystemReconciler{
-		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
-		Scheme:   mgr.GetScheme(),
-		Recorder: controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageSystem controller")),
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		Recorder:          controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageSystem controller")),
+		OperatorNamespace: operatorNamespace,
 	}
 	if err = storageSystemReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageSystem")
@@ -144,6 +146,7 @@ func main() {
 	subscriptionReconciler := &controllers.SubscriptionReconciler{
 		Client:            mgr.GetClient(),
 		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: operatorNamespace,
 		ConditionName:     conditionName,
 		OperatorCondition: condition,
 	}
@@ -168,6 +171,24 @@ func main() {
 		ConsolePort: int32(odfConsolePort), //nolint:gosec
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterVersion")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.OperatorScalerReconciler{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: operatorNamespace,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OperatorScaler")
+		os.Exit(1)
+	}
+
+	if err = (&webhook.ClusterServiceVersionDefaulter{
+		Client:            mgr.GetClient(),
+		Decoder:           admission.NewDecoder(mgr.GetScheme()),
+		OperatorNamespace: operatorNamespace,
+	}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterServiceVersion")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
