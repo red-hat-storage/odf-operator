@@ -10,12 +10,6 @@ RUN rm -f /configs/odf.yaml
 # Remove odf bundle details from the index file
 RUN sed -i '1,11d' /configs/index.yaml
 
-# Replace the image reference in odf-dependencies.yaml
-# It will be replaced only in the openshift CI
-ARG ODF_DEPS_BUNDLE_IMG
-RUN test -n "$ODF_DEPS_BUNDLE_IMG" && \
-    sed -i "s|image: .*|image: ${ODF_DEPS_BUNDLE_IMG}|g" /configs/odf-dependencies.yaml || true
-
 
 # The base image is expected to contain
 # /bin/opm (with a serve subcommand) and /bin/grpc_health_probe
