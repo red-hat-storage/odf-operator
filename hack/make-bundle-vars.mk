@@ -49,7 +49,7 @@ BUNDLE_IMAGE_NAME ?= $(IMAGE_NAME)-bundle
 ODF_DEPS_BUNDLE_NAME ?= odf-dependencies
 ODF_DEPS_BUNDLE_IMAGE_NAME ?= $(ODF_DEPS_BUNDLE_NAME)-bundle
 CATALOG_IMAGE_NAME ?= $(IMAGE_NAME)-catalog
-CATALOG_DEPS_IMAGE_NAME ?= $(IMAGE_NAME)-catalog-deps
+ODF_DEPS_CATALOG_IMAGE_NAME ?= $(ODF_DEPS_BUNDLE_NAME)-catalog
 
 # IMG defines the image used for the operator.
 IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
@@ -63,8 +63,8 @@ ODF_DEPS_BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(ODF_DEPS_BUNDLE
 # CATALOG_IMG defines the image used for the catalog.
 CATALOG_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CATALOG_IMAGE_NAME):$(IMAGE_TAG)
 
-# CATALOG_DEPS_IMG defines the image used for the catalog deps.
-CATALOG_DEPS_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CATALOG_DEPS_IMAGE_NAME):$(IMAGE_TAG)
+# ODF_DEPS_CATALOG_IMG defines the image used for the deps catalog.
+ODF_DEPS_CATALOG_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(ODF_DEPS_CATALOG_IMAGE_NAME):$(IMAGE_TAG)
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd"
