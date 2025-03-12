@@ -2,6 +2,9 @@
 
 set -e
 
+# Define the age threshold in hours
+AGE=6
+
 # Calculate age in hours from given time
 calculate_age() {
     local launch_time=$1
@@ -19,8 +22,7 @@ calculate_age() {
     echo "$age_hours"
 }
 
-
-# Delete the instance older than 3 hours
+# Delete the instance older than AGE
 delete_ec2_instance() {
     local region=$1
     local instance_id=$2
@@ -34,15 +36,14 @@ delete_ec2_instance() {
 
     age_hours=$(calculate_age "$launch_time")
 
-    # Delete the instance if older than 3 hours
-    if [ "$age_hours" -gt 3 ]; then
+    # Delete the instance if older than AGE
+    if [ "$age_hours" -gt "$AGE" ]; then
         echo "Deleting the instance $instance_id in region $region with launch time $launch_time"
         aws ec2 terminate-instances --region "$region" --instance-ids "$instance_id"
     fi
 }
 
-
-# Delete the volume older than 3 hours
+# Delete the volume older than AGE
 delete_ec2_volume() {
     local region=$1
     local volume_id=$2
@@ -56,15 +57,14 @@ delete_ec2_volume() {
 
     age_hours=$(calculate_age "$create_time")
 
-    # Delete the volume if older than 3 hours
-    if [ "$age_hours" -gt 3 ]; then
+    # Delete the volume if older than AGE
+    if [ "$age_hours" -gt "$AGE" ]; then
         echo "Deleting the volume $volume_id in region $region with create time $create_time"
         aws ec2 delete-volume --region "$region" --volume-id "$volume_id"
     fi
 }
 
-
-# Delete the nat gateway older than 3 hours
+# Delete the nat gateway older than AGE
 delete_ec2_nat_gateway() {
     local region=$1
     local nat_gateway_id=$2
@@ -78,15 +78,14 @@ delete_ec2_nat_gateway() {
 
     age_hours=$(calculate_age "$create_time")
 
-    # Delete the nat gateway if older than 3 hours
-    if [ "$age_hours" -gt 3 ]; then
+    # Delete the nat gateway if older than AGE
+    if [ "$age_hours" -gt "$AGE" ]; then
         echo "Deleting the nat gateway $nat_gateway_id in region $region with create time $create_time"
         aws ec2 delete-nat-gateway --region "$region" --nat-gateway-id "$nat_gateway_id"
     fi
 }
 
-
-# Delete the load balancer older than 3 hours
+# Delete the load balancer older than AGE
 delete_elb_load_balancer() {
     local region=$1
     local load_balancer_arn=$2
@@ -100,15 +99,14 @@ delete_elb_load_balancer() {
 
     age_hours=$(calculate_age "$created_time")
 
-    # Delete the load balancer if older than 3 hours
-    if [ "$age_hours" -gt 3 ]; then
+    # Delete the load balancer if older than AGE
+    if [ "$age_hours" -gt "$AGE" ]; then
         echo "Deleting the load balancer $load_balancer_arn in region $region with created time $created_time"
         aws elbv2 delete-load-balancer --region "$region" --load-balancer-arn "$load_balancer_arn"
     fi
 }
 
-
-# Delete the s3 bucket older than 3 hours
+# Delete the s3 bucket older than AGE
 delete_s3_bucket() {
     local region=$1
     local s3_bucket_name=$2
@@ -122,8 +120,8 @@ delete_s3_bucket() {
 
     age_hours=$(calculate_age "$creation_date")
 
-    # Delete the s3 bucket if older than 3 hours
-    if [ "$age_hours" -gt 3 ]; then
+    # Delete the s3 bucket if older than AGE
+    if [ "$age_hours" -gt "$AGE" ]; then
         echo "Deleting the s3 bucket $s3_bucket_name in region $region with creation date $creation_date"
         aws s3 rb s3://"$s3_bucket_name" --region "$region" --force
     fi
