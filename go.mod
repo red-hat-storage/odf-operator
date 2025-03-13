@@ -11,7 +11,6 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
 	github.com/openshift/api v0.0.0-20250304202347-422203b26165
-	github.com/openshift/custom-resource-status v1.1.3-0.20220503160415-f2fdb4999d87
 	github.com/operator-framework/api v0.30.0
 	github.com/prometheus/client_golang v1.21.1
 	github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20250304160013-6d2b355ea4cc
@@ -85,6 +84,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/noobaa/noobaa-operator/v5 v5.0.0-20250302162422-00b29b2310ad // indirect
+	github.com/openshift/custom-resource-status v1.1.3-0.20220503160415-f2fdb4999d87 // indirect
 	github.com/operator-framework/operator-lib v0.15.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
