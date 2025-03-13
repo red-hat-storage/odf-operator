@@ -221,7 +221,10 @@ func (r *OperatorScalerReconciler) createMetrics() error {
 		}
 	}
 
-	r.log.Info("successfully completed createMetrics")
+	if returnErr == nil {
+		r.log.Info("successfully completed createMetrics")
+	}
+
 	return returnErr
 }
 
@@ -270,7 +273,10 @@ func (r *OperatorScalerReconciler) reconcileOperators() error {
 		}
 	}
 
-	r.log.Info("successfully completed reconcileOperators")
+	if returnErr == nil {
+		r.log.Info("successfully completed reconcileOperators")
+	}
+
 	return returnErr
 }
 
