@@ -19,9 +19,11 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/red-hat-storage/odf-operator/metrics"
 	"go.uber.org/multierr"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -149,6 +151,10 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
+	if err := r.reconcileMetrics(ctx, logger); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
 }
@@ -172,6 +178,49 @@ func (r *OperatorScalerReconciler) isOdfDependenciesCsvReady(ctx context.Context
 
 	logger.Info("successfully completed isOdfDependenciesCsvReady")
 	return nil
+}
+
+func (r *OperatorScalerReconciler) reconcileMetrics(ctx context.Context, logger logr.Logger) error {
+	logger.Info("entering reconcileMetrics")
+
+	// list the crds with label and update the metrics
+	crdList := &extv1.CustomResourceDefinitionList{}
+	labelOptions := client.MatchingLabels{"odf.openshift.io/is-storage-system": "true"}
+	if err := r.Client.List(ctx, crdList, labelOptions); err != nil {
+		logger.Error(err, "failed to list CRDs with label", "label", labelOptions)
+		return err
+	}
+
+	var combinedErr error
+	for i := range crdList.Items {
+		crd := &crdList.Items[i]
+
+		crList := &metav1.PartialObjectMetadataList{}
+		crList.APIVersion = crd.Spec.Group + "/" + crd.Spec.Versions[0].Name
+		crList.Kind = crd.Spec.Names.Kind
+
+		if err := r.Client.List(ctx, crList); err != nil {
+			msg := fmt.Sprintf("failed listing %s", crList.Kind)
+			logger.Error(err, msg)
+			multierr.AppendInto(&combinedErr, err)
+		} else {
+			for j := range crList.Items {
+				crItem := &crList.Items[j]
+
+				metrics.ReportODFSystemMapMetrics(
+					crItem.Name+"-storagesystem",
+					crItem.Name,
+					crItem.Namespace,
+					strings.ToLower(crList.Kind)+crList.APIVersion,
+				)
+			}
+		}
+	}
+	if combinedErr == nil {
+		logger.Info("successfully completed reconcileMetrics")
+	}
+
+	return combinedErr
 }
 
 func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logger logr.Logger) error {
