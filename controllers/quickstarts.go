@@ -65,7 +65,7 @@ func ensureQuickStarts(ctx context.Context, cli client.Client, log logr.Logger) 
 	return nil
 }
 
-func deleteQuickStarts(ctx context.Context, cli client.Client, log logr.Logger) {
+func deleteQuickStarts(ctx context.Context, cli client.Client, log logr.Logger) { //nolint:unused
 	if len(AllQuickStarts) == 0 {
 		log.Info("No quickstarts found.")
 	}

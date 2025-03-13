@@ -74,6 +74,11 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
+	err = ensureQuickStarts(ctx, r.Client, logger)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	err = r.setOperatorCondition(logger, req.NamespacedName.Namespace)
 	if err != nil {
 		return ctrl.Result{}, err
