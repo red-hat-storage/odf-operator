@@ -170,6 +170,15 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterVersion")
 		os.Exit(1)
 	}
+
+	if err = (&controllers.OperatorScalerReconciler{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: operatorNamespace,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OperatorScaler")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
