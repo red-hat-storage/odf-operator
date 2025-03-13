@@ -46,7 +46,6 @@ import (
 type SubscriptionReconciler struct {
 	client.Client
 	Scheme            *runtime.Scheme
-	Recorder          *EventReporter
 	ConditionName     string
 	OperatorCondition conditions.Condition
 }

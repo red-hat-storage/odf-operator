@@ -21,83 +21,71 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
+	consolev1 "github.com/openshift/api/console/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-
-	consolev1 "github.com/openshift/api/console/v1"
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {
+func ensureQuickStarts(ctx context.Context, cli client.Client, log logr.Logger) error {
 	if len(AllQuickStarts) == 0 {
-		logger.Info("No quickstarts found")
+		log.Info("No quickstarts found")
 		return nil
 	}
 	for _, qs := range AllQuickStarts {
 		cqs := consolev1.ConsoleQuickStart{}
 		err := yaml.Unmarshal(qs, &cqs)
 		if err != nil {
-			logger.Error(err, "Failed to unmarshal ConsoleQuickStart", "ConsoleQuickStartString", string(qs))
+			log.Error(err, "Failed to unmarshal ConsoleQuickStart", "ConsoleQuickStartString", string(qs))
 			continue
 		}
 		found := consolev1.ConsoleQuickStart{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: cqs.Name, Namespace: cqs.Namespace}, &found)
+		err = cli.Get(ctx, types.NamespacedName{Name: cqs.Name, Namespace: cqs.Namespace}, &found)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				err = r.Client.Create(context.TODO(), &cqs)
+				err = cli.Create(ctx, &cqs)
 				if err != nil {
-					logger.Error(err, "Failed to create quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
+					log.Error(err, "Failed to create quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
 					return nil
 				}
-				logger.Info("Creating quickstarts", "Name", cqs.Name, "Namespace", cqs.Namespace)
+				log.Info("Creating quickstarts", "Name", cqs.Name, "Namespace", cqs.Namespace)
 				continue
 			}
-			logger.Error(err, "Error has occurred when fetching quickstarts")
+			log.Error(err, "Error has occurred when fetching quickstarts")
 			return nil
 		}
 		found.Spec = cqs.Spec
-		err = r.Client.Update(context.TODO(), &found)
+		err = cli.Update(ctx, &found)
 		if err != nil {
-			logger.Error(err, "Failed to update quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
+			log.Error(err, "Failed to update quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
 			return nil
 		}
-		logger.Info("Updating quickstarts", "Name", cqs.Name, "Namespace", cqs.Namespace)
+		log.Info("Updating quickstarts", "Name", cqs.Name, "Namespace", cqs.Namespace)
 	}
 	return nil
 }
 
-func (r *StorageSystemReconciler) deleteQuickStarts(logger logr.Logger, instance *odfv1alpha1.StorageSystem) {
+func deleteQuickStarts(ctx context.Context, cli client.Client, log logr.Logger) {
 	if len(AllQuickStarts) == 0 {
-		logger.Info("No quickstarts found.")
-	}
-
-	allSSDeleted, err := r.areAllStorageSystemsMarkedForDeletion(instance.Namespace)
-	if err != nil {
-		// Log the error but not fail the operator
-		logger.Error(err, "Failed to List", "Kind", "StorageSystem")
-		return
-	}
-
-	if !allSSDeleted {
-		return
+		log.Info("No quickstarts found.")
 	}
 
 	for _, qs := range AllQuickStarts {
 		cqs := consolev1.ConsoleQuickStart{}
 		err := yaml.Unmarshal(qs, &cqs)
 		if err != nil {
-			logger.Error(err, "Failed to unmarshal ConsoleQuickStart.", "ConsoleQuickStartString", string(qs))
+			log.Error(err, "Failed to unmarshal ConsoleQuickStart.", "ConsoleQuickStartString", string(qs))
 			continue
 		}
 
-		err = r.Client.Delete(context.TODO(), &cqs)
+		err = cli.Delete(ctx, &cqs)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				continue
 			}
-			logger.Error(err, "Failed to delete quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
+			log.Error(err, "Failed to delete quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
 		}
 
-		logger.Info("Quickstart marked for deletion", "Name", cqs.Name, "Namespace", cqs.Namespace)
+		log.Info("Quickstart marked for deletion", "Name", cqs.Name, "Namespace", cqs.Namespace)
 	}
 }
