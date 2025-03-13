@@ -17,20 +17,12 @@ rules:
   - update
   - watch
 - apiGroups:
-  - admissionregistration.k8s.io
-  resources:
-  - validatingwebhookconfigurations
-  verbs:
-  - delete
-- apiGroups:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions
   verbs:
-  - create
   - get
   - list
-  - update
   - watch
 - apiGroups:
   - apps
@@ -94,16 +86,6 @@ rules:
   - get
   - update
 - apiGroups:
-  - console.openshift.io
-  resources:
-  - consolequickstarts
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - update
-- apiGroups:
   - monitoring.coreos.com
   resources:
   - alertmanagers
@@ -125,70 +107,35 @@ rules:
   resources:
   - storageclusters
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
-- apiGroups:
-  - ocs.openshift.io
-  resources:
-  - storageclusters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ocs.openshift.io
-  resources:
-  - storageclusters/status
-  verbs:
-  - get
-  - patch
-  - update
 - apiGroups:
   - odf.ibm.com
   resources:
   - flashsystemclusters
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
-  - odf.openshift.io
+  - operators.coreos.com
   resources:
-  - storagesystems
+  - clusterserviceversions
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - odf.openshift.io
-  resources:
-  - storagesystems/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - odf.openshift.io
-  resources:
-  - storagesystems/status
-  verbs:
-  - get
-  - patch
   - update
 - apiGroups:
   - operators.coreos.com
   resources:
-  - catalogsources
-  - clusterserviceversions
+  - clusterserviceversions/finalizers
+  - subscriptions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - operators.coreos.com
+  resources:
   - installplans
   - subscriptions
   verbs:
@@ -199,13 +146,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - operators.coreos.com
-  resources:
-  - clusterserviceversions/finalizers
-  - subscriptions/finalizers
-  verbs:
-  - update
 - apiGroups:
   - operators.coreos.com
   resources:
