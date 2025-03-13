@@ -105,3 +105,13 @@ func GetFakeFlashSystemCluster() *ibmv1alpha1.FlashSystemCluster {
 		Spec: ibmv1alpha1.FlashSystemClusterSpec{},
 	}
 }
+
+func GetFakeStorageCluster() *ocsv1.StorageCluster {
+	return &ocsv1.StorageCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "fake-vendor-system",
+			Namespace: OperatorNamespace,
+		},
+		Spec: ocsv1.StorageClusterSpec{},
+	}
+}
