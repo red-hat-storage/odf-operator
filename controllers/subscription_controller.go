@@ -46,7 +46,6 @@ import (
 type SubscriptionReconciler struct {
 	client.Client
 	Scheme            *runtime.Scheme
-	Recorder          *EventReporter
 	ConditionName     string
 	OperatorCondition conditions.Condition
 }
@@ -72,6 +71,11 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+
+	err = ensureQuickStarts(ctx, r.Client, logger)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 

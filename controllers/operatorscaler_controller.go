@@ -19,9 +19,12 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/go-logr/logr"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/red-hat-storage/odf-operator/metrics"
 	"go.uber.org/multierr"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -47,19 +50,23 @@ const (
 )
 
 type ResourceMappingRecord struct {
-	CrdName    string
-	ApiVersion string
-	Kind       string
-	PkgNames   []string
+	CrdName        string
+	ApiVersion     string
+	Kind           string
+	PkgNames       []string
+	ReportMetrics  bool
+	RemoveOwnerRef bool
 }
 
 var (
 	ResourceMappingList = []ResourceMappingRecord{
 		{
-			CrdName:    "storageclusters.ocs.openshift.io",
-			ApiVersion: "ocs.openshift.io/v1",
-			Kind:       "StorageCluster",
-			PkgNames:   []string{OcsSubscriptionPackage},
+			CrdName:        "storageclusters.ocs.openshift.io",
+			ApiVersion:     "ocs.openshift.io/v1",
+			Kind:           "StorageCluster",
+			PkgNames:       []string{OcsSubscriptionPackage},
+			ReportMetrics:  true,
+			RemoveOwnerRef: true,
 		},
 		{
 			CrdName:    "cephclusters.ceph.rook.io",
@@ -86,10 +93,12 @@ var (
 			PkgNames:   []string{PrometheusSubscriptionPackage},
 		},
 		{
-			CrdName:    "flashsystemclusters.odf.ibm.com",
-			ApiVersion: "odf.ibm.com/v1alpha1",
-			Kind:       "FlashSystemCluster",
-			PkgNames:   []string{IbmSubscriptionPackage},
+			CrdName:        "flashsystemclusters.odf.ibm.com",
+			ApiVersion:     "odf.ibm.com/v1alpha1",
+			Kind:           "FlashSystemCluster",
+			PkgNames:       []string{IbmSubscriptionPackage},
+			ReportMetrics:  true,
+			RemoveOwnerRef: true,
 		},
 	}
 
@@ -144,6 +153,14 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 
+	if err := r.createMetrics(); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.removeStorageSystemOwnerRef(); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	if err := r.reconcileOperators(); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -175,6 +192,99 @@ func (r *OperatorScalerReconciler) isOdfDependenciesCsvReady() error {
 
 	r.log.Info("successfully completed isOdfDependenciesCsvReady")
 	return nil
+}
+
+func (r *OperatorScalerReconciler) createMetrics() error {
+	r.log.Info("entering createMetrics")
+
+	var returnErr error
+
+	for i := range ResourceMappingList {
+		resMap := &ResourceMappingList[i]
+
+		if resMap.ReportMetrics {
+
+			crList := &metav1.PartialObjectMetadataList{}
+			crList.TypeMeta.APIVersion = resMap.ApiVersion
+			crList.TypeMeta.Kind = resMap.Kind
+
+			if err := r.Client.List(r.ctx, crList); err != nil {
+				if !meta.IsNoMatchError(err) {
+					msg := fmt.Sprintf("failed listing %s", resMap.Kind)
+					r.log.Error(err, msg)
+					multierr.AppendInto(&returnErr, err)
+				}
+			} else {
+				for j := range crList.Items {
+					crItem := &crList.Items[j]
+
+					metrics.ReportODFSystemMapMetrics(
+						crItem.Name+"-storagesystem",
+						crItem.Name,
+						crItem.Namespace,
+						strings.ToLower(resMap.Kind)+resMap.ApiVersion,
+					)
+				}
+			}
+		}
+	}
+
+	if returnErr == nil {
+		r.log.Info("successfully completed createMetrics")
+	}
+
+	return returnErr
+}
+
+func (r *OperatorScalerReconciler) removeStorageSystemOwnerRef() error {
+	r.log.Info("entering removeStorageSystemOwnerRef")
+
+	var returnErr error
+
+	for i := range ResourceMappingList {
+		resMap := &ResourceMappingList[i]
+
+		if resMap.RemoveOwnerRef {
+
+			crList := &metav1.PartialObjectMetadataList{}
+			crList.TypeMeta.APIVersion = resMap.ApiVersion
+			crList.TypeMeta.Kind = resMap.Kind
+
+			if err := r.Client.List(r.ctx, crList); err != nil {
+				if !meta.IsNoMatchError(err) {
+					msg := fmt.Sprintf("failed listing %s", resMap.Kind)
+					r.log.Error(err, msg)
+					multierr.AppendInto(&returnErr, err)
+				}
+			} else {
+				for j := range crList.Items {
+					crItem := &crList.Items[j]
+
+					ownRefLen := len(crItem.OwnerReferences)
+
+					// remove the storagesystem owner reference from the CR
+					crItem.OwnerReferences = slices.DeleteFunc(crItem.OwnerReferences, func(oRef metav1.OwnerReference) bool {
+						return oRef.Kind == "StorageSystem"
+					})
+
+					if len(crItem.OwnerReferences) < ownRefLen {
+						r.log.Info("removing owner reference", "kind", resMap.Kind, "name", crItem.Name)
+
+						if err := r.Client.Update(r.ctx, crItem); err != nil {
+							r.log.Error(err, "failed updating owner references", "kind", resMap.Kind, "name", crItem.Name)
+							multierr.AppendInto(&returnErr, err)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if returnErr == nil {
+		r.log.Info("successfully completed removeStorageSystemOwnerRef")
+	}
+
+	return returnErr
 }
 
 func (r *OperatorScalerReconciler) reconcileOperators() error {

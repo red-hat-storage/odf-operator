@@ -69,7 +69,7 @@ spec:
 
               - &*File storage:&* Select **ocs-storagecluster-cephfs**.
 
-           7. Specify your storage details. If you’re using an existing claim, specify your mount path details. 
+           7. Specify your storage details. If you’re using an existing claim, specify your mount path details.
 
            8. Select **Save**.
       review:
@@ -87,12 +87,12 @@ spec:
       title: Connect applications to object storage (Object Bucket Claims)
       description: >-
 
-        Object Bucket Claims provide an easy way to consume object storage across OpenShift Data Foundation. 
-        
-        
+        Object Bucket Claims provide an easy way to consume object storage across OpenShift Data Foundation.
+
+
         Use your object service endpoint, access key, and secret key to add your object service provider to OpenShift Data Foundation as a BackingStore.
 
-       
+
         **To create an Object Bucket Claim and connect it to your application:**
 
           1. Select **Storage > Object Bucket Claims**.
@@ -106,7 +106,7 @@ spec:
              - &*Multicloud Object Gateway:&* Select **openshift-storage.noobaa.io**.
 
           4. Select Object Bucket Claim for StorageClass **openshift-storage.noobaa.io**.
-          
+
           5. To create your Object Bucket Claim, select **Create**.
 
           6. On the **Object Bucket Claims** page, verify that your object bucket claim’s status is **Bound**.
@@ -167,17 +167,17 @@ spec:
     - title: Expand your StorageSystem
       description: |-
         When you installed the OpenShift Data Foundation operator, you:
-        
+
         - Created a StorageSystem.
-        
+
         - Set a cluster size.
-        
+
         - Provisioned a storage subsystem.
-        
+
         - Deployed necessary drivers.
-        
+
         - Created StorageClasses.
-        
+
 
         Now, you’re ready to easily provision and consume your deployed storage services.
 

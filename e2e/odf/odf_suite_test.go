@@ -20,12 +20,3 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	tests.TearDown()
 })
-
-// Test for the creation & deletion of storagesystem
-var _ = Describe("StorageSystem test", func() {
-	Context("Checking the StorageSystem", func() {
-		It("Should check the creation & deletion of storagesystem", func() {
-			tests.TestStorageSystem()
-		})
-	})
-})
