@@ -22,14 +22,18 @@ import (
 
 	"github.com/go-logr/logr"
 	"go.uber.org/multierr"
+	admrv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -47,9 +51,11 @@ const (
 // StorageSystemReconciler reconciles a StorageSystem object
 type StorageSystemReconciler struct {
 	client.Client
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Recorder *EventReporter
+	Log               logr.Logger
+	Scheme            *runtime.Scheme
+	Recorder          *EventReporter
+	OperatorNamespace string
+	ctx               context.Context
 }
 
 //+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems,verbs=get;list;watch;create;update;patch;delete
@@ -64,11 +70,14 @@ type StorageSystemReconciler struct {
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;create;update
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=validatingwebhookconfigurations,verbs=delete
+//+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := r.Log.WithValues("instance", req.NamespacedName)
+
+	r.ctx = ctx
+	logger := log.FromContext(ctx)
 
 	instance := &odfv1alpha1.StorageSystem{}
 	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
@@ -152,6 +161,11 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 	}
 
 	err = r.ensureQuickStarts(logger)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	err = ensureWebhook(r.ctx, r.Client, logger, r.OperatorNamespace)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -261,12 +275,38 @@ func (r *StorageSystemReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		},
 	}
 
+	enqueueStorageSystemRequest := handler.EnqueueRequestsFromMapFunc(
+		func(ctx context.Context, obj client.Object) []reconcile.Request {
+			logger := log.FromContext(ctx)
+			ssList := &odfv1alpha1.StorageSystemList{}
+			err := r.Client.List(ctx, ssList, client.InNamespace(r.OperatorNamespace))
+			if err != nil {
+				logger.Error(err, "Unable to list StorageSystem objects")
+				return []reconcile.Request{}
+			}
+
+			// Return name and namespace of the StorageSystem object
+			request := []reconcile.Request{}
+			for _, ss := range ssList.Items {
+				request = append(request, reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Namespace: ss.Namespace,
+						Name:      ss.Name,
+					},
+				})
+			}
+
+			return request
+		},
+	)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&odfv1alpha1.StorageSystem{}, builder.WithPredicates(generationChangedPredicate)).
 		Owns(&operatorv1alpha1.Subscription{}, builder.WithPredicates(generationChangedPredicate, ignoreCreatePredicate)).
 		// Although we own the storage cluster, we are not a controller owner.
 		// Not being a controller owner requires us to pass builder.MatchEveryOwner.
 		Owns(&ocsv1.StorageCluster{}, builder.MatchEveryOwner, builder.WithPredicates(generationChangedPredicate)).
+		Watches(&admrv1.MutatingWebhookConfiguration{}, enqueueStorageSystemRequest, builder.WithPredicates(generationChangedPredicate)).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 1}).
 		Complete(r)
 }
