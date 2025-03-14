@@ -222,7 +222,10 @@ func (r *OperatorScalerReconciler) reconcileOperators() error {
 		}
 	}
 
-	r.log.Info("successfully completed reconcileOperators")
+	if returnErr == nil {
+		r.log.Info("successfully completed reconcileOperators")
+	}
+
 	return returnErr
 }
 
