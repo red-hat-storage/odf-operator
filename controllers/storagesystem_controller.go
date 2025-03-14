@@ -60,7 +60,6 @@ type StorageSystemReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions/finalizers,verbs=update
-//+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;create;update
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=validatingwebhookconfigurations,verbs=delete
 
@@ -146,11 +145,6 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 			logger.Error(err, "failed to update storagesystem with finalizer", "Finalizer", storageSystemFinalizer)
 			return ctrl.Result{}, err
 		}
-	}
-
-	err = r.ensureQuickStarts(logger)
-	if err != nil {
-		return ctrl.Result{}, err
 	}
 
 	err = r.ensureSubscriptions(instance, logger)
