@@ -21,83 +21,56 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-
 	consolev1 "github.com/openshift/api/console/v1"
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func (r *StorageSystemReconciler) ensureQuickStarts(logger logr.Logger) error {
-	if len(AllQuickStarts) == 0 {
-		logger.Info("No quickstarts found")
-		return nil
-	}
+// ensureQuickStarts create or update the quickstarts
+func ensureQuickStarts(ctx context.Context, cli client.Client, logger logr.Logger) error {
 	for _, qs := range AllQuickStarts {
-		cqs := consolev1.ConsoleQuickStart{}
-		err := yaml.Unmarshal(qs, &cqs)
+		desiredCQS := &consolev1.ConsoleQuickStart{}
+		err := yaml.Unmarshal(qs, desiredCQS)
 		if err != nil {
-			logger.Error(err, "Failed to unmarshal ConsoleQuickStart", "ConsoleQuickStartString", string(qs))
+			logger.Error(err, "failed to unmarshal ConsoleQuickStart", "ConsoleQuickStartString", string(qs))
 			continue
 		}
-		found := consolev1.ConsoleQuickStart{}
-		err = r.Client.Get(context.TODO(), types.NamespacedName{Name: cqs.Name, Namespace: cqs.Namespace}, &found)
+		cqs := &consolev1.ConsoleQuickStart{}
+		cqs.ObjectMeta = desiredCQS.ObjectMeta
+		_, err = controllerutil.CreateOrUpdate(ctx, cli, cqs, func() error {
+			cqs.Spec = desiredCQS.Spec
+			return nil
+		})
 		if err != nil {
-			if errors.IsNotFound(err) {
-				err = r.Client.Create(context.TODO(), &cqs)
-				if err != nil {
-					logger.Error(err, "Failed to create quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
-					return nil
-				}
-				logger.Info("Creating quickstarts", "Name", cqs.Name, "Namespace", cqs.Namespace)
-				continue
-			}
-			logger.Error(err, "Error has occurred when fetching quickstarts")
+			logger.Error(err, "failed to create or update quickstart", "Name", desiredCQS.Name, "Namespace", desiredCQS.Namespace)
 			return nil
 		}
-		found.Spec = cqs.Spec
-		err = r.Client.Update(context.TODO(), &found)
-		if err != nil {
-			logger.Error(err, "Failed to update quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
-			return nil
-		}
-		logger.Info("Updating quickstarts", "Name", cqs.Name, "Namespace", cqs.Namespace)
+		logger.Info("updating quickstarts", "Name", desiredCQS.Name, "Namespace", desiredCQS.Namespace)
 	}
 	return nil
 }
 
-func (r *StorageSystemReconciler) deleteQuickStarts(logger logr.Logger, instance *odfv1alpha1.StorageSystem) {
-	if len(AllQuickStarts) == 0 {
-		logger.Info("No quickstarts found.")
-	}
-
-	allSSDeleted, err := r.areAllStorageSystemsMarkedForDeletion(instance.Namespace)
-	if err != nil {
-		// Log the error but not fail the operator
-		logger.Error(err, "Failed to List", "Kind", "StorageSystem")
-		return
-	}
-
-	if !allSSDeleted {
-		return
-	}
+// deleteQuickStarts deletes the quickstarts
+// TODO: This function is not used, a call for this function need to be introduced whenever we resolve ODF uninstallation techdebt
+func deleteQuickStarts(ctx context.Context, cli client.Client, logger logr.Logger) { //nolint:unused
 
 	for _, qs := range AllQuickStarts {
 		cqs := consolev1.ConsoleQuickStart{}
 		err := yaml.Unmarshal(qs, &cqs)
 		if err != nil {
-			logger.Error(err, "Failed to unmarshal ConsoleQuickStart.", "ConsoleQuickStartString", string(qs))
+			logger.Error(err, "failed to unmarshal ConsoleQuickStart.", "ConsoleQuickStartString", string(qs))
 			continue
 		}
 
-		err = r.Client.Delete(context.TODO(), &cqs)
+		err = cli.Delete(ctx, &cqs)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				continue
 			}
-			logger.Error(err, "Failed to delete quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
+			logger.Error(err, "failed to delete quickstart", "Name", cqs.Name, "Namespace", cqs.Namespace)
 		}
 
-		logger.Info("Quickstart marked for deletion", "Name", cqs.Name, "Namespace", cqs.Namespace)
+		logger.Info("quickstart marked for deletion", "Name", cqs.Name, "Namespace", cqs.Namespace)
 	}
 }

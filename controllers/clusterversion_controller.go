@@ -49,6 +49,7 @@ type ClusterVersionReconciler struct {
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleclidownloads,verbs=get;create;update
+//+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -60,6 +61,11 @@ func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 	if err := r.ensureConsolePlugin(instance.Status.Desired.Version); err != nil {
 		logger.Error(err, "Could not ensure compatibility for ODF consolePlugin")
+		return ctrl.Result{}, err
+	}
+
+	if err := ensureQuickStarts(ctx, r.Client, logger); err != nil {
+		logger.Error(err, "Could not ensure QuickStarts")
 		return ctrl.Result{}, err
 	}
 
