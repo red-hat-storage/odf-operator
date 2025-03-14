@@ -36,7 +36,6 @@ import (
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-operator/metrics"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
@@ -61,7 +60,6 @@ type StorageSystemReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions/finalizers,verbs=update
-//+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;create;update
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=validatingwebhookconfigurations,verbs=delete
 
@@ -82,8 +80,6 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	logger.Info("storagesystem instance found")
-
-	metrics.ReportODFSystemMapMetrics(instance.Name, instance.Spec.Name, instance.Spec.Namespace, string(instance.Spec.Kind))
 
 	// Reconcile changes
 	result, reconcileError := r.reconcile(instance, logger)
@@ -149,11 +145,6 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 			logger.Error(err, "failed to update storagesystem with finalizer", "Finalizer", storageSystemFinalizer)
 			return ctrl.Result{}, err
 		}
-	}
-
-	err = r.ensureQuickStarts(logger)
-	if err != nil {
-		return ctrl.Result{}, err
 	}
 
 	err = r.ensureSubscriptions(instance, logger)

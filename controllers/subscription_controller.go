@@ -57,6 +57,7 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -72,6 +73,11 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
+		return ctrl.Result{}, err
+	}
+
+	err = ensureQuickStarts(ctx, r.Client, logger)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
