@@ -211,8 +211,8 @@ func (r *OperatorScalerReconciler) reconcileOperators() error {
 					r.log.Error(err, "failed listing csvs with label", "label", key)
 					multierr.AppendInto(&returnErr, err)
 				} else {
-					for i := range csvList.Items {
-						if err = r.updateCsvDeplymentsReplicas(&csvList.Items[i]); err != nil {
+					for j := range csvList.Items {
+						if err = r.updateCsvDeplymentsReplicas(&csvList.Items[j]); err != nil {
 							r.log.Error(err, "failed updating csvs replica")
 							multierr.AppendInto(&returnErr, err)
 						}
