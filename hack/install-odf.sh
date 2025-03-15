@@ -9,8 +9,21 @@ OPERATOR_SDK=${OPERATOR_SDK:-$1}
 BUNDLE_IMG=${BUNDLE_IMG:-$2}
 ODF_DEPS_CATALOG_IMG=${ODF_DEPS_CATALOG_IMG:-$3}
 CSV_NAMES=${CSV_NAMES:-$4}
+CI=${CI:-false}
 
 NAMESPACE=$(oc get ns "$INSTALL_NAMESPACE" -o jsonpath="{.metadata.name}" 2>/dev/null || true)
+
+function print_debug_logs {
+    if [ "$CI" == true ]; then
+        echo "printing debug logs"
+        oc get csv -n "$INSTALL_NAMESPACE"
+        oc get pods -n "$INSTALL_NAMESPACE"
+        oc describe csv -n "$INSTALL_NAMESPACE"
+        oc describe pods -n "$INSTALL_NAMESPACE"
+    fi
+}
+
+
 if [[ -n "$NAMESPACE" ]]; then
     echo "Namespace \"$NAMESPACE\" exists"
 else
@@ -18,7 +31,7 @@ else
     oc create ns "$INSTALL_NAMESPACE"
 fi
 
-"$OPERATOR_SDK" run bundle "$BUNDLE_IMG" --timeout=10m --security-context-config restricted -n "$INSTALL_NAMESPACE" --index-image "$ODF_DEPS_CATALOG_IMG"
+"$OPERATOR_SDK" run bundle "$BUNDLE_IMG" --timeout=10m --security-context-config restricted -n "$INSTALL_NAMESPACE" --index-image "$ODF_DEPS_CATALOG_IMG" || (print_debug_logs && exit 1)
 
 # Check for the presence of the CSVs in the cluster for up to 5 minutes,
 # Since 'oc wait' exits immediately if the resource is not found.
@@ -29,15 +42,7 @@ for i in {1..30}; do
     sleep 10
 done
 
-oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAMESPACE" csv $CSV_NAMES || {
-
-    echo "CSV $CSV_NAMES did not succeed, describing CSV"
-    oc get csv -n "$INSTALL_NAMESPACE"
-    oc get pods -n "$INSTALL_NAMESPACE"
-    oc describe csv -n "$INSTALL_NAMESPACE"
-    oc describe pods -n "$INSTALL_NAMESPACE"
-    exit 1
-}
+oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAMESPACE" csv $CSV_NAMES || (print_debug_logs && exit 1)
 
 oc wait --timeout=5m --for condition=Available -n "$INSTALL_NAMESPACE" deployment \
     ceph-csi-controller-manager \
@@ -50,4 +55,6 @@ oc wait --timeout=5m --for condition=Available -n "$INSTALL_NAMESPACE" deploymen
     odf-operator-controller-manager \
     prometheus-operator \
     rook-ceph-operator \
-    ux-backend-server
+    ux-backend-server || (print_debug_logs && exit 1)
+
+print_debug_logs
