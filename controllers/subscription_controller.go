@@ -22,6 +22,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"go.uber.org/multierr"
+	admrv1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,6 +48,7 @@ type SubscriptionReconciler struct {
 	client.Client
 	Scheme            *runtime.Scheme
 	Recorder          *EventReporter
+	OperatorNamespace string
 	ConditionName     string
 	OperatorCondition conditions.Condition
 }
@@ -57,6 +59,7 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -75,13 +78,16 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	err = r.setOperatorCondition(logger, req.NamespacedName.Namespace)
+	err = r.setOperatorCondition(logger, r.OperatorNamespace)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	err = r.ensureSubscriptions(logger, req.NamespacedName.Namespace)
-	if err != nil {
+	if err = reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err = r.ensureSubscriptions(logger, r.OperatorNamespace); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -290,12 +296,22 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		},
 	)
 
+	enqueueOdfSub := handler.EnqueueRequestsFromMapFunc(
+		func(ctx context.Context, obj client.Object) []reconcile.Request {
+			req := reconcile.Request{}
+			req.Name = "odf-operator"
+			req.Namespace = r.OperatorNamespace
+			return []reconcile.Request{req}
+		},
+	)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&operatorv1alpha1.Subscription{},
 			builder.WithPredicates(generationChangedPredicate, subscriptionPredicate)).
 		Owns(&operatorv1alpha1.Subscription{},
 			builder.WithPredicates(generationChangedPredicate)).
 		Watches(&operatorv2.OperatorCondition{}, enqueueFromCondition, builder.WithPredicates(conditionPredicate)).
+		Watches(&admrv1.MutatingWebhookConfiguration{}, enqueueOdfSub, builder.WithPredicates(generationChangedPredicate)).
 		Complete(r)
 }
 
