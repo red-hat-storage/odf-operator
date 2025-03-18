@@ -164,6 +164,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&controllers.CleanupReconciler{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: operatorNamespace,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "CleanupController")
+		os.Exit(1)
+	}
+
 	if err = (&webhook.ClusterServiceVersionDeploymentScaler{
 		Client:            mgr.GetClient(),
 		Decoder:           admission.NewDecoder(mgr.GetScheme()),
