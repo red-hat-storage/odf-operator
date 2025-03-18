@@ -152,16 +152,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	storageClusterReconciler := &controllers.StorageClusterReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageCluster controller")),
-	}
-	if err = storageClusterReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "StorageCluster")
-		os.Exit(1)
-	}
-
 	if err = (&controllers.ClusterVersionReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
