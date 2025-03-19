@@ -135,9 +135,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 				odfConsolePlugin.Spec.Backend.Service.BasePath = basePath
 			}
 		}
-		if odfConsolePlugin.Spec.Proxy == nil {
-			odfConsolePlugin.Spec.Proxy = console.GetConsolePluginProxy(OperatorNamespace)
-		}
+		odfConsolePlugin.Spec.Proxy = console.GetConsolePluginProxy(OperatorNamespace)
 		return nil
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {

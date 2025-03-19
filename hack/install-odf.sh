@@ -9,8 +9,22 @@ OPERATOR_SDK=${OPERATOR_SDK:-$1}
 BUNDLE_IMG=${BUNDLE_IMG:-$2}
 ODF_DEPS_CATALOG_IMG=${ODF_DEPS_CATALOG_IMG:-$3}
 CSV_NAMES=${CSV_NAMES:-$4}
+CI=${CI:-false}
 
 NAMESPACE=$(oc get ns "$INSTALL_NAMESPACE" -o jsonpath="{.metadata.name}" 2>/dev/null || true)
+
+function print_debug_logs {
+    if [ "$CI" == true ]; then
+        echo "printing debug logs"
+        oc get csv -n "$INSTALL_NAMESPACE"
+        oc get pods -n "$INSTALL_NAMESPACE"
+        oc describe csv -n "$INSTALL_NAMESPACE"
+        oc describe pods -n "$INSTALL_NAMESPACE"
+    fi
+}
+
+trap print_debug_logs EXIT
+
 if [[ -n "$NAMESPACE" ]]; then
     echo "Namespace \"$NAMESPACE\" exists"
 else
@@ -29,15 +43,7 @@ for i in {1..30}; do
     sleep 10
 done
 
-oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAMESPACE" csv $CSV_NAMES || {
-
-    echo "CSV $CSV_NAMES did not succeed, describing CSV"
-    oc get csv -n "$INSTALL_NAMESPACE"
-    oc get pods -n "$INSTALL_NAMESPACE"
-    oc describe csv -n "$INSTALL_NAMESPACE"
-    oc describe pods -n "$INSTALL_NAMESPACE"
-    exit 1
-}
+oc wait --timeout=5m --for jsonpath='{.status.phase}'=Succeeded -n "$INSTALL_NAMESPACE" csv $CSV_NAMES
 
 oc wait --timeout=5m --for condition=Available -n "$INSTALL_NAMESPACE" deployment \
     ceph-csi-controller-manager \
