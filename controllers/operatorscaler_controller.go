@@ -115,8 +115,6 @@ type OperatorScalerReconciler struct {
 	Scheme            *runtime.Scheme
 	OperatorNamespace string
 
-	ctx               context.Context
-	log               logr.Logger
 	cache             cache.Cache
 	controller        controller.Controller
 	kindsBeingWatched map[string]bool
@@ -135,50 +133,49 @@ type OperatorScalerReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.ctx = ctx
-	r.log = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
-	r.log.Info("starting reconcile")
+	logger.Info("starting reconcile")
 
-	if err := r.isOdfDependenciesCsvReady(); err != nil {
+	if err := r.isOdfDependenciesCsvReady(ctx, logger); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileOperators(); err != nil {
+	if err := r.reconcileOperators(ctx, logger); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileDynamicWatchers(); err != nil {
+	if err := r.reconcileDynamicWatchers(ctx, logger); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	r.log.Info("reconcile completed successfully")
+	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
 }
 
-func (r *OperatorScalerReconciler) isOdfDependenciesCsvReady() error {
-	r.log.Info("entering isOdfDependenciesCsvReady")
+func (r *OperatorScalerReconciler) isOdfDependenciesCsvReady(ctx context.Context, logger logr.Logger) error {
+	logger.Info("entering isOdfDependenciesCsvReady")
 
 	odfDepsCsv := &opv1a1.ClusterServiceVersion{}
 
-	err := r.Client.Get(r.ctx, types.NamespacedName{Name: OdfDepsSubscriptionStartingCSV, Namespace: r.OperatorNamespace}, odfDepsCsv)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: OdfDepsSubscriptionStartingCSV, Namespace: r.OperatorNamespace}, odfDepsCsv)
 	if err != nil {
-		r.log.Error(err, "failed getting odf-deps csv", "csvName", OdfDepsSubscriptionStartingCSV)
+		logger.Error(err, "failed getting odf-deps csv", "csvName", OdfDepsSubscriptionStartingCSV)
 		return err
 	}
 
 	if odfDepsCsv.Status.Phase != opv1a1.CSVPhaseSucceeded {
 		err = fmt.Errorf("csv %s is not in succeeded state", OdfDepsSubscriptionStartingCSV)
-		r.log.Error(err, "waiting for csv to be in succeeded state")
+		logger.Error(err, "waiting for csv to be in succeeded state")
 		return err
 	}
 
-	r.log.Info("successfully completed isOdfDependenciesCsvReady")
+	logger.Info("successfully completed isOdfDependenciesCsvReady")
 	return nil
 }
 
-func (r *OperatorScalerReconciler) reconcileOperators() error {
-	r.log.Info("entering reconcileOperators")
+func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logger logr.Logger) error {
+	logger.Info("entering reconcileOperators")
 
 	var returnErr error
 
@@ -189,10 +186,10 @@ func (r *OperatorScalerReconciler) reconcileOperators() error {
 		crList.TypeMeta.APIVersion = resourceMapping.ApiVersion
 		crList.TypeMeta.Kind = resourceMapping.Kind
 
-		if err := r.Client.List(r.ctx, crList, client.Limit(1)); err != nil {
+		if err := r.Client.List(ctx, crList, client.Limit(1)); err != nil {
 			if !meta.IsNoMatchError(err) {
 				msg := fmt.Sprintf("failed listing %s", resourceMapping.Kind)
-				r.log.Error(err, msg)
+				logger.Error(err, msg)
 				multierr.AppendInto(&returnErr, err)
 			}
 
@@ -203,17 +200,17 @@ func (r *OperatorScalerReconciler) reconcileOperators() error {
 
 				csvList := &opv1a1.ClusterServiceVersionList{}
 				err = r.Client.List(
-					r.ctx, csvList,
+					ctx, csvList,
 					client.InNamespace(r.OperatorNamespace),
 					client.MatchingLabels(map[string]string{key: ""}),
 				)
 				if err != nil {
-					r.log.Error(err, "failed listing csvs with label", "label", key)
+					logger.Error(err, "failed listing csvs with label", "label", key)
 					multierr.AppendInto(&returnErr, err)
 				} else {
 					for j := range csvList.Items {
-						if err = r.updateCsvDeplymentsReplicas(&csvList.Items[j]); err != nil {
-							r.log.Error(err, "failed updating csvs replica")
+						if err = r.updateCsvDeplymentsReplicas(ctx, logger, &csvList.Items[j]); err != nil {
+							logger.Error(err, "failed updating csvs replica")
 							multierr.AppendInto(&returnErr, err)
 						}
 					}
@@ -223,13 +220,13 @@ func (r *OperatorScalerReconciler) reconcileOperators() error {
 	}
 
 	if returnErr == nil {
-		r.log.Info("successfully completed reconcileOperators")
+		logger.Info("successfully completed reconcileOperators")
 	}
 
 	return returnErr
 }
 
-func (r *OperatorScalerReconciler) updateCsvDeplymentsReplicas(csv *opv1a1.ClusterServiceVersion) error {
+func (r *OperatorScalerReconciler) updateCsvDeplymentsReplicas(ctx context.Context, logger logr.Logger, csv *opv1a1.ClusterServiceVersion) error {
 
 	var updateRequired bool
 	for i := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
@@ -241,18 +238,18 @@ func (r *OperatorScalerReconciler) updateCsvDeplymentsReplicas(csv *opv1a1.Clust
 	}
 
 	if updateRequired {
-		if err := r.Client.Update(r.ctx, csv); err != nil {
-			r.log.Error(err, "failed updating csv replica", "csvName", csv.Name)
+		if err := r.Client.Update(ctx, csv); err != nil {
+			logger.Error(err, "failed updating csv replica", "csvName", csv.Name)
 			return err
 		}
-		r.log.Info("csv updated successfully", "csvName", csv.Name)
+		logger.Info("csv updated successfully", "csvName", csv.Name)
 	}
 
 	return nil
 }
 
-func (r *OperatorScalerReconciler) reconcileDynamicWatchers() error {
-	r.log.Info("entering reconcileDynamicWatchers")
+func (r *OperatorScalerReconciler) reconcileDynamicWatchers(ctx context.Context, logger logr.Logger) error {
+	logger.Info("entering reconcileDynamicWatchers")
 
 	for i := range ResourceMappingList {
 		resourceMapping := &ResourceMappingList[i]
@@ -261,11 +258,11 @@ func (r *OperatorScalerReconciler) reconcileDynamicWatchers() error {
 
 			crd := &extv1.CustomResourceDefinition{}
 			crd.Name = resourceMapping.CrdName
-			if err := r.Client.Get(r.ctx, client.ObjectKeyFromObject(crd), crd); client.IgnoreNotFound(err) != nil {
-				r.log.Error(err, "failed getting crd", "crdName", resourceMapping.CrdName)
+			if err := r.Client.Get(ctx, client.ObjectKeyFromObject(crd), crd); client.IgnoreNotFound(err) != nil {
+				logger.Error(err, "failed getting crd", "crdName", resourceMapping.CrdName)
 				return err
 			} else if err == nil {
-				r.log.Info("adding dynamic watch", "kind", resourceMapping.Kind)
+				logger.Info("adding dynamic watch", "kind", resourceMapping.Kind)
 
 				err := r.controller.Watch(
 					source.Kind(
@@ -285,7 +282,7 @@ func (r *OperatorScalerReconciler) reconcileDynamicWatchers() error {
 					),
 				)
 				if err != nil {
-					r.log.Error(err, "failed adding dynamic watch", "kind", resourceMapping.Kind)
+					logger.Error(err, "failed adding dynamic watch", "kind", resourceMapping.Kind)
 					return err
 				}
 
@@ -294,7 +291,7 @@ func (r *OperatorScalerReconciler) reconcileDynamicWatchers() error {
 		}
 	}
 
-	r.log.Info("successfully completed reconcileDynamicWatchers")
+	logger.Info("successfully completed reconcileDynamicWatchers")
 	return nil
 }
 
