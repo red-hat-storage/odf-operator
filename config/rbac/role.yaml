@@ -37,10 +37,8 @@ rules:
   resources:
   - customresourcedefinitions
   verbs:
-  - create
   - get
   - list
-  - update
   - watch
 - apiGroups:
   - apps
@@ -135,24 +133,16 @@ rules:
   resources:
   - storageclusters
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - odf.ibm.com
   resources:
   - flashsystemclusters
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - odf.openshift.io
@@ -167,23 +157,8 @@ rules:
   - update
   - watch
 - apiGroups:
-  - odf.openshift.io
-  resources:
-  - storagesystems/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - odf.openshift.io
-  resources:
-  - storagesystems/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - operators.coreos.com
   resources:
-  - catalogsources
   - clusterserviceversions
   - installplans
   - subscriptions

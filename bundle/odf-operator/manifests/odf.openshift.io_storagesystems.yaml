@@ -68,35 +68,6 @@ spec:
             type: object
           status:
             description: StorageSystemStatus defines the observed state of StorageSystem
-            properties:
-              conditions:
-                description: Conditions describes the state of the StorageSystem resource.
-                items:
-                  description: |-
-                    Condition represents the state of the operator's
-                    reconciliation functionality.
-                  properties:
-                    lastHeartbeatTime:
-                      format: date-time
-                      type: string
-                    lastTransitionTime:
-                      format: date-time
-                      type: string
-                    message:
-                      type: string
-                    reason:
-                      type: string
-                    status:
-                      type: string
-                    type:
-                      description: ConditionType is the state of the operator's reconciliation
-                        functionality.
-                      type: string
-                  required:
-                  - status
-                  - type
-                  type: object
-                type: array
             type: object
         type: object
     served: true
