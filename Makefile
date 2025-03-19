@@ -63,6 +63,70 @@ e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
 	./hack/e2e-test.sh
 
+define MAPPING
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: manager-config
+data:
+  CEPHCSI: |
+    channel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
+    csv: $(CEPHCSI_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
+    scalerCrds:
+      - cephclusters.ceph.rook.io
+  CSIADDONS: |
+    channel: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
+    csv: $(CSIADDONS_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
+    scalerCrds:
+      - cephclusters.ceph.rook.io
+  IBM: |
+    channel: $(IBM_SUBSCRIPTION_CHANNEL)
+    csv: $(IBM_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(IBM_SUBSCRIPTION_PACKAGE)
+    scalerCrds:
+      - flashsystemclusters.odf.ibm.com
+  NOOBAA: |
+    channel: $(NOOBAA_SUBSCRIPTION_CHANNEL)
+    csv: $(NOOBAA_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(NOOBAA_SUBSCRIPTION_PACKAGE)
+    scalerCrds:
+      - noobaas.noobaa.io
+  OCS_CLIENT: |
+    channel: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)
+    csv: $(OCS_CLIENT_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
+  OCS: |
+    channel: $(OCS_SUBSCRIPTION_CHANNEL)
+    csv: $(OCS_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(OCS_SUBSCRIPTION_PACKAGE)
+    scalerCrds:
+      - storageclusters.ocs.openshift.io
+  ODF_DEPS: |
+    channel: $(ODF_DEPS_SUBSCRIPTION_CHANNEL)
+    csv: $(ODF_DEPS_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(ODF_DEPS_SUBSCRIPTION_PACKAGE)
+  PROMETHEUS: |
+    channel: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
+    csv: $(PROMETHEUS_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(PROMETHEUS_SUBSCRIPTION_PACKAGE)
+    scalerCrds:
+      - alertmanagers.monitoring.coreos.com
+      - prometheuses.monitoring.coreos.com
+  RECIPE: |
+    channel: $(RECIPE_SUBSCRIPTION_CHANNEL)
+    csv: $(RECIPE_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(RECIPE_SUBSCRIPTION_PACKAGE)
+  ROOK: |
+    channel: $(ROOK_SUBSCRIPTION_CHANNEL)
+    csv: $(ROOK_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(ROOK_SUBSCRIPTION_PACKAGE)
+    scalerCrds:
+      - cephclusters.ceph.rook.io
+endef
+export MAPPING
+
 define MANAGER_ENV_VARS
 ODF_DEPS_SUBSCRIPTION_NAME=$(ODF_DEPS_SUBSCRIPTION_NAME)
 ODF_DEPS_SUBSCRIPTION_PACKAGE=$(ODF_DEPS_SUBSCRIPTION_PACKAGE)
@@ -129,6 +193,7 @@ export MANAGER_ENV_VARS
 
 update-mgr-env: ## Feed env variables to the manager configmap
 	@echo "$$MANAGER_ENV_VARS" > config/manager/manager.env
+	@echo "$$MAPPING" > config/manager/mapping.yaml
 
 ##@ Build
 
