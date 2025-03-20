@@ -68,6 +68,13 @@ func GetConfig(ctx context.Context, cli client.Client, logger logr.Logger, opera
 	// parse the ConfigMap data and skip any keys that fail to parse
 	configMapData := make(map[string]ConfigData)
 	for key, value := range cm.Data {
+
+		// skip parsing known environment variable keys from the configmap.
+		// first condition can be removed once the older keys are removed from the configmap.
+		if _, ok := DefaultValMap[key]; ok || key == "controller_manager_config.yaml" {
+			continue
+		}
+
 		var config ConfigData
 		if err := yaml.Unmarshal([]byte(value), &config); err != nil {
 			logger.Error(err, "failed to unmarshal configmap data", "key", key)
@@ -199,6 +206,13 @@ func GetOdfDependenciesConfig(ctx context.Context, cli client.Client, logger log
 
 	// parse the ConfigMap data and skip any keys that fail to parse
 	for key, value := range cm.Data {
+
+		// skip parsing known environment variable keys from the ConfigMap.
+		// first condition can be removed once the older keys are removed from the ConfigMap.
+		if _, ok := DefaultValMap[key]; ok || key == "controller_manager_config.yaml" {
+			continue
+		}
+
 		var config ConfigData
 		if err := yaml.Unmarshal([]byte(value), &config); err != nil {
 			logger.Error(err, "failed to unmarshal configmap data", "key", key)
