@@ -22,6 +22,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"go.uber.org/multierr"
+	admrv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -86,7 +87,7 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	metrics.ReportODFSystemMapMetrics(instance.Name, instance.Spec.Name, instance.Spec.Namespace, string(instance.Spec.Kind))
 
 	// Reconcile changes
-	result, reconcileError := r.reconcile(instance, logger)
+	result, reconcileError := r.reconcile(ctx, instance, logger)
 
 	// Apply status changes
 	statusError := r.Client.Status().Update(context.TODO(), instance)
@@ -105,7 +106,7 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 }
 
-func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem, logger logr.Logger) (ctrl.Result, error) {
+func (r *StorageSystemReconciler) reconcile(ctx context.Context, instance *odfv1alpha1.StorageSystem, logger logr.Logger) (ctrl.Result, error) {
 
 	var err error
 
@@ -156,6 +157,10 @@ func (r *StorageSystemReconciler) reconcile(instance *odfv1alpha1.StorageSystem,
 		return ctrl.Result{}, err
 	}
 
+	if ok, err := isCsvWebhookPresent(ctx, r.Client, logger); !ok {
+		return ctrl.Result{}, err
+	}
+
 	err = r.ensureSubscriptions(instance, logger)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -197,6 +202,19 @@ func (r *StorageSystemReconciler) validateStorageSystemSpec(instance *odfv1alpha
 	}
 
 	return nil
+}
+
+func isCsvWebhookPresent(ctx context.Context, cli client.Client, logger logr.Logger) (bool, error) {
+
+	whConfig := &admrv1.MutatingWebhookConfiguration{}
+	key := client.ObjectKey{Name: csvWebhook.Name}
+
+	if err := cli.Get(ctx, key, whConfig); err != nil {
+		logger.Error(err, "waiting for csv webhook to be created")
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *StorageSystemReconciler) ensureSubscriptions(instance *odfv1alpha1.StorageSystem, logger logr.Logger) error {
