@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-logr/logr"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -128,12 +127,8 @@ func (r *ClusterServiceVersionDeploymentScaler) isCsvManagedByOdf(csv *opv1a1.Cl
 		return false
 	}
 
-	for i := range controllers.ResourceMappingList {
-		for _, pkgName := range controllers.ResourceMappingList[i].PkgNames {
-			if strings.HasPrefix(csv.Name, pkgName) {
-				return true
-			}
-		}
+	if _, ok := controllers.GetCsvNamesMap()[csv.Name]; ok {
+		return true
 	}
 
 	return false
