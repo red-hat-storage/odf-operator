@@ -48,13 +48,6 @@ const (
 	CsvLabelKey = "operators.coreos.com/%s.%s"
 )
 
-type ResourceMappingRecord struct {
-	CrdName    string
-	ApiVersion string
-	Kind       string
-	PkgNames   []string
-}
-
 var (
 	ResourceMappingList = []ResourceMappingRecord{
 		{
