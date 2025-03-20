@@ -37,7 +37,6 @@ import (
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-operator/metrics"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
@@ -82,8 +81,6 @@ func (r *StorageSystemReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	logger.Info("storagesystem instance found")
-
-	metrics.ReportODFSystemMapMetrics(instance.Name, instance.Spec.Name, instance.Spec.Namespace, string(instance.Spec.Kind))
 
 	// Reconcile changes
 	result, reconcileError := r.reconcile(ctx, instance, logger)
