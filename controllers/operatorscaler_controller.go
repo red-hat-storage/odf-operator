@@ -30,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -95,7 +94,7 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	logger.Info("starting reconcile")
 
-	if err := r.isOdfDependenciesCsvReady(ctx, logger); err != nil {
+	if err := isOdfDependenciesCsvReady(ctx, r.Client, logger); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -119,27 +118,6 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
-}
-
-func (r *OperatorScalerReconciler) isOdfDependenciesCsvReady(ctx context.Context, logger logr.Logger) error {
-	logger.Info("entering isOdfDependenciesCsvReady")
-
-	odfDepsCsv := &opv1a1.ClusterServiceVersion{}
-
-	err := r.Client.Get(ctx, types.NamespacedName{Name: OdfDepsSubscriptionStartingCSV, Namespace: r.OperatorNamespace}, odfDepsCsv)
-	if err != nil {
-		logger.Error(err, "failed getting odf-deps csv", "csvName", OdfDepsSubscriptionStartingCSV)
-		return err
-	}
-
-	if odfDepsCsv.Status.Phase != opv1a1.CSVPhaseSucceeded {
-		err = fmt.Errorf("csv %s is not in succeeded state", OdfDepsSubscriptionStartingCSV)
-		logger.Error(err, "waiting for csv to be in succeeded state")
-		return err
-	}
-
-	logger.Info("successfully completed isOdfDependenciesCsvReady")
-	return nil
 }
 
 func (r *OperatorScalerReconciler) reconcileMetrics(ctx context.Context, logger logr.Logger) error {

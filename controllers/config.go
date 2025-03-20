@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
@@ -183,4 +184,34 @@ func GetCsvNamesMap(ctx context.Context, cli client.Client, logger logr.Logger, 
 	logger.Info("parsed csv names successfully", "csvNames", csvNames)
 
 	return csvNames, nil
+}
+
+func GetOdfDependenciesConfig(ctx context.Context, cli client.Client, logger logr.Logger, operatorNamespace string) (ConfigData, error) {
+
+	// read configmap
+	cm := &corev1.ConfigMap{}
+	cm.Name = odfOperatorConfigmapName
+	cm.Namespace = operatorNamespace
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(cm), cm); err != nil {
+		logger.Error(err, "failed to get configmap")
+		return ConfigData{}, err
+	}
+
+	// parse the ConfigMap data and skip any keys that fail to parse
+	for key, value := range cm.Data {
+		var config ConfigData
+		if err := yaml.Unmarshal([]byte(value), &config); err != nil {
+			logger.Error(err, "failed to unmarshal configmap data", "key", key)
+			continue
+		}
+
+		if config.Pkg == "odf-dependencies" {
+			logger.Info("parsed odf-dependencies config successfully", "config", config)
+			return config, nil
+		}
+	}
+
+	err := fmt.Errorf("odf-dependencies config not found in configmap")
+	logger.Error(err, "failed to get odf-dependencies config")
+	return ConfigData{}, err
 }
