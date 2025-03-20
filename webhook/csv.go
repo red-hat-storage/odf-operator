@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/go-logr/logr"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -42,7 +41,8 @@ type ClusterServiceVersionDeploymentScaler struct {
 	OperatorNamespace string
 }
 
-// +kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;patch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;patch
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get
 
 func (r *ClusterServiceVersionDeploymentScaler) Handle(ctx context.Context, req admission.Request) admission.Response {
 
@@ -55,7 +55,13 @@ func (r *ClusterServiceVersionDeploymentScaler) Handle(ctx context.Context, req 
 		return admission.Errored(http.StatusBadRequest, fmt.Errorf("failed decoding admission review as csv: %v", err))
 	}
 
-	if ok := r.isCsvManagedByOdf(csv); !ok {
+	csvNamesMap, err := controllers.GetCsvNamesMap(ctx, r.Client, logger, r.OperatorNamespace)
+	if err != nil {
+		logger.Error(err, "failed getting csv names")
+		return admission.Errored(http.StatusInternalServerError, fmt.Errorf("failed getting ODF managed csvs names: %v", err))
+	}
+
+	if ok := r.isCsvManagedByOdf(csv, csvNamesMap); !ok {
 		logger.Info("ignoring csv as it is not a csv managed by ODF")
 		return admission.Allowed("csv is not managed by ODF")
 	}
@@ -122,18 +128,14 @@ func (r *ClusterServiceVersionDeploymentScaler) scaleDownCsvDeployments(logger l
 	}
 }
 
-func (r *ClusterServiceVersionDeploymentScaler) isCsvManagedByOdf(csv *opv1a1.ClusterServiceVersion) bool {
+func (r *ClusterServiceVersionDeploymentScaler) isCsvManagedByOdf(csv *opv1a1.ClusterServiceVersion, csvNamesMap map[string]bool) bool {
 
 	if csv.Namespace != r.OperatorNamespace {
 		return false
 	}
 
-	for i := range controllers.ResourceMappingList {
-		for _, pkgName := range controllers.ResourceMappingList[i].PkgNames {
-			if strings.HasPrefix(csv.Name, pkgName) {
-				return true
-			}
-		}
+	if _, ok := csvNamesMap[csv.Name]; ok {
+		return true
 	}
 
 	return false
