@@ -66,6 +66,7 @@ metadata:
     support: Red Hat
     vendors.odf.openshift.io/kind: '["storagecluster.ocs.openshift.io/v1", "flashsystemcluster.odf.ibm.com/v1alpha1"]'
   labels:
+    odf.openshift.io/odf-operator: "true"
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported

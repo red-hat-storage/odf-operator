@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	admrv1 "k8s.io/api/admissionregistration/v1"
@@ -158,7 +157,7 @@ func reconcileCsvMutatingWebhookConfiguration(ctx context.Context, cli client.Cl
 					Operator: metav1.LabelSelectorOpDoesNotExist,
 				},
 				{
-					Key:      fmt.Sprintf(CsvLabelKey, "odf-operator", operatorNamespace),
+					Key:      "odf.openshift.io/odf-operator",
 					Operator: metav1.LabelSelectorOpDoesNotExist,
 				},
 			},
