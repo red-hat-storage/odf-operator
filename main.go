@@ -124,17 +124,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	storageSystemReconciler := &controllers.StorageSystemReconciler{
-		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("StorageSystem"),
-		Scheme:   mgr.GetScheme(),
-		Recorder: controllers.NewEventReporter(mgr.GetEventRecorderFor("StorageSystem controller")),
-	}
-	if err = storageSystemReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "StorageSystem")
-		os.Exit(1)
-	}
-
 	conditionName, err := util.GetConditionName(mgr.GetClient())
 	if err != nil {
 		setupLog.Error(err, "unable to get condition name")
