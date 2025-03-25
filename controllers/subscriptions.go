@@ -218,9 +218,11 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 		return err
 	}
 
-	// Skip creating (only update) subscriptions other than odf-dependencies
+	// Skip creating (only update) subscriptions other than odf-dependencies and ibm-storage-odf-operator
 	// It will allow OLM to manage their creation via dependency resolution
-	if desiredSubscription.Spec.Package != OdfDepsSubscriptionPackage && desiredSubscription.CreationTimestamp.IsZero() {
+	if desiredSubscription.CreationTimestamp.IsZero() &&
+		desiredSubscription.Spec.Package != OdfDepsSubscriptionPackage &&
+		desiredSubscription.Spec.Package != IbmSubscriptionPackage {
 		return nil
 	}
 
