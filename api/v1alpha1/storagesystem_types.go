@@ -18,8 +18,6 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -28,17 +26,6 @@ import (
 
 // StorageKind specifies a vendor's supported kinds
 type StorageKind string
-
-const (
-	//ConditionStorageSystemInvalid communicates if storagesystem CR is invalid
-	ConditionStorageSystemInvalid conditionsv1.ConditionType = "StorageSystemInvalid"
-
-	// ConditionVendorCsvReady communicates if CSV is ready
-	ConditionVendorCsvReady conditionsv1.ConditionType = "VendorCsvReady"
-
-	// ConditionVendorSystemPresent communicates if backend storage CR is present in the cluster
-	ConditionVendorSystemPresent conditionsv1.ConditionType = "VendorSystemPresent"
-)
 
 // StorageSystemSpec defines the desired state of StorageSystem
 type StorageSystemSpec struct {
@@ -61,10 +48,6 @@ type StorageSystemSpec struct {
 // StorageSystemStatus defines the observed state of StorageSystem
 type StorageSystemStatus struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
-
-	// Conditions describes the state of the StorageSystem resource.
-	// +optional
-	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
