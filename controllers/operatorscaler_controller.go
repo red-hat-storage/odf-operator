@@ -63,11 +63,18 @@ var (
 			Kind:       "StorageCluster",
 			PkgNames:   []string{OcsSubscriptionPackage},
 		},
+		// In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
+		// scale up client op based on cephCluster instead of storageClient CR
 		{
 			CrdName:    "cephclusters.ceph.rook.io",
 			ApiVersion: "ceph.rook.io/v1",
 			Kind:       "CephCluster",
-			PkgNames:   []string{RookSubscriptionPackage, CephCSISubscriptionPackage, CSIAddonsSubscriptionPackage},
+			PkgNames: []string{
+				RookSubscriptionPackage,
+				CephCSISubscriptionPackage,
+				CSIAddonsSubscriptionPackage,
+				OcsClientSubscriptionPackage,
+			},
 		},
 		{
 			CrdName:    "noobaas.noobaa.io",
