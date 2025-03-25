@@ -17,34 +17,20 @@ limitations under the License.
 package controllers
 
 import (
-	"reflect"
-	"strings"
-
-	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
-	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 )
 
-var StorageClusterKind = odfv1alpha1.StorageKind(strings.ToLower(reflect.TypeOf(ocsv1.StorageCluster{}).Name()) +
-	"." + ocsv1.GroupVersion.String())
-var FlashSystemKind = odfv1alpha1.StorageKind(strings.ToLower(reflect.TypeOf(ibmv1alpha1.FlashSystemCluster{}).Name()) +
-	"." + ibmv1alpha1.GroupVersion.String())
-
-var KnownKinds = []odfv1alpha1.StorageKind{
-	StorageClusterKind,
-	FlashSystemKind,
-}
+var StorageClusterKind = odfv1alpha1.StorageKind("storagecluster.ocs.openshift.io/v1")
+var FlashSystemKind = odfv1alpha1.StorageKind("flashsystemcluster.odf.ibm.com/v1alpha1")
 
 // VendorStorageCluster returns GroupVersionKind
 func VendorStorageCluster() odfv1alpha1.StorageKind {
 
-	// storagecluster.ocs.openshift.io/v1
 	return StorageClusterKind
 }
 
 // VendorFlashSystemCluster returns GroupVersionKind
 func VendorFlashSystemCluster() odfv1alpha1.StorageKind {
 
-	// flashsystemcluster.odf.ibm.com/v1alpha1
 	return FlashSystemKind
 }

@@ -19,12 +19,12 @@ package controllers
 import (
 	"context"
 
-	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	consolev1 "github.com/openshift/api/console/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 )
 
 // ensureQuickStarts create or update the quickstarts
