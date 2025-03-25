@@ -63,6 +63,8 @@ e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
 	./hack/e2e-test.sh
 
+# In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
+# scale up client op based on cephCluster instead of storageClient CR
 define MAPPING
 apiVersion: v1
 kind: ConfigMap
@@ -97,6 +99,8 @@ data:
     channel: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)
     csv: $(OCS_CLIENT_SUBSCRIPTION_STARTINGCSV)
     pkg: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
   OCS: |
     channel: $(OCS_SUBSCRIPTION_CHANNEL)
     csv: $(OCS_SUBSCRIPTION_STARTINGCSV)

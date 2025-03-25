@@ -20,23 +20,16 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"slices"
-	"strings"
 
 	"go.uber.org/multierr"
-	admv1 "k8s.io/api/admissionregistration/v1"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
@@ -58,17 +51,6 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 		odfSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
 	}
 
-	var isProvider bool
-	if desiredSubscription.Spec.Package == OcsClientSubscriptionPackage ||
-		desiredSubscription.Spec.Package == CSIAddonsSubscriptionPackage ||
-		desiredSubscription.Spec.Package == CephCSISubscriptionPackage {
-
-		isProvider, err = isProviderMode(cli)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	subsList := &operatorv1alpha1.SubscriptionList{}
 	err = cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
 	if err != nil {
@@ -87,10 +69,7 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 			}
 			actualSub = &subsList.Items[i]
 
-			if !isProvider {
-				actualSub.Spec.Channel = desiredSubscription.Spec.Channel
-			}
-
+			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
 			if actualSub.Spec.Config == nil && desiredSubscription.Spec.Config == nil {
 				actualSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
 				actualSub.Spec.Config.Tolerations = odfSub.Spec.Config.Tolerations
@@ -129,26 +108,6 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 	}
 
 	return desiredSubscription, nil
-}
-
-func isProviderMode(cli client.Client) (bool, error) {
-
-	storageclusters := &ocsv1.StorageClusterList{}
-	err := cli.List(context.TODO(), storageclusters)
-	if err != nil {
-		if meta.IsNoMatchError(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	for _, storagecluster := range storageclusters.Items {
-		if storagecluster.Spec.AllowRemoteStorageConsumers {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }
 
 func getMergedTolerations(tol1, tol2 []corev1.Toleration) []corev1.Toleration {
@@ -275,58 +234,20 @@ func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]strin
 
 	var csvNames []string
 	var err error
-	var isProvider bool
 
 	if kind == VendorFlashSystemCluster() {
 		csvNames = []string{IbmSubscriptionStartingCSV}
 	} else if kind == VendorStorageCluster() {
-		csvNames = []string{OdfDepsSubscriptionStartingCSV, OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
-			PrometheusSubscriptionStartingCSV, RecipeSubscriptionStartingCSV}
-
-		isProvider, err = isProviderMode(cli)
-		if err != nil {
-			return csvNames, err
-		}
-
-		if !isProvider {
-			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV, CSIAddonsSubscriptionStartingCSV, CephCSISubscriptionStartingCSV)
-		}
-
-		// In provider mode, upgrades of the ocs-client-operator and csiaddons are managed by the provider, not the odf-operator.
-		// This can result in these operators lagging behind the odf-operator, with different CSV versions.
-		// Therefore, we need to fetch the CSV name from the operator deployment.
-		// We are only fetching the ocs-client-operator CSV name and ignoring the csiaddons
-		// Because the ocs-client-operator is essential when enabling provider mode as we need to bring it up.
-
-		// Fetch the CSV name from the client operator deployment and append it to the csv list
-		if isProvider {
-			// get ocs-client-operator deployment with label
-			deployments := &appsv1.DeploymentList{}
-			err = cli.List(context.TODO(), deployments, &client.ListOptions{
-				Namespace:     OperatorNamespace,
-				LabelSelector: labels.SelectorFromSet(map[string]string{"app": "ocs-client-operator"}),
-			})
-
-			if err != nil {
-				return csvNames, err
-			}
-
-			if len(deployments.Items) == 0 {
-				return csvNames, fmt.Errorf("ocs-client-operator deployment not found")
-			}
-
-			// get owner ref index from deployment
-			ownerRefIndex := slices.IndexFunc(deployments.Items[0].OwnerReferences, func(o metav1.OwnerReference) bool {
-				return o.Kind == "ClusterServiceVersion"
-			})
-			if ownerRefIndex == -1 {
-				return csvNames, fmt.Errorf("ClusterServiceVersion owner reference not found in ocs-client-operator deployment")
-			}
-
-			ownerRef := deployments.Items[0].OwnerReferences[ownerRefIndex]
-
-			// get csv name from owner ref
-			csvNames = append(csvNames, ownerRef.Name)
+		csvNames = []string{
+			OdfDepsSubscriptionStartingCSV,
+			OcsSubscriptionStartingCSV,
+			RookSubscriptionStartingCSV,
+			NoobaaSubscriptionStartingCSV,
+			PrometheusSubscriptionStartingCSV,
+			RecipeSubscriptionStartingCSV,
+			OcsClientSubscriptionStartingCSV,
+			CSIAddonsSubscriptionStartingCSV,
+			CephCSISubscriptionStartingCSV,
 		}
 	}
 
@@ -351,34 +272,6 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 	}
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
 		csvObj.OwnerReferences = []metav1.OwnerReference{}
-
-		// Shut down the OCS client operator CSV pods in non provider mode
-		if strings.HasPrefix(csvName, "ocs-client-operator") {
-			isProvider, err := isProviderMode(cli)
-			if err != nil {
-				return err
-			}
-
-			var replicas int32 = 0
-			if isProvider {
-				replicas = 1
-			}
-
-			for i := range csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
-				csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec.Replicas = &replicas
-			}
-
-			if replicas == 0 {
-				// delete the subscription webhook created by the ocs-client-operator
-				// we can not delete the webhook by the ocs-client-operator itself because the client operator is down
-				webhook := &admv1.ValidatingWebhookConfiguration{}
-				webhook.Name = "subscription.ocs.openshift.io"
-				if err = cli.Delete(context.TODO(), webhook); err != nil && !errors.IsNotFound(err) {
-					return err
-				}
-			}
-		}
-
 		return SetOdfSubControllerReference(cli, csvObj)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {

@@ -58,6 +58,8 @@ data:
     channel: alpha
     csv: ocs-client-operator.v4.18.0
     pkg: ocs-client-operator
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
   OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE: odf-catalogsource
   OCS_CLIENT_SUBSCRIPTION_CATALOGSOURCE_NAMESPACE: openshift-marketplace
   OCS_CLIENT_SUBSCRIPTION_CHANNEL: alpha
