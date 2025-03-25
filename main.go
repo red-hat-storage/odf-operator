@@ -37,9 +37,6 @@ import (
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorv2 "github.com/operator-framework/api/pkg/operators/v2"
 
-	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
-	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
-
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/controllers"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
@@ -62,8 +59,6 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(odfv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(ocsv1.AddToScheme(scheme))
-	utilruntime.Must(ibmv1alpha1.AddToScheme(scheme))
 
 	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(operatorv2.AddToScheme(scheme))

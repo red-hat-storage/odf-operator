@@ -16,10 +16,8 @@ package controllers
 import (
 	"testing"
 
-	ibmv1alpha1 "github.com/IBM/ibm-storage-odf-operator/api/v1alpha1"
 	consolev1 "github.com/openshift/api/console/v1"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -46,16 +44,6 @@ func createFakeScheme(t *testing.T) *runtime.Scheme {
 	err = operatorv1alpha1.AddToScheme(scheme)
 	if err != nil {
 		assert.Fail(t, "failed to add operatorv1alpha1 scheme")
-	}
-
-	err = ocsv1.AddToScheme(scheme)
-	if err != nil {
-		assert.Fail(t, "failed to add ocsv1 scheme")
-	}
-
-	err = ibmv1alpha1.AddToScheme(scheme)
-	if err != nil {
-		assert.Fail(t, "failed to add ibmv1alpha1 scheme")
 	}
 
 	return scheme
