@@ -73,25 +73,25 @@ data:
     channel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
     csv: $(CEPHCSI_SUBSCRIPTION_STARTINGCSV)
     pkg: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
-    scalerCrds:
+    scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   CSIADDONS: |
     channel: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
     csv: $(CSIADDONS_SUBSCRIPTION_STARTINGCSV)
     pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
-    scalerCrds:
+    scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM: |
     channel: $(IBM_SUBSCRIPTION_CHANNEL)
     csv: $(IBM_SUBSCRIPTION_STARTINGCSV)
     pkg: $(IBM_SUBSCRIPTION_PACKAGE)
-    scalerCrds:
+    scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
   NOOBAA: |
     channel: $(NOOBAA_SUBSCRIPTION_CHANNEL)
     csv: $(NOOBAA_SUBSCRIPTION_STARTINGCSV)
     pkg: $(NOOBAA_SUBSCRIPTION_PACKAGE)
-    scalerCrds:
+    scaleUpOnInstanceOf:
       - noobaas.noobaa.io
   OCS_CLIENT: |
     channel: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)
@@ -101,7 +101,7 @@ data:
     channel: $(OCS_SUBSCRIPTION_CHANNEL)
     csv: $(OCS_SUBSCRIPTION_STARTINGCSV)
     pkg: $(OCS_SUBSCRIPTION_PACKAGE)
-    scalerCrds:
+    scaleUpOnInstanceOf:
       - storageclusters.ocs.openshift.io
   ODF_DEPS: |
     channel: $(ODF_DEPS_SUBSCRIPTION_CHANNEL)
@@ -111,7 +111,7 @@ data:
     channel: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
     csv: $(PROMETHEUS_SUBSCRIPTION_STARTINGCSV)
     pkg: $(PROMETHEUS_SUBSCRIPTION_PACKAGE)
-    scalerCrds:
+    scaleUpOnInstanceOf:
       - alertmanagers.monitoring.coreos.com
       - prometheuses.monitoring.coreos.com
   RECIPE: |
@@ -122,7 +122,7 @@ data:
     channel: $(ROOK_SUBSCRIPTION_CHANNEL)
     csv: $(ROOK_SUBSCRIPTION_STARTINGCSV)
     pkg: $(ROOK_SUBSCRIPTION_PACKAGE)
-    scalerCrds:
+    scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
 endef
 export MAPPING
