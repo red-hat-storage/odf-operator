@@ -5,7 +5,6 @@ go 1.23.0
 toolchain go1.23.4
 
 require (
-	github.com/IBM/ibm-storage-odf-operator v1.6.0
 	github.com/ghodss/yaml v1.0.1-0.20220118164431-d8423dcdf344
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.22.2
