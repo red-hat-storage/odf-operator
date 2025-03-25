@@ -278,6 +278,8 @@ spec:
           verbs:
           - get
           - list
+          - patch
+          - update
           - watch
         - apiGroups:
           - odf.ibm.com
@@ -286,6 +288,8 @@ spec:
           verbs:
           - get
           - list
+          - patch
+          - update
           - watch
         - apiGroups:
           - odf.openshift.io
@@ -299,6 +303,12 @@ spec:
           - patch
           - update
           - watch
+        - apiGroups:
+          - odf.openshift.io
+          resources:
+          - storagesystems/finalizers
+          verbs:
+          - update
         - apiGroups:
           - operators.coreos.com
           resources:

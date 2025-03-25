@@ -135,6 +135,8 @@ rules:
   verbs:
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - odf.ibm.com
@@ -143,6 +145,8 @@ rules:
   verbs:
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - odf.openshift.io
@@ -156,6 +160,12 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - odf.openshift.io
+  resources:
+  - storagesystems/finalizers
+  verbs:
+  - update
 - apiGroups:
   - operators.coreos.com
   resources:
