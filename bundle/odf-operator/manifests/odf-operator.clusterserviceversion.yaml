@@ -150,6 +150,14 @@ spec:
         - apiGroups:
           - ""
           resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
           - services
           verbs:
           - create

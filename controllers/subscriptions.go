@@ -35,7 +35,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	"github.com/go-logr/logr"
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
@@ -640,4 +642,27 @@ func GetFlashSystemClusterSubscriptions() []*operatorv1alpha1.Subscription {
 	}
 
 	return []*operatorv1alpha1.Subscription{ibmSubscription}
+}
+
+func isOdfDependenciesCsvReady(ctx context.Context, cli client.Client, logger logr.Logger) error {
+
+	csvConfig, err := GetOdfDependenciesSubConfig(logger)
+	if err != nil {
+		return err
+	}
+
+	odfDepsCsv := &opv1a1.ClusterServiceVersion{}
+	key := client.ObjectKey{Name: csvConfig.Csv, Namespace: OperatorNamespace}
+	if err := cli.Get(ctx, key, odfDepsCsv); err != nil {
+		logger.Error(err, "failed getting odf-deps csv", "csvName", key.Name)
+		return err
+	}
+
+	if odfDepsCsv.Status.Phase != opv1a1.CSVPhaseSucceeded {
+		err = fmt.Errorf("csv %s is not in succeeded state", key.Name)
+		logger.Error(err, "waiting for csv to be in succeeded state")
+		return err
+	}
+
+	return nil
 }
