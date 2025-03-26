@@ -235,9 +235,9 @@ func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]strin
 	var csvNames []string
 	var err error
 
-	if kind == VendorFlashSystemCluster() {
+	if kind == FlashSystemKind {
 		csvNames = []string{IbmSubscriptionStartingCSV}
-	} else if kind == VendorStorageCluster() {
+	} else if kind == StorageClusterKind {
 		csvNames = []string{
 			OdfDepsSubscriptionStartingCSV,
 			OcsSubscriptionStartingCSV,
