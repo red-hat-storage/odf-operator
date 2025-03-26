@@ -23,10 +23,8 @@ import (
 	"github.com/go-logr/logr"
 	"go.uber.org/multierr"
 	admrv1 "k8s.io/api/admissionregistration/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorv2 "github.com/operator-framework/api/pkg/operators/v2"
@@ -68,27 +65,15 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	logger := log.FromContext(ctx)
 
-	instance := &operatorv1alpha1.Subscription{}
-	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			logger.Info("Subscription instance not found.")
-			return ctrl.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
+	if err := r.setOperatorCondition(logger, r.OperatorNamespace); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	err = r.setOperatorCondition(logger, r.OperatorNamespace)
-	if err != nil {
+	if err := reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err = reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace); err != nil {
-		return ctrl.Result{}, err
-	}
-
-	if err = r.ensureSubscriptions(logger, r.OperatorNamespace); err != nil {
+	if err := r.ensureSubscriptions(logger, r.OperatorNamespace); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -196,37 +181,6 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 // SetupWithManager sets up the controller with the Manager.
 func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
-	generationChangedPredicate := predicate.GenerationChangedPredicate{}
-
-	predicateFunc := func(obj runtime.Object) bool {
-		instance, ok := obj.(*operatorv1alpha1.Subscription)
-		if !ok {
-			return false
-		}
-
-		// ignore if not a odf-operator subscription
-		if instance.Spec.Package != "odf-operator" {
-			return false
-		}
-
-		return true
-	}
-
-	subscriptionPredicate := predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			return predicateFunc(e.Object)
-		},
-		DeleteFunc: func(e event.DeleteEvent) bool {
-			return predicateFunc(e.Object)
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return predicateFunc(e.ObjectNew)
-		},
-		GenericFunc: func(e event.GenericEvent) bool {
-			return predicateFunc(e.Object)
-		},
-	}
-
 	conditionPredicate := predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return false
@@ -282,37 +236,24 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return false
 		},
 	}
-	enqueueFromCondition := handler.EnqueueRequestsFromMapFunc(
-		func(ctx context.Context, obj client.Object) []reconcile.Request {
-			if _, ok := obj.(*operatorv2.OperatorCondition); !ok {
-				return []reconcile.Request{}
-			}
-			logger := log.FromContext(ctx)
-			sub, err := GetOdfSubscription(r.Client)
-			if err != nil {
-				logger.Error(err, "failed to get ODF Subscription")
-				return []reconcile.Request{}
-			}
-			return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: sub.Name, Namespace: sub.Namespace}}}
-		},
-	)
-
-	enqueueOdfSub := handler.EnqueueRequestsFromMapFunc(
-		func(ctx context.Context, obj client.Object) []reconcile.Request {
-			req := reconcile.Request{}
-			req.Name = "odf-operator"
-			req.Namespace = r.OperatorNamespace
-			return []reconcile.Request{req}
-		},
-	)
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&operatorv1alpha1.Subscription{},
-			builder.WithPredicates(generationChangedPredicate, subscriptionPredicate)).
-		Owns(&operatorv1alpha1.Subscription{},
-			builder.WithPredicates(generationChangedPredicate)).
-		Watches(&operatorv2.OperatorCondition{}, enqueueFromCondition, builder.WithPredicates(conditionPredicate)).
-		Watches(&admrv1.MutatingWebhookConfiguration{}, enqueueOdfSub, builder.WithPredicates(generationChangedPredicate)).
+		Named("subscription").
+		Watches(
+			&operatorv1alpha1.Subscription{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(predicate.GenerationChangedPredicate{}),
+		).
+		Watches(
+			&operatorv2.OperatorCondition{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(conditionPredicate),
+		).
+		Watches(
+			&admrv1.MutatingWebhookConfiguration{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(predicate.GenerationChangedPredicate{}),
+		).
 		Complete(r)
 }
 
