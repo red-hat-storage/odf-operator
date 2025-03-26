@@ -33,6 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+var (
+	StorageClusterKind = odfv1alpha1.StorageKind("storagecluster.ocs.openshift.io/v1")
+	FlashSystemKind    = odfv1alpha1.StorageKind("flashsystemcluster.odf.ibm.com/v1alpha1")
+)
+
 type CleanupReconciler struct {
 	client.Client
 
@@ -76,10 +81,10 @@ func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, log l
 	cr.Namespace = instance.Spec.Namespace
 
 	switch instance.Spec.Kind {
-	case VendorStorageCluster():
+	case StorageClusterKind:
 		cr.APIVersion = "ocs.openshift.io/v1"
 		cr.Kind = "StorageCluster"
-	case VendorFlashSystemCluster():
+	case FlashSystemKind:
 		cr.APIVersion = "odf.ibm.com/v1alpha1"
 		cr.Kind = "FlashSystemCluster"
 	}
