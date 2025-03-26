@@ -51,30 +51,30 @@ type CleanupReconciler struct {
 //+kubebuilder:rbac:groups=odf.ibm.com,resources=flashsystemclusters,verbs=get;list;update;patch
 
 func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
-	log.Info("starting reconcile")
+	logger := log.FromContext(ctx)
+	logger.Info("starting reconcile")
 
 	instance := &odfv1alpha1.StorageSystem{}
 	if err := r.Client.Get(ctx, req.NamespacedName, instance); errors.IsNotFound(err) {
-		log.Info("storagesystem instance not found")
+		logger.Info("storagesystem instance not found")
 		return ctrl.Result{}, nil
 	} else if err != nil {
 		// Error reading the object - requeue the request.
-		log.Error(err, "error reading the object")
+		logger.Error(err, "error reading the object")
 		return ctrl.Result{}, err
 	}
 
-	log.Info("storagesystem instance found")
+	logger.Info("storagesystem instance found")
 
-	if err := r.safelyDeleteStorageSystem(ctx, log, instance); err != nil {
+	if err := r.safelyDeleteStorageSystem(ctx, logger, instance); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	log.Info("reconcile completed successfully")
+	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
 }
 
-func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, log logr.Logger, instance *odfv1alpha1.StorageSystem) error {
+func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logger logr.Logger, instance *odfv1alpha1.StorageSystem) error {
 
 	cr := &metav1.PartialObjectMetadata{}
 	cr.Name = instance.Spec.Name
@@ -91,7 +91,7 @@ func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, log l
 
 	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(cr), cr); err != nil {
 		msg := fmt.Sprintf("failed getting %s named %s", cr.Kind, cr.Name)
-		log.Error(err, msg)
+		logger.Error(err, msg)
 		return err
 	}
 
@@ -101,20 +101,20 @@ func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, log l
 	})
 
 	if len(cr.OwnerReferences) > len(updatedRefs) {
-		log.Info("removing owner reference", "kind", cr.Kind, "name", cr.Name)
+		logger.Info("removing owner reference", "kind", cr.Kind, "name", cr.Name)
 
 		patch := client.MergeFrom(cr.DeepCopy())
 		cr.OwnerReferences = updatedRefs
 
 		if err := r.Client.Patch(ctx, cr, patch); err != nil {
-			log.Error(err, "failed removing owner references", "kind", cr.Kind, "name", cr.Name)
+			logger.Error(err, "failed removing owner references", "kind", cr.Kind, "name", cr.Name)
 			return err
 		}
 	}
 
 	// delete the storagesystem
 	if err := r.Client.Delete(ctx, instance); err != nil {
-		log.Error(err, "failed deleting storagesystem")
+		logger.Error(err, "failed deleting storagesystem")
 		return err
 	}
 
@@ -122,7 +122,7 @@ func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, log l
 	instance.ObjectMeta.Finalizers = util.RemoveFromSlice(instance.ObjectMeta.Finalizers, "storagesystem.odf.openshift.io")
 
 	if err := r.Client.Update(context.TODO(), instance); err != nil {
-		log.Error(err, "failed deleting storagesystem")
+		logger.Error(err, "failed deleting storagesystem")
 		return err
 	}
 
