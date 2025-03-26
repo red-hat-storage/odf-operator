@@ -119,34 +119,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	conditionName, err := util.GetConditionName(mgr.GetClient())
-	if err != nil {
-		setupLog.Error(err, "unable to get condition name")
-		os.Exit(1)
-	}
-	condition, err := util.NewUpgradeableCondition(mgr.GetClient())
-	if err != nil {
-		setupLog.Error(err, "unable to get OperatorCondition")
-		os.Exit(1)
-	}
-	subscriptionReconciler := &controllers.SubscriptionReconciler{
-		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
-		OperatorNamespace: operatorNamespace,
-		ConditionName:     conditionName,
-		OperatorCondition: condition,
-	}
-	if err = subscriptionReconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Subscription")
-		os.Exit(1)
-	}
-
 	if err = (&controllers.ClusterVersionReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
 		ConsolePort: int32(odfConsolePort), //nolint:gosec
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterVersion")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.SubscriptionReconciler{
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: operatorNamespace,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Subscription")
 		os.Exit(1)
 	}
 
