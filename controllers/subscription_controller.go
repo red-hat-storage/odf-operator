@@ -43,10 +43,12 @@ import (
 // SubscriptionReconciler reconciles a Subscription object
 type SubscriptionReconciler struct {
 	client.Client
+
 	Scheme            *runtime.Scheme
 	OperatorNamespace string
-	ConditionName     string
-	OperatorCondition conditions.Condition
+
+	operatorConditionName string
+	operatorCondition     conditions.Condition
 }
 
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
@@ -166,7 +168,7 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 			// operator is not upgradeable
 			msg := fmt.Sprintf("%s:%s", ocd.GetName(), cond.Message)
 			logger.Info("setting operator upgradeable status", "status", cond.Status)
-			return r.OperatorCondition.Set(context.TODO(), cond.Status,
+			return r.operatorCondition.Set(context.TODO(), cond.Status,
 				conditions.WithReason(cond.Reason), conditions.WithMessage(msg))
 		}
 	}
@@ -174,12 +176,23 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 	// all operators are upgradeable
 	status := metav1.ConditionTrue
 	logger.Info("setting operator upgradeable status", "status", status)
-	return r.OperatorCondition.Set(context.TODO(), status,
+	return r.operatorCondition.Set(context.TODO(), status,
 		conditions.WithReason("Dependents"), conditions.WithMessage("No dependent reports not upgradeable status"))
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	var err error
+
+	r.operatorConditionName, err = util.GetConditionName(mgr.GetClient())
+	if err != nil {
+		return err
+	}
+	r.operatorCondition, err = util.NewUpgradeableCondition(mgr.GetClient())
+	if err != nil {
+		return err
+	}
 
 	conditionPredicate := predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
@@ -197,7 +210,7 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			}
 
 			// skip sending a reconcile event if our own condition is updated
-			if newObj.GetName() == r.ConditionName {
+			if newObj.GetName() == r.operatorConditionName {
 				return false
 			}
 
