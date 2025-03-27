@@ -14,37 +14,33 @@ limitations under the License.
 package controllers
 
 import (
-	"testing"
+	"context"
 
+	"github.com/go-logr/logr"
 	consolev1 "github.com/openshift/api/console/v1"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
-	"github.com/stretchr/testify/assert"
-	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-func createFakeScheme(t *testing.T) *runtime.Scheme {
+var (
+	testScheme  *runtime.Scheme
+	testContext context.Context
+	testClient  client.Client
+	testLogger  logr.Logger
+)
 
-	scheme, err := odfv1alpha1.SchemeBuilder.Build()
-	if err != nil {
-		assert.Fail(t, "unable to build scheme")
-	}
+func init() {
 
-	err = consolev1.AddToScheme(scheme)
-	if err != nil {
-		assert.Fail(t, "failed to add consolev1 scheme")
-	}
+	log.SetLogger(zap.New(zap.UseDevMode(true)))
 
-	err = extv1.AddToScheme(scheme)
-	if err != nil {
-		assert.Fail(t, "failed to add extv1 scheme")
-	}
+	testScheme = runtime.NewScheme()
+	testContext = context.TODO()
+	testClient = fake.NewClientBuilder().WithScheme(testScheme).WithRuntimeObjects().Build()
+	testLogger = log.Log.WithName("test-logger")
 
-	err = operatorv1alpha1.AddToScheme(scheme)
-	if err != nil {
-		assert.Fail(t, "failed to add operatorv1alpha1 scheme")
-	}
-
-	return scheme
+	utilruntime.Must(consolev1.AddToScheme(testScheme))
 }

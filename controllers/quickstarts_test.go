@@ -17,15 +17,12 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
 	"testing"
 
 	consolev1 "github.com/openshift/api/console/v1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 )
 
@@ -39,10 +36,9 @@ func TestQuickStartYamls(t *testing.T) {
 
 func TestEnsureQuickStarts(t *testing.T) {
 
-	scheme := createFakeScheme(t)
-	ctx := context.TODO()
-	cli := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
-	logger := log.Log.WithName("test-logger")
+	ctx := testContext
+	cli := testClient
+	logger := testLogger
 
 	err := ensureQuickStarts(ctx, cli, logger)
 	assert.NoError(t, err)
@@ -67,10 +63,9 @@ func TestEnsureQuickStarts(t *testing.T) {
 
 func TestDeleteQuickStarts(t *testing.T) {
 
-	scheme := createFakeScheme(t)
-	ctx := context.TODO()
-	cli := fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects().Build()
-	logger := log.Log.WithName("test-logger")
+	ctx := testContext
+	cli := testClient
+	logger := testLogger
 
 	deleteQuickStarts(ctx, cli, logger)
 
