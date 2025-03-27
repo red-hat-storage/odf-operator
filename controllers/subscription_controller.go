@@ -39,6 +39,18 @@ import (
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
+type OlmPkgRecord struct {
+	/* example
+	   channel: alpha
+	   csv: ocs-operator.v4.18.0
+	   pkg: ocs-operator
+	*/
+
+	Channel string `yaml:"channel"`
+	Csv     string `yaml:"csv"`
+	Pkg     string `yaml:"pkg"`
+}
+
 type SubscriptionReconciler struct {
 	client.Client
 
@@ -61,7 +73,9 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 
 	logger := log.FromContext(ctx)
 
-	if err := r.setOperatorCondition(logger, r.OperatorNamespace); err != nil {
+	olmPkgRecords := getOlmPkgRecord()
+
+	if err := r.setOperatorCondition(logger, olmPkgRecords); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -69,20 +83,20 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if err := r.ensureSubscriptions(logger); err != nil {
+	if err := r.ensureSubscriptions(logger, olmPkgRecords); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger) error {
+func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
 
 	var combinedErr error
 
-	for _, sub := range GetSubscriptions() {
-		if err := EnsureDesiredSubscription(r.Client, sub); err != nil {
-			logger.Error(err, "failed to ensure subscription", "subscription", sub.Name)
+	for _, olmPkgRecord := range olmPkgRecords {
+		if err := EnsureDesiredSubscription(r.Client, olmPkgRecord); err != nil {
+			logger.Error(err, "failed to ensure subscription", "package", olmPkgRecord.Pkg)
 			multierr.AppendInto(&combinedErr, err)
 		}
 	}
@@ -91,9 +105,12 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger) error {
 		return combinedErr
 	}
 
-	csvNames := GetCsvNames()
-	for _, csvName := range csvNames {
-		if err := EnsureCsv(r.Client, csvName); err != nil {
+	// Ensure CSVs are checked only after updating the channel of all subscriptions.
+	// Checking the CSV of a single updated subscription is incorrect,
+	// as there won't be any desired CSVs until all subscriptions are updated.
+
+	for _, olmPkgRecord := range olmPkgRecords {
+		if err := EnsureCsv(r.Client, olmPkgRecord); err != nil {
 			multierr.AppendInto(&combinedErr, err)
 		}
 	}
@@ -101,19 +118,17 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger) error {
 	return combinedErr
 }
 
-func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namespace string) error {
+func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
 	ocdList := &opv2.OperatorConditionList{}
-	err := r.Client.List(context.TODO(), ocdList, client.InNamespace(namespace))
+	err := r.Client.List(context.TODO(), ocdList, client.InNamespace(r.OperatorNamespace))
 	if err != nil {
 		logger.Error(err, "failed to list OperatorConditions")
 		return err
 	}
 
-	condNames := GetCsvNames()
-
-	condMap := make(map[string]struct{}, len(condNames))
-	for i := range condNames {
-		condMap[condNames[i]] = struct{}{}
+	condMap := make(map[string]struct{}, len(olmPkgRecords))
+	for _, olmPkgRecord := range olmPkgRecords {
+		condMap[olmPkgRecord.Csv] = struct{}{}
 	}
 
 	for ocdIdx := range ocdList.Items {
