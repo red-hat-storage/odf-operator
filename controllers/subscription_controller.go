@@ -80,9 +80,11 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger) error {
 
 	var combinedErr error
 
-	for _, sub := range GetSubscriptions() {
-		if err := EnsureDesiredSubscription(r.Client, sub); err != nil {
-			logger.Error(err, "failed to ensure subscription", "subscription", sub.Name)
+	olmPkgRecords := GetOlmPkgRecord()
+
+	for _, olmPkgRecord := range olmPkgRecords {
+		if err := EnsureDesiredSubscription(r.Client, olmPkgRecord); err != nil {
+			logger.Error(err, "failed to ensure subscription", "package", olmPkgRecord.Pkg)
 			multierr.AppendInto(&combinedErr, err)
 		}
 	}
@@ -91,9 +93,8 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger) error {
 		return combinedErr
 	}
 
-	csvNames := GetCsvNames()
-	for _, csvName := range csvNames {
-		if err := EnsureCsv(r.Client, csvName); err != nil {
+	for _, olmPkgRecord := range olmPkgRecords {
+		if err := EnsureCsv(r.Client, olmPkgRecord); err != nil {
 			multierr.AppendInto(&combinedErr, err)
 		}
 	}
@@ -109,11 +110,11 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 		return err
 	}
 
-	condNames := GetCsvNames()
+	olmPkgRecords := GetOlmPkgRecord()
 
-	condMap := make(map[string]struct{}, len(condNames))
-	for i := range condNames {
-		condMap[condNames[i]] = struct{}{}
+	condMap := make(map[string]struct{}, len(olmPkgRecords))
+	for _, olmPkgRecord := range olmPkgRecords {
+		condMap[olmPkgRecord.Csv] = struct{}{}
 	}
 
 	for ocdIdx := range ocdList.Items {
