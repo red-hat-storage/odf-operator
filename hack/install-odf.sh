@@ -16,8 +16,10 @@ NAMESPACE=$(oc get ns "$INSTALL_NAMESPACE" -o jsonpath="{.metadata.name}" 2>/dev
 function print_debug_logs {
     if [ "$CI" == true ]; then
         echo "printing debug logs"
+        oc get sub -n "$INSTALL_NAMESPACE"
         oc get csv -n "$INSTALL_NAMESPACE"
         oc get pods -n "$INSTALL_NAMESPACE"
+        oc describe sub -n "$INSTALL_NAMESPACE"
         oc describe csv -n "$INSTALL_NAMESPACE"
         oc describe pods -n "$INSTALL_NAMESPACE"
     fi
