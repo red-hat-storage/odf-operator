@@ -333,14 +333,6 @@ spec:
           - list
           - watch
         - apiGroups:
-          - operators.coreos.com
-          resources:
-          - subscriptions/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews

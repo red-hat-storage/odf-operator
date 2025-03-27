@@ -25,12 +25,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
@@ -230,63 +228,83 @@ func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, erro
 	return nil, fmt.Errorf("odf-operator subscription not found")
 }
 
-func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]string, error) {
+func GetCsvNames() []string {
 
-	var csvNames []string
-	var err error
-
-	if kind == FlashSystemKind {
-		csvNames = []string{IbmSubscriptionStartingCSV}
-	} else if kind == StorageClusterKind {
-		csvNames = []string{
-			OdfDepsSubscriptionStartingCSV,
-			OcsSubscriptionStartingCSV,
-			RookSubscriptionStartingCSV,
-			NoobaaSubscriptionStartingCSV,
-			PrometheusSubscriptionStartingCSV,
-			RecipeSubscriptionStartingCSV,
-			OcsClientSubscriptionStartingCSV,
-			CSIAddonsSubscriptionStartingCSV,
-			CephCSISubscriptionStartingCSV,
-		}
+	return []string{
+		OdfDepsSubscriptionStartingCSV,
+		OcsSubscriptionStartingCSV,
+		RookSubscriptionStartingCSV,
+		NoobaaSubscriptionStartingCSV,
+		PrometheusSubscriptionStartingCSV,
+		RecipeSubscriptionStartingCSV,
+		OcsClientSubscriptionStartingCSV,
+		CSIAddonsSubscriptionStartingCSV,
+		CephCSISubscriptionStartingCSV,
+		IbmSubscriptionStartingCSV,
 	}
-
-	return csvNames, err
 }
 
-func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.ClusterServiceVersion, error) {
-
-	var err error
+func EnsureCsv(cli client.Client, csvName string) error {
 
 	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
-	err = cli.Get(context.TODO(), types.NamespacedName{
-		Name: csvName, Namespace: OperatorNamespace}, csvObj)
-	if err != nil {
+	csvObj.Name, csvObj.Namespace = csvName, OperatorNamespace
+
+	if err := cli.Get(context.TODO(), client.ObjectKeyFromObject(csvObj), csvObj); err != nil {
 		if errors.IsNotFound(err) {
-			approvalErr := ApproveInstallPlanForCsv(cli, csvName)
-			if approvalErr != nil {
-				return nil, approvalErr
+			if present, err := isSubscriptionPresentForCsv(cli, csvName); err != nil {
+				return err
+			} else if present {
+				if err := ApproveInstallPlanForCsv(cli, csvName); err != nil {
+					return err
+				}
 			}
+			return nil
 		}
-		return nil, err
+		return err
 	}
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
-		csvObj.OwnerReferences = []metav1.OwnerReference{}
+
+	if _, err := controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
 		return SetOdfSubControllerReference(cli, csvObj)
-	})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		return nil, err
+	}); err != nil {
+		return err
 	}
 
 	isReady := csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
 		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful
 
 	if !isReady {
-		err = fmt.Errorf("CSV is not successfully installed")
-		return nil, err
+		return fmt.Errorf("CSV is not successfully installed")
 	}
 
-	return csvObj, err
+	return nil
+}
+
+func isSubscriptionPresentForCsv(cli client.Client, csvName string) (bool, error) {
+
+	// find the package name for the given csv
+	var pkgName string
+	subs := GetSubscriptions()
+	for _, sub := range subs {
+		if sub.Spec.StartingCSV == csvName {
+			pkgName = sub.Spec.Package
+			break
+		}
+	}
+
+	// get all subscriptions in the cluster
+	subList := &operatorv1alpha1.SubscriptionList{}
+	if err := cli.List(context.TODO(), subList, client.InNamespace(OperatorNamespace)); err != nil {
+		return false, err
+	}
+
+	// check if subscription exists on cluster for the given csv
+	for _, sub := range subList.Items {
+		if sub.Spec.Package == pkgName {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // ApproveInstallPlanForCsv approve the manual approval installPlan for the given CSV
@@ -328,21 +346,8 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 	return finalError
 }
 
-// GetSubscriptions returns all required Subscriptions for the given StorageKind
-func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscription {
-
-	subscriptions := []*operatorv1alpha1.Subscription{}
-	if k == StorageClusterKind {
-		subscriptions = GetStorageClusterSubscriptions()
-	} else if k == FlashSystemKind {
-		subscriptions = GetFlashSystemClusterSubscriptions()
-	}
-
-	return subscriptions
-}
-
-// GetStorageClusterSubscription return subscription for StorageCluster
-func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
+// GetSubscriptions returns all required Subscriptions
+func GetSubscriptions() []*operatorv1alpha1.Subscription {
 
 	odfDepsSubscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
@@ -511,12 +516,6 @@ func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{odfDepsSubscription, ocsSubscription, rookSubscription, noobaaSubscription,
-		csiAddonsSubscription, cephCsiSubscription, ocsClientSubscription, prometheusSubscription, recipeSubscription}
-}
-
-// GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
-func GetFlashSystemClusterSubscriptions() []*operatorv1alpha1.Subscription {
 	ibmSubscription := &operatorv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      IbmSubscriptionName,
@@ -532,5 +531,6 @@ func GetFlashSystemClusterSubscriptions() []*operatorv1alpha1.Subscription {
 		},
 	}
 
-	return []*operatorv1alpha1.Subscription{ibmSubscription}
+	return []*operatorv1alpha1.Subscription{odfDepsSubscription, ocsSubscription, rookSubscription, noobaaSubscription,
+		csiAddonsSubscription, cephCsiSubscription, ocsClientSubscription, prometheusSubscription, recipeSubscription, ibmSubscription}
 }
