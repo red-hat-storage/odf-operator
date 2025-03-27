@@ -34,6 +34,22 @@ else
     oc create ns "$INSTALL_NAMESPACE"
 fi
 
+if [ "$CI" == true ]; then
+    # This ensures that we don't face issues related to OCP catalogsources in odf sub with error "failed to list bundles"
+    # It is safe to disable these catalogsources as we are not using them anywhere
+    oc patch operatorhub cluster --type=merge \
+    --patch '{
+        "spec": {
+            "sources": [
+                {"disabled": true, "name": "community-operators"},
+                {"disabled": true, "name": "redhat-marketplace"},
+                {"disabled": true, "name": "redhat-operators"},
+                {"disabled": true, "name": "certified-operators"}
+            ]
+        }
+    }'
+fi
+
 "$OPERATOR_SDK" run bundle "$BUNDLE_IMG" --timeout=10m --security-context-config restricted -n "$INSTALL_NAMESPACE" --index-image "$ODF_DEPS_CATALOG_IMG"
 
 # Check for the presence of the CSVs in the cluster for up to 5 minutes,
