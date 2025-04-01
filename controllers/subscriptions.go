@@ -338,7 +338,7 @@ func AdjustSpecialCasesSubscriptionConfig(subscription *operatorv1alpha1.Subscri
 
 	switch subscription.Spec.Package {
 
-	case CSIAddonsSubscriptionPackage, CephCSISubscriptionPackage:
+	case "csi-addons", "odf-csi-addons-operator", "cephcsi-operator":
 		subscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
 			Tolerations: []corev1.Toleration{
 				{
@@ -350,7 +350,7 @@ func AdjustSpecialCasesSubscriptionConfig(subscription *operatorv1alpha1.Subscri
 			},
 		}
 
-	case NoobaaSubscriptionPackage:
+	case "noobaa-operator", "mcg-operator":
 		roleARN := os.Getenv("ROLEARN")
 		if roleARN != "" {
 			subscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
