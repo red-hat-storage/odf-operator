@@ -5,37 +5,37 @@ metadata:
 data:
   CEPHCSI: |
     channel: alpha
-    csv: cephcsi-operator.v4.18.0
+    csv: cephcsi-operator.v4.19.0
     pkg: cephcsi-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   CSIADDONS: |
     channel: alpha
-    csv: csi-addons.v0.10.0
+    csv: csi-addons.v0.12.0
     pkg: csi-addons
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM: |
     channel: stable-v1.6
-    csv: ibm-storage-odf-operator.v1.6.0
+    csv: ibm-storage-odf-operator.v1.7.0
     pkg: ibm-storage-odf-operator
     scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
   NOOBAA: |
     channel: alpha
-    csv: noobaa-operator.v5.18.0
+    csv: noobaa-operator.v5.19.0
     pkg: noobaa-operator
     scaleUpOnInstanceOf:
       - noobaas.noobaa.io
   OCS_CLIENT: |
     channel: alpha
-    csv: ocs-client-operator.v4.18.0
+    csv: ocs-client-operator.v4.19.0
     pkg: ocs-client-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   OCS: |
     channel: alpha
-    csv: ocs-operator.v4.18.0
+    csv: ocs-operator.v4.19.0
     pkg: ocs-operator
     scaleUpOnInstanceOf:
       - storageclusters.ocs.openshift.io
@@ -45,7 +45,7 @@ data:
     pkg: odf-dependencies
   PROMETHEUS: |
     channel: beta
-    csv: odf-prometheus-operator.v4.18.0
+    csv: odf-prometheus-operator.v4.19.0
     pkg: odf-prometheus-operator
     scaleUpOnInstanceOf:
       - alertmanagers.monitoring.coreos.com
@@ -56,7 +56,7 @@ data:
     pkg: recipe
   ROOK: |
     channel: alpha
-    csv: rook-ceph-operator.v4.18.0
+    csv: rook-ceph-operator.v4.19.0
     pkg: rook-ceph-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
