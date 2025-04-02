@@ -27,6 +27,12 @@ delete_ec2_instance() {
     local region=$1
     local instance_id=$2
 
+    # This instance was created by a unidentified user as "Fedora 38" and the cleanup process fails with the following error.
+    # The instance 'i-05a66fffafaa219f5' may not be terminated. Modify its 'disableApiTermination' instance attribute and try again.
+    if [[ "$instance_id" == "i-05a66fffafaa219f5" ]]; then
+        return
+    fi
+
     # Get the launch time of the instance
     launch_time=$(aws ec2 describe-instances --region "$region" --instance-ids "$instance_id" \
         --query "Reservations[*].Instances[*].{LaunchTime:LaunchTime}" --output text)
