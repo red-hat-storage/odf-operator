@@ -334,68 +334,11 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 	return finalError
 }
 
-func getOlmPkgRecord() []*OlmPkgRecord {
-
-	return []*OlmPkgRecord{
-		{
-			Channel: OdfDepsSubscriptionChannel,
-			Csv:     OdfDepsSubscriptionStartingCSV,
-			Pkg:     OdfDepsSubscriptionPackage,
-		},
-		{
-			Channel: OcsSubscriptionChannel,
-			Csv:     OcsSubscriptionStartingCSV,
-			Pkg:     OcsSubscriptionPackage,
-		},
-		{
-			Channel: RookSubscriptionChannel,
-			Csv:     RookSubscriptionStartingCSV,
-			Pkg:     RookSubscriptionPackage,
-		},
-		{
-			Channel: NoobaaSubscriptionChannel,
-			Csv:     NoobaaSubscriptionStartingCSV,
-			Pkg:     NoobaaSubscriptionPackage,
-		},
-		{
-			Channel: OcsClientSubscriptionChannel,
-			Csv:     OcsClientSubscriptionStartingCSV,
-			Pkg:     OcsClientSubscriptionPackage,
-		},
-		{
-			Channel: CephCSISubscriptionChannel,
-			Csv:     CephCSISubscriptionStartingCSV,
-			Pkg:     CephCSISubscriptionPackage,
-		},
-		{
-			Channel: CSIAddonsSubscriptionChannel,
-			Csv:     CSIAddonsSubscriptionStartingCSV,
-			Pkg:     CSIAddonsSubscriptionPackage,
-		},
-		{
-			Channel: PrometheusSubscriptionChannel,
-			Csv:     PrometheusSubscriptionStartingCSV,
-			Pkg:     PrometheusSubscriptionPackage,
-		},
-		{
-			Channel: RecipeSubscriptionChannel,
-			Csv:     RecipeSubscriptionStartingCSV,
-			Pkg:     RecipeSubscriptionPackage,
-		},
-		{
-			Channel: IbmSubscriptionChannel,
-			Csv:     IbmSubscriptionStartingCSV,
-			Pkg:     IbmSubscriptionPackage,
-		},
-	}
-
-}
-
 func AdjustSpecialCasesSubscriptionConfig(subscription *operatorv1alpha1.Subscription) {
 
 	switch subscription.Spec.Package {
 
-	case CSIAddonsSubscriptionPackage, CephCSISubscriptionPackage:
+	case "csi-addons", "odf-csi-addons-operator", "cephcsi-operator":
 		subscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
 			Tolerations: []corev1.Toleration{
 				{
@@ -407,7 +350,7 @@ func AdjustSpecialCasesSubscriptionConfig(subscription *operatorv1alpha1.Subscri
 			},
 		}
 
-	case NoobaaSubscriptionPackage:
+	case "noobaa-operator", "mcg-operator":
 		roleARN := os.Getenv("ROLEARN")
 		if roleARN != "" {
 			subscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{

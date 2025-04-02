@@ -26,6 +26,7 @@ import (
 	"github.com/operator-framework/operator-lib/conditions"
 	"go.uber.org/multierr"
 	admrv1 "k8s.io/api/admissionregistration/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -67,15 +68,36 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update
 
 func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
-
 	logger := log.FromContext(ctx)
+	logger.Info("starting reconcile")
 
-	olmPkgRecords := getOlmPkgRecord()
+	configmap, err := GetOdfConfigMap(ctx, r.Client, logger)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
-	if err := r.setOperatorCondition(logger, olmPkgRecords); err != nil {
+	var olmPkgRecords []*OlmPkgRecord
+	var csvNamesMap = make(map[string]struct{})
+	ParseOdfConfigMapRecords(logger, configmap, func(record *OdfOperatorConfigMapRecord, key, rawValue string) {
+		if record.Channel == "" || record.Csv == "" || record.Pkg == "" {
+			logger.Info("skipping the record from the configmap", "key", key, "value", rawValue)
+			return
+		}
+
+		olmPkgRecords = append(olmPkgRecords, &OlmPkgRecord{
+			Channel: record.Channel,
+			Csv:     record.Csv,
+			Pkg:     record.Pkg,
+		})
+		csvNamesMap[record.Csv] = struct{}{}
+	})
+	logger.Info("subscriptions records", "olmPkgRecords", olmPkgRecords)
+
+	if err := r.setOperatorCondition(logger, csvNamesMap); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -87,6 +109,7 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
+	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
 }
 
@@ -118,17 +141,12 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, olmPkgR
 	return combinedErr
 }
 
-func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
+func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, condMap map[string]struct{}) error {
 	ocdList := &opv2.OperatorConditionList{}
 	err := r.Client.List(context.TODO(), ocdList, client.InNamespace(r.OperatorNamespace))
 	if err != nil {
 		logger.Error(err, "failed to list OperatorConditions")
 		return err
-	}
-
-	condMap := make(map[string]struct{}, len(olmPkgRecords))
-	for _, olmPkgRecord := range olmPkgRecords {
-		condMap[olmPkgRecord.Csv] = struct{}{}
 	}
 
 	for ocdIdx := range ocdList.Items {
@@ -241,6 +259,16 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&admrv1.MutatingWebhookConfiguration{},
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(predicate.GenerationChangedPredicate{}),
+		).
+		Watches(
+			&corev1.ConfigMap{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(
+				predicate.NewPredicateFuncs(func(obj client.Object) bool {
+					return obj.GetName() == odfOperatorConfigMapName && obj.GetNamespace() == r.OperatorNamespace
+				}),
+				predicate.GenerationChangedPredicate{},
+			),
 		).
 		Complete(r)
 }
