@@ -104,12 +104,13 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	logger := log.FromContext(ctx)
 	logger.Info("starting reconcile")
 
-	if err := r.isOdfDependenciesCsvReady(ctx, logger); err != nil {
+	var kindMapping = map[string]*KindPackagesRecord{}
+	var odfDepsCsvName = ""
+	if err := r.loadOdfConfigMapData(ctx, logger, kindMapping, &odfDepsCsvName); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	kindMapping := map[string]*KindPackagesRecord{}
-	if err := r.loadOdfConfigMapData(ctx, logger, kindMapping); err != nil {
+	if err := r.isOdfDependenciesCsvReady(ctx, logger, odfDepsCsvName); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -129,7 +130,7 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{}, nil
 }
 
-func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, kindMapping map[string]*KindPackagesRecord) error {
+func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, kindMapping map[string]*KindPackagesRecord, odfDepsCsvName *string) error {
 	logger.Info("entering loadOdfConfigMapData")
 
 	configmap, err := GetOdfConfigMap(ctx, r.Client, logger)
@@ -140,6 +141,10 @@ func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, log
 	var combinedErr error
 
 	ParseOdfConfigMapRecords(logger, configmap, func(record *OdfOperatorConfigMapRecord, key, rawValue string) {
+		if record.Pkg == OdfDepsSubscriptionPackage {
+			*odfDepsCsvName = record.Csv
+		}
+
 		if record.Pkg == "" || record.ScaleUpOnInstanceOf == nil {
 			logger.Info("skipping the record from the configmap", "key", key, "value", rawValue)
 			return
@@ -179,19 +184,19 @@ func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, log
 	return combinedErr
 }
 
-func (r *OperatorScalerReconciler) isOdfDependenciesCsvReady(ctx context.Context, logger logr.Logger) error {
+func (r *OperatorScalerReconciler) isOdfDependenciesCsvReady(ctx context.Context, logger logr.Logger, odfDepsCsvName string) error {
 	logger.Info("entering isOdfDependenciesCsvReady")
 
 	odfDepsCsv := &opv1a1.ClusterServiceVersion{}
 
-	err := r.Client.Get(ctx, types.NamespacedName{Name: OdfDepsSubscriptionStartingCSV, Namespace: r.OperatorNamespace}, odfDepsCsv)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: odfDepsCsvName, Namespace: r.OperatorNamespace}, odfDepsCsv)
 	if err != nil {
-		logger.Error(err, "failed getting odf-deps csv", "csvName", OdfDepsSubscriptionStartingCSV)
+		logger.Error(err, "failed getting odf-deps csv", "csvName", odfDepsCsvName)
 		return err
 	}
 
 	if odfDepsCsv.Status.Phase != opv1a1.CSVPhaseSucceeded {
-		err = fmt.Errorf("csv %s is not in succeeded state", OdfDepsSubscriptionStartingCSV)
+		err = fmt.Errorf("csv %s is not in succeeded state", odfDepsCsvName)
 		logger.Error(err, "waiting for csv to be in succeeded state")
 		return err
 	}
