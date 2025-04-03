@@ -75,27 +75,11 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 	logger := log.FromContext(ctx)
 	logger.Info("starting reconcile")
 
-	configmap, err := GetOdfConfigMap(ctx, r.Client, logger)
-	if err != nil {
+	olmPkgRecords := []*OlmPkgRecord{}
+	csvNamesMap := map[string]struct{}{}
+	if err := r.loadOdfConfigMapData(ctx, logger, &olmPkgRecords, csvNamesMap); err != nil {
 		return ctrl.Result{}, err
 	}
-
-	var olmPkgRecords []*OlmPkgRecord
-	var csvNamesMap = make(map[string]struct{})
-	ParseOdfConfigMapRecords(logger, configmap, func(record *OdfOperatorConfigMapRecord, key, rawValue string) {
-		if record.Channel == "" || record.Csv == "" || record.Pkg == "" {
-			logger.Info("skipping the record from the configmap", "key", key, "value", rawValue)
-			return
-		}
-
-		olmPkgRecords = append(olmPkgRecords, &OlmPkgRecord{
-			Channel: record.Channel,
-			Csv:     record.Csv,
-			Pkg:     record.Pkg,
-		})
-		csvNamesMap[record.Csv] = struct{}{}
-	})
-	logger.Info("subscriptions records", "olmPkgRecords", olmPkgRecords)
 
 	if err := r.setOperatorCondition(logger, csvNamesMap); err != nil {
 		return ctrl.Result{}, err
@@ -111,6 +95,32 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 
 	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
+}
+
+func (r *SubscriptionReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, olmPkgRecords *[]*OlmPkgRecord, csvNamesMap map[string]struct{}) error {
+
+	configmap, err := GetOdfConfigMap(ctx, r.Client, logger)
+	if err != nil {
+		return err
+	}
+
+	ParseOdfConfigMapRecords(logger, configmap, func(record *OdfOperatorConfigMapRecord, key, rawValue string) {
+		if record.Channel == "" || record.Csv == "" || record.Pkg == "" {
+			logger.Info("skipping the record from the configmap", "key", key, "value", rawValue)
+			return
+		}
+
+		*olmPkgRecords = append(*olmPkgRecords, &OlmPkgRecord{
+			Channel: record.Channel,
+			Csv:     record.Csv,
+			Pkg:     record.Pkg,
+		})
+		csvNamesMap[record.Csv] = struct{}{}
+	})
+
+	logger.Info("subscriptions records", "records", olmPkgRecords)
+
+	return nil
 }
 
 func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
