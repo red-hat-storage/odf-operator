@@ -29,7 +29,7 @@ var find string = "odf_system_map"
 
 func TestReportODFSystemMapMetrics(t *testing.T) {
 	type args struct {
-		storageSystem, name, namespace, kind string
+		storageSystem, name, namespace, kind, apiVersion string
 	}
 	tests := []struct {
 		name string
@@ -42,6 +42,7 @@ func TestReportODFSystemMapMetrics(t *testing.T) {
 				name:          "StorageCluster1",
 				namespace:     "Namespace1",
 				kind:          "StorageCluster",
+				apiVersion:    "ocs.openshift.io/v1",
 			},
 		},
 		{
@@ -51,12 +52,13 @@ func TestReportODFSystemMapMetrics(t *testing.T) {
 				name:          "FlashSystem1",
 				namespace:     "Namespace1",
 				kind:          "Flashsystem",
+				apiVersion:    "odf.ibm.com/v1alpha1",
 			},
 		},
 	}
 	for n, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ReportODFSystemMapMetrics(tt.args.storageSystem, tt.args.name, tt.args.namespace, tt.args.kind)
+			ReportODFSystemMapMetrics(tt.args.storageSystem, tt.args.name, tt.args.namespace, tt.args.kind, tt.args.apiVersion)
 			count, err := testutil.GatherAndCount(defaultRegistry, find)
 			assert.NoError(t, err)
 			assert.Equal(t, n+1, count)

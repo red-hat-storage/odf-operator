@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/go-logr/logr"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -215,10 +214,11 @@ func (r *OperatorScalerReconciler) reconcileMetrics(ctx context.Context, logger 
 				crItem := &crList.Items[j]
 
 				metrics.ReportODFSystemMapMetrics(
-					crItem.Name+"-storagesystem",
+					crItem.Name,
 					crItem.Name,
 					crItem.Namespace,
-					strings.ToLower(crList.Kind)+crList.APIVersion,
+					crList.Kind,
+					crList.APIVersion,
 				)
 			}
 		}
