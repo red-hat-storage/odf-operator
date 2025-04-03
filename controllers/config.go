@@ -78,8 +78,7 @@ func ParseOdfConfigMapRecords(logger logr.Logger, configmap corev1.ConfigMap, fn
 	for key, value := range configmap.Data {
 
 		// skip parsing known environment variable and keys from the configmap.
-		// first condition can be removed once the older keys are removed from the configmap.
-		if _, ok := DefaultValMap[key]; ok || slices.Contains(configMapIgnoreKeys, key) {
+		if slices.Contains(configMapIgnoreKeys, key) {
 			continue
 		}
 
