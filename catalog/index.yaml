@@ -29,7 +29,7 @@ schema: olm.channel
 package: ocs-operator
 name: alpha
 entries:
-  - name: ocs-operator.v4.18.0
+  - name: ocs-operator.v4.19.0
 
 ---
 defaultChannel: alpha
@@ -40,7 +40,7 @@ schema: olm.channel
 package: ocs-client-operator
 name: alpha
 entries:
-  - name: ocs-client-operator.v4.18.0
+  - name: ocs-client-operator.v4.19.0
 
 ---
 defaultChannel: alpha
@@ -51,7 +51,7 @@ schema: olm.channel
 package: noobaa-operator
 name: alpha
 entries:
-  - name: noobaa-operator.v5.18.0
+  - name: noobaa-operator.v5.19.0
 
 ---
 defaultChannel: alpha
@@ -62,7 +62,7 @@ schema: olm.channel
 package: csi-addons
 name: alpha
 entries:
-  - name: csi-addons.v0.10.0
+  - name: csi-addons.v0.12.0
 
 ---
 defaultChannel: alpha
@@ -73,18 +73,18 @@ schema: olm.channel
 package: cephcsi-operator
 name: alpha
 entries:
-  - name: cephcsi-operator.v4.18.0
+  - name: cephcsi-operator.v4.19.0
 
 ---
-defaultChannel: stable-v1.6
+defaultChannel: stable-v1.7
 name: ibm-storage-odf-operator
 schema: olm.package
 ---
 schema: olm.channel
 package: ibm-storage-odf-operator
-name: stable-v1.6
+name: stable-v1.7
 entries:
-  - name: ibm-storage-odf-operator.v1.6.0
+  - name: ibm-storage-odf-operator.v1.7.0
 
 ---
 defaultChannel: alpha
@@ -95,7 +95,7 @@ schema: olm.channel
 package: rook-ceph-operator
 name: alpha
 entries:
-  - name: rook-ceph-operator.v4.18.0
+  - name: rook-ceph-operator.v4.19.0
 
 ---
 defaultChannel: beta
@@ -106,7 +106,7 @@ schema: olm.channel
 package: odf-prometheus-operator
 name: beta
 entries:
-  - name: odf-prometheus-operator.v4.18.0
+  - name: odf-prometheus-operator.v4.19.0
 
 ---
 defaultChannel: alpha
