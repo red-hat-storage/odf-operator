@@ -24,7 +24,9 @@ import (
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/metrics"
 	"go.uber.org/multierr"
+	corev1 "k8s.io/api/core/v1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,60 +49,7 @@ const (
 	CsvLabelKey = "operators.coreos.com/%s.%s"
 )
 
-type ResourceMappingRecord struct {
-	CrdName    string
-	ApiVersion string
-	Kind       string
-	PkgNames   []string
-}
-
 var (
-	ResourceMappingList = []ResourceMappingRecord{
-		{
-			CrdName:    "storageclusters.ocs.openshift.io",
-			ApiVersion: "ocs.openshift.io/v1",
-			Kind:       "StorageCluster",
-			PkgNames:   []string{OcsSubscriptionPackage},
-		},
-		// In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
-		// scale up client op based on cephCluster instead of storageClient CR
-		{
-			CrdName:    "cephclusters.ceph.rook.io",
-			ApiVersion: "ceph.rook.io/v1",
-			Kind:       "CephCluster",
-			PkgNames: []string{
-				RookSubscriptionPackage,
-				CephCSISubscriptionPackage,
-				CSIAddonsSubscriptionPackage,
-				OcsClientSubscriptionPackage,
-			},
-		},
-		{
-			CrdName:    "noobaas.noobaa.io",
-			ApiVersion: "noobaa.io/v1alpha1",
-			Kind:       "NooBaa",
-			PkgNames:   []string{NoobaaSubscriptionPackage},
-		},
-		{
-			CrdName:    "prometheuses.monitoring.coreos.com",
-			ApiVersion: "monitoring.coreos.com/v1",
-			Kind:       "Prometheus",
-			PkgNames:   []string{PrometheusSubscriptionPackage},
-		},
-		{
-			CrdName:    "alertmanagers.monitoring.coreos.com",
-			ApiVersion: "monitoring.coreos.com/v1",
-			Kind:       "Alertmanager",
-			PkgNames:   []string{PrometheusSubscriptionPackage},
-		},
-		{
-			CrdName:    "flashsystemclusters.odf.ibm.com",
-			ApiVersion: "odf.ibm.com/v1alpha1",
-			Kind:       "FlashSystemCluster",
-			PkgNames:   []string{IbmSubscriptionPackage},
-		},
-	}
-
 	createOnlyPredicate = predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return true
@@ -117,6 +66,18 @@ var (
 	}
 )
 
+type KindPackagesRecord struct {
+	/* examples
+	   ApiVersion: "ceph.rook.io/v1",
+	   Kind:       "CephCluster",
+	   PkgNames:   []string{rook-operator, cephcsi-operator, csi-addons, ocs-client-operator},
+	*/
+
+	ApiVersion string
+	Kind       string
+	PkgNames   []string
+}
+
 type OperatorScalerReconciler struct {
 	client.Client
 
@@ -128,6 +89,7 @@ type OperatorScalerReconciler struct {
 	kindsBeingWatched map[string]bool
 }
 
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 //+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;list;update
 
@@ -138,22 +100,24 @@ type OperatorScalerReconciler struct {
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=alertmanagers,verbs=get;list;watch
 //+kubebuilder:rbac:groups=odf.ibm.com,resources=flashsystemclusters,verbs=get;list;watch
 
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-
 	logger.Info("starting reconcile")
 
 	if err := r.isOdfDependenciesCsvReady(ctx, logger); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileOperators(ctx, logger); err != nil {
+	kindMapping := map[string]*KindPackagesRecord{}
+	if err := r.loadOdfConfigMapData(ctx, logger, kindMapping); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileDynamicWatchers(ctx, logger); err != nil {
+	if err := r.reconcileOperators(ctx, logger, kindMapping); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.reconcileDynamicWatchers(ctx, logger, kindMapping); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -163,6 +127,56 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
+}
+
+func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, kindMapping map[string]*KindPackagesRecord) error {
+	logger.Info("entering loadOdfConfigMapData")
+
+	configmap, err := GetOdfConfigMap(ctx, r.Client, logger)
+	if err != nil {
+		return err
+	}
+
+	var combinedErr error
+
+	ParseOdfConfigMapRecords(logger, configmap, func(record *OdfOperatorConfigMapRecord, key, rawValue string) {
+		if record.Pkg == "" || record.ScaleUpOnInstanceOf == nil {
+			logger.Info("skipping the record from the configmap", "key", key, "value", rawValue)
+			return
+		}
+		for _, crdName := range record.ScaleUpOnInstanceOf {
+
+			rec, ok := kindMapping[crdName]
+			if !ok {
+				rec = &KindPackagesRecord{}
+			}
+			kindMapping[crdName].PkgNames = append(kindMapping[crdName].PkgNames, record.Pkg)
+
+			// populate the apiVersion and kind
+			crd := &extv1.CustomResourceDefinition{}
+			crd.Name = crdName
+			if err := r.Client.Get(ctx, client.ObjectKeyFromObject(crd), crd); errors.IsNotFound(err) {
+				logger.Info("skipping crd not found", "crdName", crdName)
+				return
+			} else if err != nil {
+				logger.Error(err, "failed getting crd", "crdName", crdName)
+				multierr.AppendInto(&combinedErr, err)
+				return
+			}
+
+			rec.ApiVersion = crd.Spec.Group + "/" + crd.Spec.Versions[0].Name
+			rec.Kind = crd.Spec.Names.Kind
+			kindMapping[crdName] = rec
+		}
+	})
+
+	logger.Info("operator scaler records", "records", kindMapping)
+
+	if combinedErr == nil {
+		logger.Info("successfully completed loadOdfConfigMapData")
+	}
+
+	return combinedErr
 }
 
 func (r *OperatorScalerReconciler) isOdfDependenciesCsvReady(ctx context.Context, logger logr.Logger) error {
@@ -230,13 +244,12 @@ func (r *OperatorScalerReconciler) reconcileMetrics(ctx context.Context, logger 
 	return combinedErr
 }
 
-func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logger logr.Logger) error {
+func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logger logr.Logger, kindMapping map[string]*KindPackagesRecord) error {
 	logger.Info("entering reconcileOperators")
 
 	var returnErr error
 
-	for i := range ResourceMappingList {
-		resourceMapping := &ResourceMappingList[i]
+	for _, resourceMapping := range kindMapping {
 
 		crList := &metav1.PartialObjectMetadataList{}
 		crList.TypeMeta.APIVersion = resourceMapping.ApiVersion
@@ -304,46 +317,38 @@ func (r *OperatorScalerReconciler) updateCsvDeplymentsReplicas(ctx context.Conte
 	return nil
 }
 
-func (r *OperatorScalerReconciler) reconcileDynamicWatchers(ctx context.Context, logger logr.Logger) error {
+func (r *OperatorScalerReconciler) reconcileDynamicWatchers(_ context.Context, logger logr.Logger, kindMapping map[string]*KindPackagesRecord) error {
 	logger.Info("entering reconcileDynamicWatchers")
 
-	for i := range ResourceMappingList {
-		resourceMapping := &ResourceMappingList[i]
+	for _, resourceMapping := range kindMapping {
 
 		if !r.kindsBeingWatched[resourceMapping.Kind] {
 
-			crd := &extv1.CustomResourceDefinition{}
-			crd.Name = resourceMapping.CrdName
-			if err := r.Client.Get(ctx, client.ObjectKeyFromObject(crd), crd); client.IgnoreNotFound(err) != nil {
-				logger.Error(err, "failed getting crd", "crdName", resourceMapping.CrdName)
-				return err
-			} else if err == nil {
-				logger.Info("adding dynamic watch", "kind", resourceMapping.Kind)
+			logger.Info("adding dynamic watch", "kind", resourceMapping.Kind)
 
-				err := r.controller.Watch(
-					source.Kind(
-						r.cache,
-						client.Object(
-							&metav1.PartialObjectMetadata{
-								TypeMeta: metav1.TypeMeta{
-									APIVersion: resourceMapping.ApiVersion,
-									Kind:       resourceMapping.Kind,
-								},
+			err := r.controller.Watch(
+				source.Kind(
+					r.cache,
+					client.Object(
+						&metav1.PartialObjectMetadata{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resourceMapping.ApiVersion,
+								Kind:       resourceMapping.Kind,
 							},
-						),
-						&handler.EnqueueRequestForObject{},
-						// Trigger the reconcile for creation events of the object.
-						// This ensures the replicas in the CSV are scaled up based on the presence of Custom Resource (CR).
-						createOnlyPredicate,
+						},
 					),
-				)
-				if err != nil {
-					logger.Error(err, "failed adding dynamic watch", "kind", resourceMapping.Kind)
-					return err
-				}
-
-				r.kindsBeingWatched[resourceMapping.Kind] = true
+					&handler.EnqueueRequestForObject{},
+					// Trigger the reconcile for creation events of the object.
+					// This ensures the replicas in the CSV are scaled up based on the presence of Custom Resource (CR).
+					createOnlyPredicate,
+				),
+			)
+			if err != nil {
+				logger.Error(err, "failed adding dynamic watch", "kind", resourceMapping.Kind)
+				return err
 			}
+
+			r.kindsBeingWatched[resourceMapping.Kind] = true
 		}
 	}
 
@@ -354,22 +359,23 @@ func (r *OperatorScalerReconciler) reconcileDynamicWatchers(ctx context.Context,
 // SetupWithManager sets up the controller with the Manager.
 func (r *OperatorScalerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
-	// It will keep track or the crds that we care about
-	crdMap := map[string]bool{}
-	for i := range ResourceMappingList {
-		crdName := ResourceMappingList[i].CrdName
-		crdMap[crdName] = true
-	}
-
 	controller, err := ctrl.NewControllerManagedBy(mgr).
 		Named("operatorScaler").
+		Watches(
+			&corev1.ConfigMap{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(
+				predicate.NewPredicateFuncs(func(obj client.Object) bool {
+					return obj.GetName() == odfOperatorConfigMapName && obj.GetNamespace() == r.OperatorNamespace
+				}),
+				predicate.GenerationChangedPredicate{},
+			),
+		).
 		Watches(
 			&extv1.CustomResourceDefinition{},
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(
-				predicate.NewPredicateFuncs(func(obj client.Object) bool {
-					return crdMap[obj.GetName()]
-				}),
+				//TODO: filter the crds we care about
 				// Trigger a reconcile only during the creation of a specific CRD to ensure it runs exactly once for that CRD.
 				// This is required to dynamically add a watch for the corresponding Custom Resource (CR) based on the CRD name.
 				// The reconcile will be triggered with the CRD name as `req.Name`, and the reconciler will set up a watch for the CR using the CRD name.
