@@ -155,18 +155,18 @@ func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, log
 			if !ok {
 				rec = &KindPackagesRecord{}
 			}
-			kindMapping[crdName].PkgNames = append(kindMapping[crdName].PkgNames, record.Pkg)
+			rec.PkgNames = append(rec.PkgNames, record.Pkg)
 
 			// populate the apiVersion and kind
 			crd := &extv1.CustomResourceDefinition{}
 			crd.Name = crdName
 			if err := r.Client.Get(ctx, client.ObjectKeyFromObject(crd), crd); errors.IsNotFound(err) {
 				logger.Info("skipping crd not found", "crdName", crdName)
-				return
+				continue
 			} else if err != nil {
 				logger.Error(err, "failed getting crd", "crdName", crdName)
 				multierr.AppendInto(&combinedErr, err)
-				return
+				continue
 			}
 
 			rec.ApiVersion = crd.Spec.Group + "/" + crd.Spec.Versions[0].Name
