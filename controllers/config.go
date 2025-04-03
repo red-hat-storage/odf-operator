@@ -31,7 +31,8 @@ const (
 )
 
 var (
-	configMapIgnoreKeys = []string{"controller_manager_config.yaml"}
+	configMapIgnoreKeys             = []string{"controller_manager_config.yaml"}
+	EmptyOdfOperatorConfigMapRecord = OdfOperatorConfigMapRecord{}
 )
 
 type OdfOperatorConfigMapRecord struct {
@@ -82,6 +83,7 @@ func ParseOdfConfigMapRecords(logger logr.Logger, configmap corev1.ConfigMap, fn
 			continue
 		}
 
+		record = EmptyOdfOperatorConfigMapRecord
 		if err := yaml.Unmarshal([]byte(value), &record); err != nil {
 			logger.Error(err, "failed to unmarshal configmap data", "key", key)
 			continue
