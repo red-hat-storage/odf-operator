@@ -22,8 +22,6 @@ import (
 	"slices"
 
 	"github.com/go-logr/logr"
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-operator/pkg/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +29,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
 var (
