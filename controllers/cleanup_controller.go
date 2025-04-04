@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	odfv1a1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
 var (
@@ -120,7 +119,9 @@ func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logge
 	}
 
 	// remove the finalizer
-	instance.ObjectMeta.Finalizers = util.RemoveFromSlice(instance.ObjectMeta.Finalizers, "storagesystem.odf.openshift.io")
+	instance.ObjectMeta.Finalizers = slices.DeleteFunc(instance.ObjectMeta.Finalizers, func(s string) bool {
+		return s == "storagesystem.odf.openshift.io"
+	})
 
 	if err := r.Client.Update(context.TODO(), instance); err != nil {
 		logger.Error(err, "failed deleting storagesystem")

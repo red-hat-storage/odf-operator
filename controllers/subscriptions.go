@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/multierr"
@@ -28,8 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
 // CheckForExistingSubscription looks for any existing Subscriptions that
@@ -310,7 +309,7 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 	}
 
 	for i, installPlan := range installPlans.Items {
-		if util.FindInSlice(installPlan.Spec.ClusterServiceVersionNames, csvName) {
+		if slices.Contains(installPlan.Spec.ClusterServiceVersionNames, csvName) {
 			foundInstallPlan = true
 			if installPlan.Spec.Approval == opv1a1.ApprovalManual &&
 				!installPlan.Spec.Approved {
