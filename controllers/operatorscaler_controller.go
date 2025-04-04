@@ -45,11 +45,6 @@ import (
 	"github.com/red-hat-storage/odf-operator/metrics"
 )
 
-const (
-	// csvLabelKey is a label key to identify CSV with pkg name and namespace
-	CsvLabelKey = "operators.coreos.com/%s.%s"
-)
-
 var (
 	createOnlyPredicate = predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
@@ -71,12 +66,12 @@ type KindPackagesRecord struct {
 	/* examples
 	   ApiVersion: "ceph.rook.io/v1",
 	   Kind:       "CephCluster",
-	   PkgNames:   []string{rook-operator, cephcsi-operator, csi-addons, ocs-client-operator},
+	   CsvNames:   []string{rook-operator.v0.0.1, cephcsi-operator.v0.0.1, csi-addons.v0.0.1, ocs-client-operator.v0.0.1},
 	*/
 
 	ApiVersion string
 	Kind       string
-	PkgNames   []string
+	CsvNames   []string
 }
 
 type OperatorScalerReconciler struct {
@@ -146,7 +141,7 @@ func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, log
 			*odfDepsCsvName = record.Csv
 		}
 
-		if record.Pkg == "" || record.ScaleUpOnInstanceOf == nil {
+		if record.Csv == "" || record.ScaleUpOnInstanceOf == nil {
 			logger.Info("skipping the record from the configmap", "key", key, "value", rawValue)
 			return
 		}
@@ -156,7 +151,7 @@ func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, log
 			if !ok {
 				rec = &KindPackagesRecord{}
 			}
-			rec.PkgNames = append(rec.PkgNames, record.Pkg)
+			rec.CsvNames = append(rec.CsvNames, record.Csv)
 
 			// populate the apiVersion and kind
 			crd := &extv1.CustomResourceDefinition{}
@@ -270,24 +265,19 @@ func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logge
 
 		} else if len(crList.Items) > 0 {
 
-			for _, pkgName := range resourceMapping.PkgNames {
-				key := fmt.Sprintf(CsvLabelKey, pkgName, r.OperatorNamespace)
+			for _, csvName := range resourceMapping.CsvNames {
 
-				csvList := &opv1a1.ClusterServiceVersionList{}
-				err = r.Client.List(
-					ctx, csvList,
-					client.InNamespace(r.OperatorNamespace),
-					client.MatchingLabels(map[string]string{key: ""}),
-				)
+				csv := &opv1a1.ClusterServiceVersion{}
+				csv.Name = csvName
+				csv.Namespace = OperatorNamespace
+				err = r.Client.Get(ctx, client.ObjectKeyFromObject(csv), csv)
 				if err != nil {
-					logger.Error(err, "failed listing csvs with label", "label", key)
+					logger.Error(err, "failed getting csv ", "name", csvName)
 					multierr.AppendInto(&returnErr, err)
 				} else {
-					for j := range csvList.Items {
-						if err = r.updateCsvDeplymentsReplicas(ctx, logger, &csvList.Items[j]); err != nil {
-							logger.Error(err, "failed updating csvs replica")
-							multierr.AppendInto(&returnErr, err)
-						}
+					if err = r.updateCsvDeplymentsReplicas(ctx, logger, csv); err != nil {
+						logger.Error(err, "failed updating csv replica")
+						multierr.AppendInto(&returnErr, err)
 					}
 				}
 			}
