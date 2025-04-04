@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"os"
 
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -38,14 +38,14 @@ import (
 //
 // NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
 // because fake.Client does not support them.
-func GetDesiredSubscription(cli client.Client, record *OlmPkgRecord) (*operatorv1alpha1.Subscription, error) {
+func GetDesiredSubscription(cli client.Client, record *OlmPkgRecord) (*opv1a1.Subscription, error) {
 
-	desiredSubscription := &operatorv1alpha1.Subscription{
+	desiredSubscription := &opv1a1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      record.Pkg,
 			Namespace: OperatorNamespace,
 		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
+		Spec: &opv1a1.SubscriptionSpec{
 			Package:     record.Pkg,
 			Channel:     record.Channel,
 			StartingCSV: record.Csv,
@@ -60,17 +60,17 @@ func GetDesiredSubscription(cli client.Client, record *OlmPkgRecord) (*operatorv
 	}
 
 	if odfSub.Spec.Config == nil {
-		odfSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
+		odfSub.Spec.Config = &opv1a1.SubscriptionConfig{}
 	}
 
-	subsList := &operatorv1alpha1.SubscriptionList{}
+	subsList := &opv1a1.SubscriptionList{}
 	err = cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
 	if err != nil {
 		return nil, err
 	}
 
 	var subExsist bool
-	var actualSub *operatorv1alpha1.Subscription
+	var actualSub *opv1a1.Subscription
 	pkgName := desiredSubscription.Spec.Package
 	for i, sub := range subsList.Items {
 		if sub.Spec.Package == pkgName {
@@ -83,7 +83,7 @@ func GetDesiredSubscription(cli client.Client, record *OlmPkgRecord) (*operatorv
 
 			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
 			if actualSub.Spec.Config == nil && desiredSubscription.Spec.Config == nil {
-				actualSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
+				actualSub.Spec.Config = &opv1a1.SubscriptionConfig{}
 				actualSub.Spec.Config.Tolerations = odfSub.Spec.Config.Tolerations
 			} else if actualSub.Spec.Config == nil && desiredSubscription.Spec.Config != nil {
 				actualSub.Spec.Config = desiredSubscription.Spec.Config
@@ -111,7 +111,7 @@ func GetDesiredSubscription(cli client.Client, record *OlmPkgRecord) (*operatorv
 		}
 
 		if desiredSubscription.Spec.Config == nil {
-			desiredSubscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
+			desiredSubscription.Spec.Config = &opv1a1.SubscriptionConfig{
 				Tolerations: odfSub.Spec.Config.Tolerations,
 			}
 		} else {
@@ -196,7 +196,7 @@ func EnsureDesiredSubscription(cli client.Client, olmPkgRecord *OlmPkgRecord) er
 	}
 
 	// create/update subscription
-	sub := &operatorv1alpha1.Subscription{}
+	sub := &opv1a1.Subscription{}
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, sub, func() error {
 		sub.Spec = desiredSubscription.Spec
@@ -225,9 +225,9 @@ func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
 }
 
 // GetOdfSubscription returns the subscription for odf-operator.
-func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, error) {
+func GetOdfSubscription(cli client.Client) (*opv1a1.Subscription, error) {
 
-	subsList := &operatorv1alpha1.SubscriptionList{}
+	subsList := &opv1a1.SubscriptionList{}
 	err := cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: OperatorNamespace})
 	if err != nil {
 		return nil, err
@@ -244,7 +244,7 @@ func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, erro
 
 func EnsureCsv(cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 
-	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
+	csvObj := &opv1a1.ClusterServiceVersion{}
 	csvObj.Name, csvObj.Namespace = olmPkgRecord.Csv, OperatorNamespace
 
 	if err := cli.Get(context.TODO(), client.ObjectKeyFromObject(csvObj), csvObj); err != nil {
@@ -267,8 +267,8 @@ func EnsureCsv(cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 		return err
 	}
 
-	isReady := csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
-		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful
+	isReady := csvObj.Status.Phase == opv1a1.CSVPhaseSucceeded &&
+		csvObj.Status.Reason == opv1a1.CSVReasonInstallSuccessful
 
 	if !isReady {
 		return fmt.Errorf("CSV is not successfully installed")
@@ -280,7 +280,7 @@ func EnsureCsv(cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 func isSubscriptionPresent(cli client.Client, olmPkgRecord *OlmPkgRecord) (bool, error) {
 
 	// get all subscriptions in the cluster
-	subList := &operatorv1alpha1.SubscriptionList{}
+	subList := &opv1a1.SubscriptionList{}
 	if err := cli.List(context.TODO(), subList, client.InNamespace(OperatorNamespace)); err != nil {
 		return false, err
 	}
@@ -302,7 +302,7 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 	var finalError error
 	var foundInstallPlan bool
 
-	installPlans := &operatorv1alpha1.InstallPlanList{}
+	installPlans := &opv1a1.InstallPlanList{}
 	err := cli.List(context.TODO(), installPlans, &client.ListOptions{Namespace: OperatorNamespace})
 
 	if err != nil {
@@ -312,7 +312,7 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 	for i, installPlan := range installPlans.Items {
 		if util.FindInSlice(installPlan.Spec.ClusterServiceVersionNames, csvName) {
 			foundInstallPlan = true
-			if installPlan.Spec.Approval == operatorv1alpha1.ApprovalManual &&
+			if installPlan.Spec.Approval == opv1a1.ApprovalManual &&
 				!installPlan.Spec.Approved {
 
 				installPlans.Items[i].Spec.Approved = true
@@ -334,12 +334,12 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 	return finalError
 }
 
-func AdjustSpecialCasesSubscriptionConfig(subscription *operatorv1alpha1.Subscription) {
+func AdjustSpecialCasesSubscriptionConfig(subscription *opv1a1.Subscription) {
 
 	switch subscription.Spec.Package {
 
 	case "csi-addons", "odf-csi-addons-operator", "cephcsi-operator":
-		subscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
+		subscription.Spec.Config = &opv1a1.SubscriptionConfig{
 			Tolerations: []corev1.Toleration{
 				{
 					Key:      "node.ocs.openshift.io/storage",
@@ -353,7 +353,7 @@ func AdjustSpecialCasesSubscriptionConfig(subscription *operatorv1alpha1.Subscri
 	case "noobaa-operator", "mcg-operator":
 		roleARN := os.Getenv("ROLEARN")
 		if roleARN != "" {
-			subscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
+			subscription.Spec.Config = &opv1a1.SubscriptionConfig{
 				Env: []corev1.EnvVar{
 					{
 						Name:  "ROLEARN",

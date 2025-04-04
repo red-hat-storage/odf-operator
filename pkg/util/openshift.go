@@ -20,7 +20,7 @@ import (
 	"context"
 
 	configv1 "github.com/openshift/api/config/v1"
-	operatorv2 "github.com/operator-framework/api/pkg/operators/v2"
+	opv2 "github.com/operator-framework/api/pkg/operators/v2"
 	"github.com/operator-framework/operator-lib/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -51,5 +51,5 @@ func GetConditionName(client client.Client) (string, error) {
 }
 
 func NewUpgradeableCondition(client client.Client) (conditions.Condition, error) {
-	return getConditionFactory(client).NewCondition(operatorv2.ConditionType(operatorv2.Upgradeable))
+	return getConditionFactory(client).NewCondition(opv2.ConditionType(opv2.Upgradeable))
 }

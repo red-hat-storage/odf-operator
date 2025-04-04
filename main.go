@@ -26,13 +26,13 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	consolev1 "github.com/openshift/api/console/v1"
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	operatorv2 "github.com/operator-framework/api/pkg/operators/v2"
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	opv2 "github.com/operator-framework/api/pkg/operators/v2"
 	admrv1 "k8s.io/api/admissionregistration/v1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -41,7 +41,7 @@ import (
 	metrics "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
+	odfv1a1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/controllers"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 	"github.com/red-hat-storage/odf-operator/webhook"
@@ -54,10 +54,10 @@ var (
 )
 
 func init() {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(odfv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(operatorv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(operatorv2.AddToScheme(scheme))
+	utilruntime.Must(k8sscheme.AddToScheme(scheme))
+	utilruntime.Must(odfv1a1.AddToScheme(scheme))
+	utilruntime.Must(opv1a1.AddToScheme(scheme))
+	utilruntime.Must(opv2.AddToScheme(scheme))
 	utilruntime.Must(consolev1.AddToScheme(scheme))
 	utilruntime.Must(admrv1.AddToScheme(scheme))
 	utilruntime.Must(extv1.AddToScheme(scheme))
