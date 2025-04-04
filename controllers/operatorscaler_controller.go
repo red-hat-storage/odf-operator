@@ -305,7 +305,7 @@ func (r *OperatorScalerReconciler) updateCsvDeplymentsReplicas(ctx context.Conte
 	var updateRequired bool
 	for i := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 		deploymentSpec := &csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec
-		if *deploymentSpec.Replicas < 1 {
+		if deploymentSpec.Replicas == nil || *deploymentSpec.Replicas < 1 {
 			deploymentSpec.Replicas = ptr.To(int32(1))
 			updateRequired = true
 		}
