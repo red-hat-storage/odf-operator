@@ -32,7 +32,7 @@ help: ## Display this help.
 
 ##@ Development
 
-manifests: controller-gen update-mgr-env ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: controller-gen update-mgr-config ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -65,7 +65,7 @@ e2e-test: ginkgo ## Run end to end functional tests.
 
 # In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
 # scale up client op based on cephCluster instead of storageClient CR
-define MAPPING
+define CONFIGMAP_YAML
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -129,11 +129,11 @@ data:
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
 endef
-export MAPPING
+export CONFIGMAP_YAML
 
 
-update-mgr-env: ## Feed env variables to the manager configmap
-	@echo "$$MAPPING" > config/manager/mapping.yaml
+update-mgr-config: ## Feed env variables to the manager configmap
+	@echo "$$CONFIGMAP_YAML" > config/manager/configmap.yaml
 
 ##@ Build
 
