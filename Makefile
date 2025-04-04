@@ -1,6 +1,7 @@
 include hack/make-project-vars.mk
 include hack/make-tools.mk
 include hack/make-bundle-vars.mk
+include hack/make-files.mk
 
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
@@ -63,75 +64,6 @@ e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
 	./hack/e2e-test.sh
 
-# In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
-# scale up client op based on cephCluster instead of storageClient CR
-define CONFIGMAP_YAML
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: manager-config
-data:
-  CEPHCSI: |
-    channel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
-    csv: $(CEPHCSI_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
-    scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
-  CSIADDONS: |
-    channel: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
-    csv: $(CSIADDONS_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
-    scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
-  IBM: |
-    channel: $(IBM_SUBSCRIPTION_CHANNEL)
-    csv: $(IBM_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(IBM_SUBSCRIPTION_PACKAGE)
-    scaleUpOnInstanceOf:
-      - flashsystemclusters.odf.ibm.com
-  NOOBAA: |
-    channel: $(NOOBAA_SUBSCRIPTION_CHANNEL)
-    csv: $(NOOBAA_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(NOOBAA_SUBSCRIPTION_PACKAGE)
-    scaleUpOnInstanceOf:
-      - noobaas.noobaa.io
-  OCS_CLIENT: |
-    channel: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)
-    csv: $(OCS_CLIENT_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
-    scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
-  OCS: |
-    channel: $(OCS_SUBSCRIPTION_CHANNEL)
-    csv: $(OCS_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(OCS_SUBSCRIPTION_PACKAGE)
-    scaleUpOnInstanceOf:
-      - storageclusters.ocs.openshift.io
-  ODF_DEPS: |
-    channel: $(ODF_DEPS_SUBSCRIPTION_CHANNEL)
-    csv: $(ODF_DEPS_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(ODF_DEPS_SUBSCRIPTION_PACKAGE)
-  PROMETHEUS: |
-    channel: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
-    csv: $(PROMETHEUS_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(PROMETHEUS_SUBSCRIPTION_PACKAGE)
-    scaleUpOnInstanceOf:
-      - alertmanagers.monitoring.coreos.com
-      - prometheuses.monitoring.coreos.com
-  RECIPE: |
-    channel: $(RECIPE_SUBSCRIPTION_CHANNEL)
-    csv: $(RECIPE_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(RECIPE_SUBSCRIPTION_PACKAGE)
-  ROOK: |
-    channel: $(ROOK_SUBSCRIPTION_CHANNEL)
-    csv: $(ROOK_SUBSCRIPTION_STARTINGCSV)
-    pkg: $(ROOK_SUBSCRIPTION_PACKAGE)
-    scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
-endef
-export CONFIGMAP_YAML
-
-
 update-mgr-config: ## Feed env variables to the manager configmap
 	@echo "$$CONFIGMAP_YAML" > config/manager/configmap.yaml
 
@@ -186,6 +118,7 @@ checkout-bundle-timestamp:
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	# Dependencies bundle
+	@echo "$$DEPENDENCIES_YAML" > bundle/odf-dependencies/metadata/dependencies.yaml
 	cd config/bundle && $(KUSTOMIZE) edit add annotation --force \
 		'olm.skipRange':"$(SKIP_RANGE)" \
 		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
@@ -225,6 +158,7 @@ bundle-push: ## Push the bundle image.
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog
 catalog: opm ## Generate catalog manifests and then validate generated files.
+	@echo "$$INDEX_YAML" > catalog/index.yaml
 	$(OPM) render --output=yaml $(BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf.yaml
 	$(OPM) render --output=yaml $(ODF_DEPS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf-dependencies.yaml
 	$(OPM) render --output=yaml $(OCS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs.yaml
