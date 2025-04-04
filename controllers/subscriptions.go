@@ -37,7 +37,7 @@ import (
 //
 // NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
 // because fake.Client does not support them.
-func GetDesiredSubscription(cli client.Client, record *OlmPkgRecord) (*opv1a1.Subscription, error) {
+func GetDesiredSubscription(ctx context.Context, cli client.Client, record *OlmPkgRecord) (*opv1a1.Subscription, error) {
 
 	desiredSubscription := &opv1a1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
@@ -53,7 +53,7 @@ func GetDesiredSubscription(cli client.Client, record *OlmPkgRecord) (*opv1a1.Su
 
 	AdjustSpecialCasesSubscriptionConfig(desiredSubscription)
 
-	odfSub, err := GetOdfSubscription(cli)
+	odfSub, err := GetOdfSubscription(ctx, cli)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func GetDesiredSubscription(cli client.Client, record *OlmPkgRecord) (*opv1a1.Su
 	}
 
 	subsList := &opv1a1.SubscriptionList{}
-	err = cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
+	err = cli.List(ctx, subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
 	if err != nil {
 		return nil, err
 	}
@@ -179,11 +179,11 @@ func getMergedEnvVars(envList1, envList2 []corev1.EnvVar) []corev1.EnvVar {
 	return updatedEnvVars
 }
 
-func EnsureDesiredSubscription(cli client.Client, olmPkgRecord *OlmPkgRecord) error {
+func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 
 	var err error
 
-	desiredSubscription, err := GetDesiredSubscription(cli, olmPkgRecord)
+	desiredSubscription, err := GetDesiredSubscription(ctx, cli, olmPkgRecord)
 	if err != nil {
 		return err
 	}
@@ -197,9 +197,9 @@ func EnsureDesiredSubscription(cli client.Client, olmPkgRecord *OlmPkgRecord) er
 	// create/update subscription
 	sub := &opv1a1.Subscription{}
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, sub, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, cli, sub, func() error {
 		sub.Spec = desiredSubscription.Spec
-		return SetOdfSubControllerReference(cli, sub)
+		return SetOdfSubControllerReference(ctx, cli, sub)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -208,9 +208,9 @@ func EnsureDesiredSubscription(cli client.Client, olmPkgRecord *OlmPkgRecord) er
 	return nil
 }
 
-func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
+func SetOdfSubControllerReference(ctx context.Context, cli client.Client, obj client.Object) error {
 
-	odfSub, err := GetOdfSubscription(cli)
+	odfSub, err := GetOdfSubscription(ctx, cli)
 	if err != nil {
 		return err
 	}
@@ -224,10 +224,10 @@ func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
 }
 
 // GetOdfSubscription returns the subscription for odf-operator.
-func GetOdfSubscription(cli client.Client) (*opv1a1.Subscription, error) {
+func GetOdfSubscription(ctx context.Context, cli client.Client) (*opv1a1.Subscription, error) {
 
 	subsList := &opv1a1.SubscriptionList{}
-	err := cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: OperatorNamespace})
+	err := cli.List(ctx, subsList, &client.ListOptions{Namespace: OperatorNamespace})
 	if err != nil {
 		return nil, err
 	}
@@ -241,17 +241,17 @@ func GetOdfSubscription(cli client.Client) (*opv1a1.Subscription, error) {
 	return nil, fmt.Errorf("odf-operator subscription not found")
 }
 
-func EnsureCsv(cli client.Client, olmPkgRecord *OlmPkgRecord) error {
+func EnsureCsv(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 
 	csvObj := &opv1a1.ClusterServiceVersion{}
 	csvObj.Name, csvObj.Namespace = olmPkgRecord.Csv, OperatorNamespace
 
-	if err := cli.Get(context.TODO(), client.ObjectKeyFromObject(csvObj), csvObj); err != nil {
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(csvObj), csvObj); err != nil {
 		if errors.IsNotFound(err) {
-			if present, err := isSubscriptionPresent(cli, olmPkgRecord); err != nil {
+			if present, err := isSubscriptionPresent(ctx, cli, olmPkgRecord); err != nil {
 				return err
 			} else if present {
-				if err := ApproveInstallPlanForCsv(cli, olmPkgRecord.Csv); err != nil {
+				if err := ApproveInstallPlanForCsv(ctx, cli, olmPkgRecord.Csv); err != nil {
 					return err
 				}
 			}
@@ -260,8 +260,8 @@ func EnsureCsv(cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 		return err
 	}
 
-	if _, err := controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
-		return SetOdfSubControllerReference(cli, csvObj)
+	if _, err := controllerutil.CreateOrUpdate(ctx, cli, csvObj, func() error {
+		return SetOdfSubControllerReference(ctx, cli, csvObj)
 	}); err != nil {
 		return err
 	}
@@ -276,11 +276,11 @@ func EnsureCsv(cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 	return nil
 }
 
-func isSubscriptionPresent(cli client.Client, olmPkgRecord *OlmPkgRecord) (bool, error) {
+func isSubscriptionPresent(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord) (bool, error) {
 
 	// get all subscriptions in the cluster
 	subList := &opv1a1.SubscriptionList{}
-	if err := cli.List(context.TODO(), subList, client.InNamespace(OperatorNamespace)); err != nil {
+	if err := cli.List(ctx, subList, client.InNamespace(OperatorNamespace)); err != nil {
 		return false, err
 	}
 
@@ -296,13 +296,13 @@ func isSubscriptionPresent(cli client.Client, olmPkgRecord *OlmPkgRecord) (bool,
 
 // ApproveInstallPlanForCsv approve the manual approval installPlan for the given CSV
 // and returns an error if none found
-func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
+func ApproveInstallPlanForCsv(ctx context.Context, cli client.Client, csvName string) error {
 
 	var finalError error
 	var foundInstallPlan bool
 
 	installPlans := &opv1a1.InstallPlanList{}
-	err := cli.List(context.TODO(), installPlans, &client.ListOptions{Namespace: OperatorNamespace})
+	err := cli.List(ctx, installPlans, &client.ListOptions{Namespace: OperatorNamespace})
 
 	if err != nil {
 		return err
@@ -315,7 +315,7 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 				!installPlan.Spec.Approved {
 
 				installPlans.Items[i].Spec.Approved = true
-				err = cli.Update(context.TODO(), &installPlans.Items[i])
+				err = cli.Update(ctx, &installPlans.Items[i])
 				if err != nil {
 					multierr.AppendInto(&finalError, fmt.Errorf(
 						"Failed to approve installplan %s", installPlan.Name))

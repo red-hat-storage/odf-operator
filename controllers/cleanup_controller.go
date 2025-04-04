@@ -123,7 +123,7 @@ func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logge
 		return s == "storagesystem.odf.openshift.io"
 	})
 
-	if err := r.Client.Update(context.TODO(), instance); err != nil {
+	if err := r.Client.Update(ctx, instance); err != nil {
 		logger.Error(err, "failed deleting storagesystem")
 		return err
 	}
