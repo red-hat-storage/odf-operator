@@ -17,11 +17,6 @@ resources:
   path: github.com/red-hat-storage/odf-operator/api/v1alpha1
   version: v1alpha1
 - controller: true
-  domain: openshift.io
-  group: ocs
-  kind: StorageCluster
-  version: v1
-- controller: true
   domain: coreos.com
   group: operators
   kind: Subscription
