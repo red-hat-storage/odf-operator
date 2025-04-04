@@ -135,6 +135,7 @@ rules:
   resources:
   - storageclusters
   verbs:
+  - delete
   - get
   - list
   - patch
@@ -145,6 +146,7 @@ rules:
   resources:
   - flashsystemclusters
   verbs:
+  - delete
   - get
   - list
   - patch
