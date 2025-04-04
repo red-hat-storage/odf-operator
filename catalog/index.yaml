@@ -76,17 +76,6 @@ entries:
   - name: cephcsi-operator.v4.19.0
 
 ---
-defaultChannel: stable-v1.7
-name: ibm-storage-odf-operator
-schema: olm.package
----
-schema: olm.channel
-package: ibm-storage-odf-operator
-name: stable-v1.7
-entries:
-  - name: ibm-storage-odf-operator.v1.7.0
-
----
 defaultChannel: alpha
 name: rook-ceph-operator
 schema: olm.package
@@ -118,3 +107,14 @@ package: recipe
 name: alpha
 entries:
   - name: recipe.v0.0.1
+
+---
+defaultChannel: stable-v1.7
+name: ibm-storage-odf-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ibm-storage-odf-operator
+name: stable-v1.7
+entries:
+  - name: ibm-storage-odf-operator.v1.7.0
