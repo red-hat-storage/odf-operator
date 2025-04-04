@@ -16,7 +16,7 @@ data:
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM: |
-    channel: stable-v1.6
+    channel: stable-v1.7
     csv: ibm-storage-odf-operator.v1.7.0
     pkg: ibm-storage-odf-operator
     scaleUpOnInstanceOf:

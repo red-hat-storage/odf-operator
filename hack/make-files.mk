@@ -1,0 +1,230 @@
+# In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
+# scale up client op based on cephCluster instead of storageClient CR
+define CONFIGMAP_YAML
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: manager-config
+data:
+  CEPHCSI: |
+    channel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
+    csv: $(CEPHCSI_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
+  CSIADDONS: |
+    channel: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
+    csv: $(CSIADDONS_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
+  IBM: |
+    channel: $(IBM_SUBSCRIPTION_CHANNEL)
+    csv: $(IBM_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(IBM_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - flashsystemclusters.odf.ibm.com
+  NOOBAA: |
+    channel: $(NOOBAA_SUBSCRIPTION_CHANNEL)
+    csv: $(NOOBAA_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(NOOBAA_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - noobaas.noobaa.io
+  OCS_CLIENT: |
+    channel: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)
+    csv: $(OCS_CLIENT_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
+  OCS: |
+    channel: $(OCS_SUBSCRIPTION_CHANNEL)
+    csv: $(OCS_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(OCS_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - storageclusters.ocs.openshift.io
+  ODF_DEPS: |
+    channel: $(ODF_DEPS_SUBSCRIPTION_CHANNEL)
+    csv: $(ODF_DEPS_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(ODF_DEPS_SUBSCRIPTION_PACKAGE)
+  PROMETHEUS: |
+    channel: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
+    csv: $(PROMETHEUS_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(PROMETHEUS_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - alertmanagers.monitoring.coreos.com
+      - prometheuses.monitoring.coreos.com
+  RECIPE: |
+    channel: $(RECIPE_SUBSCRIPTION_CHANNEL)
+    csv: $(RECIPE_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(RECIPE_SUBSCRIPTION_PACKAGE)
+  ROOK: |
+    channel: $(ROOK_SUBSCRIPTION_CHANNEL)
+    csv: $(ROOK_SUBSCRIPTION_STARTINGCSV)
+    pkg: $(ROOK_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
+endef
+export CONFIGMAP_YAML
+
+
+define DEPENDENCIES_YAML
+dependencies:
+- type: olm.package
+  value:
+    packageName: $(OCS_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(OCS_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(ROOK_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(ROOK_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(OCS_CLIENT_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(NOOBAA_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(NOOBAA_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(CSIADDONS_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(CEPHCSI_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(PROMETHEUS_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(PROMETHEUS_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(RECIPE_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(RECIPE_BUNDLE_VERSION))"
+endef
+export DEPENDENCIES_YAML
+
+
+define INDEX_YAML
+---
+defaultChannel: $(DEFAULT_CHANNEL)
+name: $(IMAGE_NAME)
+schema: olm.package
+---
+schema: olm.channel
+package: $(IMAGE_NAME)
+name: $(DEFAULT_CHANNEL)
+entries:
+  - name: $(IMAGE_NAME).v$(VERSION)
+
+---
+defaultChannel: $(ODF_DEPS_SUBSCRIPTION_CHANNEL)
+name: $(ODF_DEPS_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(ODF_DEPS_SUBSCRIPTION_PACKAGE)
+name: $(ODF_DEPS_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(ODF_DEPS_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(OCS_SUBSCRIPTION_CHANNEL)
+name: $(OCS_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(OCS_SUBSCRIPTION_PACKAGE)
+name: $(OCS_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(OCS_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)
+name: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
+name: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(OCS_CLIENT_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(NOOBAA_SUBSCRIPTION_CHANNEL)
+name: $(NOOBAA_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(NOOBAA_SUBSCRIPTION_PACKAGE)
+name: $(NOOBAA_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(NOOBAA_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
+name: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
+name: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(CSIADDONS_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
+name: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
+name: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(CEPHCSI_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(ROOK_SUBSCRIPTION_CHANNEL)
+name: $(ROOK_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(ROOK_SUBSCRIPTION_PACKAGE)
+name: $(ROOK_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(ROOK_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
+name: $(PROMETHEUS_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(PROMETHEUS_SUBSCRIPTION_PACKAGE)
+name: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(PROMETHEUS_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(RECIPE_SUBSCRIPTION_CHANNEL)
+name: $(RECIPE_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(RECIPE_SUBSCRIPTION_PACKAGE)
+name: $(RECIPE_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(RECIPE_SUBSCRIPTION_STARTINGCSV)
+
+---
+defaultChannel: $(IBM_SUBSCRIPTION_CHANNEL)
+name: $(IBM_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(IBM_SUBSCRIPTION_PACKAGE)
+name: $(IBM_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(IBM_SUBSCRIPTION_STARTINGCSV)
+endef
+export INDEX_YAML
