@@ -278,6 +278,7 @@ spec:
           resources:
           - storageclusters
           verbs:
+          - delete
           - get
           - list
           - patch
@@ -288,6 +289,7 @@ spec:
           resources:
           - flashsystemclusters
           verbs:
+          - delete
           - get
           - list
           - patch

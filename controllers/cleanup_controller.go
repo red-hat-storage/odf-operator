@@ -47,8 +47,8 @@ type CleanupReconciler struct {
 
 //+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=odf.openshift.io,resources=storagesystems/finalizers,verbs=update
-//+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters,verbs=get;list;update;patch
-//+kubebuilder:rbac:groups=odf.ibm.com,resources=flashsystemclusters,verbs=get;list;update;patch
+//+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters,verbs=get;list;update;patch;delete
+//+kubebuilder:rbac:groups=odf.ibm.com,resources=flashsystemclusters,verbs=get;list;update;patch;delete
 
 func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
