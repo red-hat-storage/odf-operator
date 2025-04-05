@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	OcsSubscriptionPackage     = "ocs-operator"
 	OdfSubscriptionPackage     = "odf-operator"
 	OdfDepsSubscriptionPackage = "odf-dependencies"
 )
