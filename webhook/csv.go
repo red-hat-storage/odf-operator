@@ -143,7 +143,7 @@ func (r *ClusterServiceVersionDeploymentScaler) isPreviousCsvHasRunningDeploymen
 	deployments := prevCsv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
 	for i := range deployments {
 		deployment := &deployments[i]
-		if *deployment.Spec.Replicas > 0 {
+		if deployment.Spec.Replicas == nil || *deployment.Spec.Replicas > 0 {
 			// upgrade case where an older csv is found with replica 1
 			return true, nil
 		}
