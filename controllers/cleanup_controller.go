@@ -22,6 +22,7 @@ import (
 	"slices"
 
 	"github.com/go-logr/logr"
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -66,12 +67,60 @@ func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	logger.Info("storagesystem instance found")
 
+	var ocsCsvName = ""
+	if err := r.loadOdfConfigMapData(ctx, logger, &ocsCsvName); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.isOcsCsvReady(ctx, logger, ocsCsvName); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	if err := r.safelyDeleteStorageSystem(ctx, logger, instance); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
+}
+
+func (r *CleanupReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, ocsCsvName *string) error {
+
+	configmap, err := GetOdfConfigMap(ctx, r.Client, logger)
+	if err != nil {
+		return err
+	}
+
+	ParseOdfConfigMapRecords(logger, configmap, func(record *OdfOperatorConfigMapRecord, key, rawValue string) {
+		if record.Pkg == OcsSubscriptionPackage {
+			*ocsCsvName = record.Csv
+		}
+	})
+
+	logger.Info("cleanup controller records", "records", *ocsCsvName)
+
+	return nil
+}
+
+func (r *CleanupReconciler) isOcsCsvReady(ctx context.Context, logger logr.Logger, ocsCsvName string) error {
+
+	ocsCsv := &opv1a1.ClusterServiceVersion{}
+	ocsCsv.Name = ocsCsvName
+	ocsCsv.Namespace = OperatorNamespace
+
+	err := r.Client.Get(ctx, client.ObjectKeyFromObject(ocsCsv), ocsCsv)
+	if err != nil {
+		logger.Error(err, "failed getting ocs csv", "csvName", ocsCsv)
+		return err
+	}
+
+	if ocsCsv.Status.Phase != opv1a1.CSVPhaseSucceeded {
+		err = fmt.Errorf("csv %s is not in succeeded state", ocsCsvName)
+		logger.Error(err, "waiting for csv to be in succeeded state")
+		return err
+	}
+
+	return nil
 }
 
 func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logger logr.Logger, instance *odfv1a1.StorageSystem) error {
