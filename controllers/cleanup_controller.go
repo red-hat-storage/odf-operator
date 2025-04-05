@@ -22,8 +22,6 @@ import (
 	"slices"
 
 	"github.com/go-logr/logr"
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-operator/pkg/util"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,11 +29,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	odfv1a1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 )
 
 var (
-	StorageClusterKind = odfv1alpha1.StorageKind("storagecluster.ocs.openshift.io/v1")
-	FlashSystemKind    = odfv1alpha1.StorageKind("flashsystemcluster.odf.ibm.com/v1alpha1")
+	StorageClusterKind = odfv1a1.StorageKind("storagecluster.ocs.openshift.io/v1")
+	FlashSystemKind    = odfv1a1.StorageKind("flashsystemcluster.odf.ibm.com/v1alpha1")
 )
 
 type CleanupReconciler struct {
@@ -54,7 +54,7 @@ func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	logger := log.FromContext(ctx)
 	logger.Info("starting reconcile")
 
-	instance := &odfv1alpha1.StorageSystem{}
+	instance := &odfv1a1.StorageSystem{}
 	if err := r.Client.Get(ctx, req.NamespacedName, instance); errors.IsNotFound(err) {
 		logger.Info("storagesystem instance not found")
 		return ctrl.Result{}, nil
@@ -74,7 +74,7 @@ func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logger logr.Logger, instance *odfv1alpha1.StorageSystem) error {
+func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logger logr.Logger, instance *odfv1a1.StorageSystem) error {
 
 	cr := &metav1.PartialObjectMetadata{}
 	cr.Name = instance.Spec.Name
@@ -119,9 +119,11 @@ func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logge
 	}
 
 	// remove the finalizer
-	instance.ObjectMeta.Finalizers = util.RemoveFromSlice(instance.ObjectMeta.Finalizers, "storagesystem.odf.openshift.io")
+	instance.ObjectMeta.Finalizers = slices.DeleteFunc(instance.ObjectMeta.Finalizers, func(s string) bool {
+		return s == "storagesystem.odf.openshift.io"
+	})
 
-	if err := r.Client.Update(context.TODO(), instance); err != nil {
+	if err := r.Client.Update(ctx, instance); err != nil {
 		logger.Error(err, "failed deleting storagesystem")
 		return err
 	}
@@ -134,7 +136,7 @@ func (r *CleanupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
-			&odfv1alpha1.StorageSystem{},
+			&odfv1a1.StorageSystem{},
 			builder.WithPredicates(createOnlyPredicate),
 		).
 		Complete(r)

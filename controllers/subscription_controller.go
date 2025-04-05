@@ -81,7 +81,7 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if err := r.setOperatorCondition(logger, csvNamesMap); err != nil {
+	if err := r.setOperatorCondition(ctx, logger, csvNamesMap); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -89,7 +89,7 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if err := r.ensureSubscriptions(logger, olmPkgRecords); err != nil {
+	if err := r.ensureSubscriptions(ctx, logger, olmPkgRecords); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -123,12 +123,12 @@ func (r *SubscriptionReconciler) loadOdfConfigMapData(ctx context.Context, logge
 	return nil
 }
 
-func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
+func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
 
 	var combinedErr error
 
 	for _, olmPkgRecord := range olmPkgRecords {
-		if err := EnsureDesiredSubscription(r.Client, olmPkgRecord); err != nil {
+		if err := EnsureDesiredSubscription(ctx, r.Client, olmPkgRecord); err != nil {
 			logger.Error(err, "failed to ensure subscription", "package", olmPkgRecord.Pkg)
 			multierr.AppendInto(&combinedErr, err)
 		}
@@ -143,7 +143,7 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, olmPkgR
 	// as there won't be any desired CSVs until all subscriptions are updated.
 
 	for _, olmPkgRecord := range olmPkgRecords {
-		if err := EnsureCsv(r.Client, olmPkgRecord); err != nil {
+		if err := EnsureCsv(ctx, r.Client, olmPkgRecord); err != nil {
 			multierr.AppendInto(&combinedErr, err)
 		}
 	}
@@ -151,9 +151,9 @@ func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, olmPkgR
 	return combinedErr
 }
 
-func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, condMap map[string]struct{}) error {
+func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logger logr.Logger, condMap map[string]struct{}) error {
 	ocdList := &opv2.OperatorConditionList{}
-	err := r.Client.List(context.TODO(), ocdList, client.InNamespace(r.OperatorNamespace))
+	err := r.Client.List(ctx, ocdList, client.InNamespace(r.OperatorNamespace))
 	if err != nil {
 		logger.Error(err, "failed to list OperatorConditions")
 		return err
@@ -171,7 +171,7 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, condMa
 			// operator is not upgradeable
 			msg := fmt.Sprintf("%s:%s", ocd.GetName(), cond.Message)
 			logger.Info("setting operator upgradeable status", "status", cond.Status)
-			return r.operatorCondition.Set(context.TODO(), cond.Status,
+			return r.operatorCondition.Set(ctx, cond.Status,
 				conditions.WithReason(cond.Reason), conditions.WithMessage(msg))
 		}
 	}
@@ -179,7 +179,7 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, condMa
 	// all operators are upgradeable
 	status := metav1.ConditionTrue
 	logger.Info("setting operator upgradeable status", "status", status)
-	return r.operatorCondition.Set(context.TODO(), status,
+	return r.operatorCondition.Set(ctx, status,
 		conditions.WithReason("Dependents"), conditions.WithMessage("No dependent reports not upgradeable status"))
 }
 

@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"time"
 
-	operatorsv1 "github.com/operator-framework/api/pkg/operators/v1"
-	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	opv1 "github.com/operator-framework/api/pkg/operators/v1"
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	utilwait "k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type OlmResources struct {
-	operatorGroups []*operatorsv1.OperatorGroup
-	catalogSources []*operatorsv1alpha1.CatalogSource
-	subscriptions  []*operatorsv1alpha1.Subscription
+	operatorGroups []*opv1.OperatorGroup
+	catalogSources []*opv1a1.CatalogSource
+	subscriptions  []*opv1a1.Subscription
 }
 
 // DeployODFWithOLM deploys odf operator via an olm subscription
@@ -39,7 +39,7 @@ func (d *DeployManager) DeployODFWithOLM(odfCatalogImage, subscriptionChannel st
 // CheckAllCsvs checks if all the required csvs are present & have succeeded
 func (d *DeployManager) CheckAllCsvs(csvNames []string) error {
 	for _, csvName := range csvNames {
-		csv := &operatorsv1alpha1.ClusterServiceVersion{
+		csv := &opv1a1.ClusterServiceVersion{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      csvName,
 				Namespace: InstallNamespace,
@@ -76,25 +76,25 @@ func (d *DeployManager) GetOlmResources(odfCatalogImage, subscriptionChannel str
 	olmResources := &OlmResources{}
 
 	// Operator Groups
-	odfOperatorGroups := &operatorsv1.OperatorGroup{
+	odfOperatorGroups := &opv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "openshift-storage-operatorgroup",
 			Namespace: InstallNamespace,
 		},
-		Spec: operatorsv1.OperatorGroupSpec{
+		Spec: opv1.OperatorGroupSpec{
 			TargetNamespaces: []string{InstallNamespace},
 		},
 	}
 	olmResources.operatorGroups = append(olmResources.operatorGroups, odfOperatorGroups)
 
 	// Catalog Source
-	odfCatalog := &operatorsv1alpha1.CatalogSource{
+	odfCatalog := &opv1a1.CatalogSource{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "odf-catalogsource",
 			Namespace: InstallNamespace,
 		},
-		Spec: operatorsv1alpha1.CatalogSourceSpec{
-			SourceType:  operatorsv1alpha1.SourceTypeGrpc,
+		Spec: opv1a1.CatalogSourceSpec{
+			SourceType:  opv1a1.SourceTypeGrpc,
 			Image:       odfCatalogImage,
 			DisplayName: "OpenShift Data Foundation",
 			Publisher:   "Red Hat",
@@ -103,12 +103,12 @@ func (d *DeployManager) GetOlmResources(odfCatalogImage, subscriptionChannel str
 	olmResources.catalogSources = append(olmResources.catalogSources, odfCatalog)
 
 	// Subscriptions
-	odfSubscription := &operatorsv1alpha1.Subscription{
+	odfSubscription := &opv1a1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "odf-subscription",
 			Namespace: InstallNamespace,
 		},
-		Spec: &operatorsv1alpha1.SubscriptionSpec{
+		Spec: &opv1a1.SubscriptionSpec{
 			Channel:                subscriptionChannel,
 			InstallPlanApproval:    "Automatic",
 			Package:                "odf-operator",
@@ -179,15 +179,15 @@ func (d *DeployManager) DeleteOlmResources(olmResources *OlmResources) error {
 }
 
 // WaitForCatalogSource wait for catalogSource to become ready
-func (d *DeployManager) WaitForCatalogSource(catalogsource *operatorsv1alpha1.CatalogSource) error {
+func (d *DeployManager) WaitForCatalogSource(catalogsource *opv1a1.CatalogSource) error {
 
 	timeout := 600 * time.Second
 	interval := 10 * time.Second
 
 	lastReason := ""
 
-	err := utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
-		existingCatalogSource := &operatorsv1alpha1.CatalogSource{}
+	err := wait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
+		existingCatalogSource := &opv1a1.CatalogSource{}
 		err = d.Client.Get(d.Ctx, client.ObjectKeyFromObject(catalogsource), existingCatalogSource)
 		if err != nil {
 			lastReason = fmt.Sprintf("failed to get catalogsource: %v", err)
@@ -214,21 +214,21 @@ func (d *DeployManager) WaitForCatalogSource(catalogsource *operatorsv1alpha1.Ca
 }
 
 // WaitForCsv waits for the CSV to successfully installed
-func (d *DeployManager) WaitForCsv(csv *operatorsv1alpha1.ClusterServiceVersion) error {
+func (d *DeployManager) WaitForCsv(csv *opv1a1.ClusterServiceVersion) error {
 
 	timeout := 600 * time.Second
 	interval := 10 * time.Second
 
 	lastReason := ""
 
-	err := utilwait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
-		existingcsv := &operatorsv1alpha1.ClusterServiceVersion{}
+	err := wait.PollUntilContextTimeout(d.Ctx, interval, timeout, true, func(context.Context) (done bool, err error) {
+		existingcsv := &opv1a1.ClusterServiceVersion{}
 		err = d.Client.Get(d.Ctx, client.ObjectKeyFromObject(csv), existingcsv)
 		if err != nil {
 			lastReason = fmt.Sprintf("failed to get CSV: %v", err)
 			return false, nil
 		}
-		if existingcsv.Status.Phase != operatorsv1alpha1.CSVPhaseSucceeded {
+		if existingcsv.Status.Phase != opv1a1.CSVPhaseSucceeded {
 			lastReason = fmt.Sprintf("waiting for CSV to succeed, but stuck in %s phase", existingcsv.Status.Phase)
 			return false, nil
 		}
