@@ -20,8 +20,10 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/go-logr/logr"
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	odfv1a1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
+	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
 var (
@@ -66,12 +69,47 @@ func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	logger.Info("storagesystem instance found")
 
+	// TODO: this check should be removed in 4.20
+	// During an ODF operator upgrade, a race condition occurs where:
+	//  odf-operator upgrades first to 4.19 and removes the StorageSystem ownerReference from StorageCluster
+	//  ocs-operator (still at v4.18) fails to find this ownerReference, marking itself as not upgradable
+	// This creates a deadlock because:
+	//  ocs-operator requires the StorageSystem ownerReference to mark itself upgradable
+	//  odf-operator has already deleted both the ownerReference and StorageSystem CR
+	// The function ensures that ocs-operator CSV upgrades before running the cleanup, preventing this race condition.
+	// In 4.19 we are not using StorageSystem CR, so the check should be removed in 4.20
+	if err := r.isOcsOperatorSubAndCSVAt419(ctx); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	if err := r.safelyDeleteStorageSystem(ctx, logger, instance); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
+}
+
+func (r *CleanupReconciler) isOcsOperatorSubAndCSVAt419(ctx context.Context) error {
+	subscriptionList := &opv1a1.SubscriptionList{}
+	if err := r.List(ctx, subscriptionList, client.InNamespace(r.OperatorNamespace)); err != nil {
+		return fmt.Errorf("failed to list subscriptions: %v", err)
+	}
+	ocsOperatorSubscription := util.Find(subscriptionList.Items, func(sub *opv1a1.Subscription) bool {
+		return sub.Spec.Package == "ocs-operator"
+	})
+	if ocsOperatorSubscription == nil {
+		return fmt.Errorf("no subscription exists with package 'ocs-operator'")
+	} else if strings.HasSuffix(ocsOperatorSubscription.Spec.Channel, "4.18") {
+		return fmt.Errorf("subscription of 'ocs-operator' still points to '4.18'")
+	} else if !strings.HasSuffix(ocsOperatorSubscription.Spec.Channel, "4.19") {
+		// a guard that this code should be skipped in 4.19 even if the code isn't removed
+		return nil
+	}
+	if !strings.Contains(ocsOperatorSubscription.Status.InstalledCSV, "4.19") {
+		return fmt.Errorf("waiting for 'ocs-operator' installed CSV at '4.19'")
+	}
+	return nil
 }
 
 func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logger logr.Logger, instance *odfv1a1.StorageSystem) error {
