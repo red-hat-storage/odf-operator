@@ -56,10 +56,10 @@ type ClusterVersionReconciler struct {
 func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	instance := configv1.ClusterVersion{}
-	if err := r.Client.Get(context.TODO(), req.NamespacedName, &instance); err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, &instance); err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.ensureConsolePlugin(instance.Status.Desired.Version); err != nil {
+	if err := r.ensureConsolePlugin(ctx, instance.Status.Desired.Version); err != nil {
 		logger.Error(err, "Could not ensure compatibility for ODF consolePlugin")
 		return ctrl.Result{}, err
 	}
@@ -74,13 +74,13 @@ func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	err := mgr.Add(manager.RunnableFunc(func(context.Context) error {
-		clusterVersion, err := util.DetermineOpenShiftVersion(r.Client)
+	err := mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
+		clusterVersion, err := util.DetermineOpenShiftVersion(ctx, r.Client)
 		if err != nil {
 			return err
 		}
 
-		return r.ensureConsolePlugin(clusterVersion)
+		return r.ensureConsolePlugin(ctx, clusterVersion)
 	}))
 	if err != nil {
 		return err
@@ -91,8 +91,8 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) error {
-	logger := log.FromContext(context.TODO())
+func (r *ClusterVersionReconciler) ensureConsolePlugin(ctx context.Context, clusterVersion string) error {
+	logger := log.FromContext(ctx)
 	// The base path to where the request are sent
 	basePath := console.GetBasePath(clusterVersion)
 	nginxConf := console.NginxConf
@@ -102,7 +102,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 
 	// Get ODF console Deployment
 	odfConsoleDeployment := console.GetDeployment(OperatorNamespace)
-	err := r.Client.Get(context.TODO(), types.NamespacedName{
+	err := r.Client.Get(ctx, types.NamespacedName{
 		Name:      odfConsoleDeployment.Name,
 		Namespace: odfConsoleDeployment.Namespace,
 	}, odfConsoleDeployment)
@@ -112,7 +112,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 
 	// Create/Update ODF console ConfigMap (nginx configuration)
 	odfConsoleConfigMap := console.GetNginxConfConfigMap(OperatorNamespace)
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsoleConfigMap, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, odfConsoleConfigMap, func() error {
 		if odfConsoleConfigMapData := odfConsoleConfigMap.Data["nginx.conf"]; odfConsoleConfigMapData != nginxConf {
 			logger.Info(fmt.Sprintf("Set the ConfigMap odf-console-nginx-conf data as '%s'", nginxConf))
 			odfConsoleConfigMap.Data["nginx.conf"] = nginxConf
@@ -125,7 +125,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 
 	// Create/Update ODF console Service
 	odfConsoleService := console.GetService(r.ConsolePort, OperatorNamespace)
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsoleService, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, odfConsoleService, func() error {
 		return controllerutil.SetControllerReference(odfConsoleDeployment, odfConsoleService, r.Scheme)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
@@ -134,7 +134,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 
 	// Create/Update ODF console ConsolePlugin
 	odfConsolePlugin := console.GetConsolePluginCR(r.ConsolePort, OperatorNamespace)
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, odfConsolePlugin, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, odfConsolePlugin, func() error {
 		if odfConsolePlugin.Spec.Backend.Service != nil {
 			if currentBasePath := odfConsolePlugin.Spec.Backend.Service.BasePath; currentBasePath != basePath {
 				logger.Info(fmt.Sprintf("Set the BasePath for odf-console plugin as '%s'", basePath))
@@ -150,7 +150,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(clusterVersion string) er
 
 	// Create/Update ConsoleCLIDownload (CLI Tool download)
 	consoleCLIDownload := console.GetConsoleCLIDownloadCR()
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), r.Client, consoleCLIDownload, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, consoleCLIDownload, func() error {
 		if currentPortalLink := consoleCLIDownload.Spec.Links[0].Href; currentPortalLink != portalLink {
 			logger.Info(fmt.Sprintf("Set the customer portal link for CLI Tool '%s'", portalLink))
 			consoleCLIDownload.Spec.Links[0].Href = portalLink
