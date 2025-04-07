@@ -62,7 +62,7 @@ var (
 	}
 )
 
-type KindPackagesRecord struct {
+type KindCsvsRecord struct {
 	/* examples
 	   ApiVersion: "ceph.rook.io/v1",
 	   Kind:       "CephCluster",
@@ -100,7 +100,7 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	logger := log.FromContext(ctx)
 	logger.Info("starting reconcile")
 
-	var kindMapping = map[string]*KindPackagesRecord{}
+	var kindMapping = map[string]*KindCsvsRecord{}
 	var odfDepsCsvName = ""
 	if err := r.loadOdfConfigMapData(ctx, logger, kindMapping, &odfDepsCsvName); err != nil {
 		return ctrl.Result{}, err
@@ -126,7 +126,7 @@ func (r *OperatorScalerReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{}, nil
 }
 
-func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, kindMapping map[string]*KindPackagesRecord, odfDepsCsvName *string) error {
+func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, kindMapping map[string]*KindCsvsRecord, odfDepsCsvName *string) error {
 	logger.Info("entering loadOdfConfigMapData")
 
 	configmap, err := GetOdfConfigMap(ctx, r.Client, logger)
@@ -149,7 +149,7 @@ func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, log
 
 			rec, ok := kindMapping[crdName]
 			if !ok {
-				rec = &KindPackagesRecord{}
+				rec = &KindCsvsRecord{}
 			}
 			rec.CsvNames = append(rec.CsvNames, record.Csv)
 
@@ -245,7 +245,7 @@ func (r *OperatorScalerReconciler) reconcileMetrics(ctx context.Context, logger 
 	return combinedErr
 }
 
-func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logger logr.Logger, kindMapping map[string]*KindPackagesRecord) error {
+func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logger logr.Logger, kindMapping map[string]*KindCsvsRecord) error {
 	logger.Info("entering reconcileOperators")
 
 	var returnErr error
@@ -313,7 +313,7 @@ func (r *OperatorScalerReconciler) updateCsvDeplymentsReplicas(ctx context.Conte
 	return nil
 }
 
-func (r *OperatorScalerReconciler) reconcileDynamicWatchers(_ context.Context, logger logr.Logger, kindMapping map[string]*KindPackagesRecord) error {
+func (r *OperatorScalerReconciler) reconcileDynamicWatchers(_ context.Context, logger logr.Logger, kindMapping map[string]*KindCsvsRecord) error {
 	logger.Info("entering reconcileDynamicWatchers")
 
 	for _, resourceMapping := range kindMapping {
