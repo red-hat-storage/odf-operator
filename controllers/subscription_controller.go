@@ -21,12 +21,14 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	opv2 "github.com/operator-framework/api/pkg/operators/v2"
+	"github.com/operator-framework/operator-lib/conditions"
 	"go.uber.org/multierr"
 	admrv1 "k8s.io/api/admissionregistration/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,138 +36,127 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	operatorv2 "github.com/operator-framework/api/pkg/operators/v2"
-	"github.com/operator-framework/operator-lib/conditions"
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
-// SubscriptionReconciler reconciles a Subscription object
+type OlmPkgRecord struct {
+	/* example
+	   channel: alpha
+	   csv: ocs-operator.v4.18.0
+	   pkg: ocs-operator
+	*/
+
+	Channel string `yaml:"channel"`
+	Csv     string `yaml:"csv"`
+	Pkg     string `yaml:"pkg"`
+}
+
 type SubscriptionReconciler struct {
 	client.Client
+
 	Scheme            *runtime.Scheme
-	Recorder          *EventReporter
 	OperatorNamespace string
-	ConditionName     string
-	OperatorCondition conditions.Condition
+
+	operatorConditionName string
+	operatorCondition     conditions.Condition
 }
 
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions/finalizers,verbs=update
-//+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update
 
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *SubscriptionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-
+func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	logger.Info("starting reconcile")
 
-	instance := &operatorv1alpha1.Subscription{}
-	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			logger.Info("Subscription instance not found.")
-			return ctrl.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
+	olmPkgRecords := []*OlmPkgRecord{}
+	csvNamesMap := map[string]struct{}{}
+	if err := r.loadOdfConfigMapData(ctx, logger, &olmPkgRecords, csvNamesMap); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	err = r.setOperatorCondition(logger, r.OperatorNamespace)
-	if err != nil {
+	if err := r.setOperatorCondition(ctx, logger, csvNamesMap); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err = reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace); err != nil {
+	if err := reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err = r.ensureSubscriptions(logger, r.OperatorNamespace); err != nil {
+	if err := r.ensureSubscriptions(ctx, logger, olmPkgRecords); err != nil {
 		return ctrl.Result{}, err
 	}
 
+	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
 }
 
-func (r *SubscriptionReconciler) ensureSubscriptions(logger logr.Logger, namespace string) error {
+func (r *SubscriptionReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, olmPkgRecords *[]*OlmPkgRecord, csvNamesMap map[string]struct{}) error {
 
-	var err error
-
-	subsList := map[odfv1alpha1.StorageKind][]*operatorv1alpha1.Subscription{}
-	subsList[StorageClusterKind] = GetSubscriptions(StorageClusterKind)
-
-	ssList := &odfv1alpha1.StorageSystemList{}
-	err = r.Client.List(context.TODO(), ssList, &client.ListOptions{Namespace: namespace})
+	configmap, err := GetOdfConfigMap(ctx, r.Client, logger)
 	if err != nil {
 		return err
 	}
 
-	for _, ss := range ssList.Items {
-		subsList[ss.Spec.Kind] = GetSubscriptions(ss.Spec.Kind)
-	}
-
-	for _, subs := range subsList {
-		for _, sub := range subs {
-			errSub := EnsureDesiredSubscription(r.Client, sub)
-			if errSub != nil {
-				logger.Error(errSub, "failed to ensure Subscription", "Subscription", sub.Name)
-				err = fmt.Errorf("failed to ensure Subscriptions")
-				multierr.AppendInto(&err, fmt.Errorf("failed to ensure Subscriptions"))
-			}
-		}
-	}
-
-	if err != nil {
-		return err
-	}
-
-	for kind := range subsList {
-		csvNames, csvErr := GetVendorCsvNames(r.Client, kind)
-		if csvErr != nil {
-			return csvErr
+	ParseOdfConfigMapRecords(logger, configmap, func(record *OdfOperatorConfigMapRecord, key, rawValue string) {
+		if record.Channel == "" || record.Csv == "" || record.Pkg == "" {
+			logger.Info("skipping the record from the configmap", "key", key, "value", rawValue)
+			return
 		}
 
-		for _, csvName := range csvNames {
-			_, csvErr := EnsureVendorCsv(r.Client, csvName)
-			if csvErr != nil {
-				multierr.AppendInto(&err, csvErr)
-			}
-		}
-	}
+		*olmPkgRecords = append(*olmPkgRecords, &OlmPkgRecord{
+			Channel: record.Channel,
+			Csv:     record.Csv,
+			Pkg:     record.Pkg,
+		})
+		csvNamesMap[record.Csv] = struct{}{}
+	})
 
-	return err
+	logger.Info("subscriptions records", "records", olmPkgRecords)
+
+	return nil
 }
 
-func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namespace string) error {
-	ocdList := &operatorv2.OperatorConditionList{}
-	err := r.Client.List(context.TODO(), ocdList, client.InNamespace(namespace))
+func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
+
+	var combinedErr error
+
+	for _, olmPkgRecord := range olmPkgRecords {
+		if err := EnsureDesiredSubscription(ctx, r.Client, olmPkgRecord); err != nil {
+			logger.Error(err, "failed to ensure subscription", "package", olmPkgRecord.Pkg)
+			multierr.AppendInto(&combinedErr, err)
+		}
+	}
+
+	if combinedErr != nil {
+		return combinedErr
+	}
+
+	// Ensure CSVs are checked only after updating the channel of all subscriptions.
+	// Checking the CSV of a single updated subscription is incorrect,
+	// as there won't be any desired CSVs until all subscriptions are updated.
+
+	for _, olmPkgRecord := range olmPkgRecords {
+		if err := EnsureCsv(ctx, r.Client, olmPkgRecord); err != nil {
+			multierr.AppendInto(&combinedErr, err)
+		}
+	}
+
+	return combinedErr
+}
+
+func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logger logr.Logger, condMap map[string]struct{}) error {
+	ocdList := &opv2.OperatorConditionList{}
+	err := r.Client.List(ctx, ocdList, client.InNamespace(r.OperatorNamespace))
 	if err != nil {
 		logger.Error(err, "failed to list OperatorConditions")
 		return err
-	}
-
-	condNames, err := GetVendorCsvNames(r.Client, StorageClusterKind)
-	if err != nil {
-		return err
-	}
-
-	condNamesFlashSystem, err := GetVendorCsvNames(r.Client, FlashSystemKind)
-	if err != nil {
-		return err
-	}
-
-	condNames = append(condNames, condNamesFlashSystem...)
-
-	condMap := make(map[string]struct{}, len(condNames))
-	for i := range condNames {
-		condMap[condNames[i]] = struct{}{}
 	}
 
 	for ocdIdx := range ocdList.Items {
@@ -180,7 +171,7 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 			// operator is not upgradeable
 			msg := fmt.Sprintf("%s:%s", ocd.GetName(), cond.Message)
 			logger.Info("setting operator upgradeable status", "status", cond.Status)
-			return r.OperatorCondition.Set(context.TODO(), cond.Status,
+			return r.operatorCondition.Set(ctx, cond.Status,
 				conditions.WithReason(cond.Reason), conditions.WithMessage(msg))
 		}
 	}
@@ -188,42 +179,22 @@ func (r *SubscriptionReconciler) setOperatorCondition(logger logr.Logger, namesp
 	// all operators are upgradeable
 	status := metav1.ConditionTrue
 	logger.Info("setting operator upgradeable status", "status", status)
-	return r.OperatorCondition.Set(context.TODO(), status,
+	return r.operatorCondition.Set(ctx, status,
 		conditions.WithReason("Dependents"), conditions.WithMessage("No dependent reports not upgradeable status"))
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
-	generationChangedPredicate := predicate.GenerationChangedPredicate{}
+	var err error
 
-	predicateFunc := func(obj runtime.Object) bool {
-		instance, ok := obj.(*operatorv1alpha1.Subscription)
-		if !ok {
-			return false
-		}
-
-		// ignore if not a odf-operator subscription
-		if instance.Spec.Package != "odf-operator" {
-			return false
-		}
-
-		return true
+	r.operatorConditionName, err = util.GetConditionName(mgr.GetClient())
+	if err != nil {
+		return err
 	}
-
-	subscriptionPredicate := predicate.Funcs{
-		CreateFunc: func(e event.CreateEvent) bool {
-			return predicateFunc(e.Object)
-		},
-		DeleteFunc: func(e event.DeleteEvent) bool {
-			return predicateFunc(e.Object)
-		},
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			return predicateFunc(e.ObjectNew)
-		},
-		GenericFunc: func(e event.GenericEvent) bool {
-			return predicateFunc(e.Object)
-		},
+	r.operatorCondition, err = util.NewUpgradeableCondition(mgr.GetClient())
+	if err != nil {
+		return err
 	}
 
 	conditionPredicate := predicate.Funcs{
@@ -235,23 +206,23 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			if e.ObjectOld == nil || e.ObjectNew == nil {
 				return false
 			}
-			oldObj, _ := e.ObjectOld.(*operatorv2.OperatorCondition)
-			newObj, _ := e.ObjectNew.(*operatorv2.OperatorCondition)
+			oldObj, _ := e.ObjectOld.(*opv2.OperatorCondition)
+			newObj, _ := e.ObjectNew.(*opv2.OperatorCondition)
 			if oldObj == nil || newObj == nil {
 				return false
 			}
 
 			// skip sending a reconcile event if our own condition is updated
-			if newObj.GetName() == r.ConditionName {
+			if newObj.GetName() == r.operatorConditionName {
 				return false
 			}
 
 			// change in admin set conditions for upgradeability
 			oldOverride := util.Find(oldObj.Spec.Overrides, func(cond *metav1.Condition) bool {
-				return cond.Type == operatorv2.Upgradeable
+				return cond.Type == opv2.Upgradeable
 			})
 			newOverride := util.Find(newObj.Spec.Overrides, func(cond *metav1.Condition) bool {
-				return cond.Type == operatorv2.Upgradeable
+				return cond.Type == opv2.Upgradeable
 			})
 			if oldOverride != nil && newOverride == nil {
 				// override is removed
@@ -266,10 +237,10 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 			// change in operator set conditions for upgradeability
 			oldCond := util.Find(oldObj.Status.Conditions, func(cond *metav1.Condition) bool {
-				return cond.Type == operatorv2.Upgradeable
+				return cond.Type == opv2.Upgradeable
 			})
 			newCond := util.Find(newObj.Status.Conditions, func(cond *metav1.Condition) bool {
-				return cond.Type == operatorv2.Upgradeable
+				return cond.Type == opv2.Upgradeable
 			})
 			if newCond != nil {
 				if oldCond == nil {
@@ -281,43 +252,40 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return false
 		},
 	}
-	enqueueFromCondition := handler.EnqueueRequestsFromMapFunc(
-		func(ctx context.Context, obj client.Object) []reconcile.Request {
-			if _, ok := obj.(*operatorv2.OperatorCondition); !ok {
-				return []reconcile.Request{}
-			}
-			logger := log.FromContext(ctx)
-			sub, err := GetOdfSubscription(r.Client)
-			if err != nil {
-				logger.Error(err, "failed to get ODF Subscription")
-				return []reconcile.Request{}
-			}
-			return []reconcile.Request{{NamespacedName: types.NamespacedName{Name: sub.Name, Namespace: sub.Namespace}}}
-		},
-	)
-
-	enqueueOdfSub := handler.EnqueueRequestsFromMapFunc(
-		func(ctx context.Context, obj client.Object) []reconcile.Request {
-			req := reconcile.Request{}
-			req.Name = "odf-operator"
-			req.Namespace = r.OperatorNamespace
-			return []reconcile.Request{req}
-		},
-	)
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&operatorv1alpha1.Subscription{},
-			builder.WithPredicates(generationChangedPredicate, subscriptionPredicate)).
-		Owns(&operatorv1alpha1.Subscription{},
-			builder.WithPredicates(generationChangedPredicate)).
-		Watches(&operatorv2.OperatorCondition{}, enqueueFromCondition, builder.WithPredicates(conditionPredicate)).
-		Watches(&admrv1.MutatingWebhookConfiguration{}, enqueueOdfSub, builder.WithPredicates(generationChangedPredicate)).
+		Named("subscription").
+		Watches(
+			&opv1a1.Subscription{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(predicate.GenerationChangedPredicate{}),
+		).
+		Watches(
+			&opv2.OperatorCondition{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(conditionPredicate),
+		).
+		Watches(
+			&admrv1.MutatingWebhookConfiguration{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(predicate.GenerationChangedPredicate{}),
+		).
+		Watches(
+			&corev1.ConfigMap{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(
+				predicate.NewPredicateFuncs(func(obj client.Object) bool {
+					return obj.GetName() == odfOperatorConfigMapName && obj.GetNamespace() == r.OperatorNamespace
+				}),
+				predicate.GenerationChangedPredicate{},
+			),
+		).
 		Complete(r)
 }
 
-func getNotUpgradeableCond(ocd *operatorv2.OperatorCondition) *metav1.Condition {
+func getNotUpgradeableCond(ocd *opv2.OperatorCondition) *metav1.Condition {
 	cond := util.Find(ocd.Spec.Overrides, func(cd *metav1.Condition) bool {
-		return cd.Type == operatorv2.Upgradeable
+		return cd.Type == opv2.Upgradeable
 	})
 	if cond != nil {
 		if cond.Status != "True" {
@@ -328,6 +296,6 @@ func getNotUpgradeableCond(ocd *operatorv2.OperatorCondition) *metav1.Condition 
 	}
 
 	return util.Find(ocd.Status.Conditions, func(cd *metav1.Condition) bool {
-		return cd.Type == operatorv2.Upgradeable && cd.Status != "True"
+		return cd.Type == opv2.Upgradeable && cd.Status != "True"
 	})
 }

@@ -21,11 +21,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
+	"sync"
 
 	"github.com/go-logr/logr"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"github.com/red-hat-storage/odf-operator/controllers"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,6 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	"github.com/red-hat-storage/odf-operator/controllers"
 )
 
 type ClusterServiceVersionDeploymentScaler struct {
@@ -40,9 +41,14 @@ type ClusterServiceVersionDeploymentScaler struct {
 
 	Decoder           admission.Decoder
 	OperatorNamespace string
+
+	odfOperatorConfigAccessMutex        sync.Mutex
+	odfOperatorConfigMapResourceVersion string
+	odfOwnedCsvNames                    map[string]bool
 }
 
-// +kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;patch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;patch
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get
 
 func (r *ClusterServiceVersionDeploymentScaler) Handle(ctx context.Context, req admission.Request) admission.Response {
 
@@ -53,6 +59,11 @@ func (r *ClusterServiceVersionDeploymentScaler) Handle(ctx context.Context, req 
 	if err := r.Decoder.Decode(req, csv); err != nil {
 		logger.Error(err, "failed decoding admission review as csv")
 		return admission.Errored(http.StatusBadRequest, fmt.Errorf("failed decoding admission review as csv: %v", err))
+	}
+
+	if err := r.loadOdfConfigMapData(ctx, logger); err != nil {
+		logger.Error(err, "failed to build config")
+		return admission.Errored(http.StatusInternalServerError, fmt.Errorf("failed to build config: %v", err))
 	}
 
 	if ok := r.isCsvManagedByOdf(csv); !ok {
@@ -82,6 +93,36 @@ func (r *ClusterServiceVersionDeploymentScaler) Handle(ctx context.Context, req 
 	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledCsv)
 }
 
+func (r *ClusterServiceVersionDeploymentScaler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger) error {
+
+	configmap, err := controllers.GetOdfConfigMap(ctx, r.Client, logger)
+	if err != nil {
+		return err
+	}
+
+	r.odfOperatorConfigAccessMutex.Lock()
+	defer r.odfOperatorConfigAccessMutex.Unlock()
+
+	if configmap.ResourceVersion == r.odfOperatorConfigMapResourceVersion {
+		return nil
+	}
+
+	r.odfOwnedCsvNames = map[string]bool{}
+	controllers.ParseOdfConfigMapRecords(logger, configmap, func(record *controllers.OdfOperatorConfigMapRecord, key, rawValue string) {
+		if record.Csv == "" {
+			logger.Info("skipping the record from the configmap", "key", key, "value", rawValue)
+			return
+		}
+
+		r.odfOwnedCsvNames[record.Csv] = true
+	})
+
+	r.odfOperatorConfigMapResourceVersion = configmap.ResourceVersion
+	logger.Info("webhook csv records", "records", r.odfOwnedCsvNames)
+
+	return nil
+}
+
 func (r *ClusterServiceVersionDeploymentScaler) isPreviousCsvHasRunningDeployments(ctx context.Context, logger logr.Logger, csv *opv1a1.ClusterServiceVersion) (bool, error) {
 
 	if csv.Spec.Replaces == "" {
@@ -103,7 +144,7 @@ func (r *ClusterServiceVersionDeploymentScaler) isPreviousCsvHasRunningDeploymen
 	deployments := prevCsv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
 	for i := range deployments {
 		deployment := &deployments[i]
-		if *deployment.Spec.Replicas > 0 {
+		if deployment.Spec.Replicas == nil || *deployment.Spec.Replicas > 0 {
 			// upgrade case where an older csv is found with replica 1
 			return true, nil
 		}
@@ -128,15 +169,7 @@ func (r *ClusterServiceVersionDeploymentScaler) isCsvManagedByOdf(csv *opv1a1.Cl
 		return false
 	}
 
-	for i := range controllers.ResourceMappingList {
-		for _, pkgName := range controllers.ResourceMappingList[i].PkgNames {
-			if strings.HasPrefix(csv.Name, pkgName) {
-				return true
-			}
-		}
-	}
-
-	return false
+	return r.odfOwnedCsvNames[csv.Name]
 }
 
 func (r *ClusterServiceVersionDeploymentScaler) SetupWebhookWithManager(mgr ctrl.Manager) error {

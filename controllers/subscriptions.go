@@ -21,24 +21,14 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"strings"
 
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/multierr"
-	admv1 "k8s.io/api/admissionregistration/v1"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	operatorv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
-	odfv1alpha1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
-	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
 // CheckForExistingSubscription looks for any existing Subscriptions that
@@ -47,36 +37,39 @@ import (
 //
 // NOTE(jarrpa): We can't use client.MatchingFields to limit the list results
 // because fake.Client does not support them.
-func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) (*operatorv1alpha1.Subscription, error) {
+func GetDesiredSubscription(ctx context.Context, cli client.Client, record *OlmPkgRecord) (*opv1a1.Subscription, error) {
 
-	odfSub, err := GetOdfSubscription(cli)
+	desiredSubscription := &opv1a1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      record.Pkg,
+			Namespace: OperatorNamespace,
+		},
+		Spec: &opv1a1.SubscriptionSpec{
+			Package:     record.Pkg,
+			Channel:     record.Channel,
+			StartingCSV: record.Csv,
+		},
+	}
+
+	AdjustSpecialCasesSubscriptionConfig(desiredSubscription)
+
+	odfSub, err := GetOdfSubscription(ctx, cli)
 	if err != nil {
 		return nil, err
 	}
 
 	if odfSub.Spec.Config == nil {
-		odfSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
+		odfSub.Spec.Config = &opv1a1.SubscriptionConfig{}
 	}
 
-	var isProvider bool
-	if desiredSubscription.Spec.Package == OcsClientSubscriptionPackage ||
-		desiredSubscription.Spec.Package == CSIAddonsSubscriptionPackage ||
-		desiredSubscription.Spec.Package == CephCSISubscriptionPackage {
-
-		isProvider, err = isProviderMode(cli)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	subsList := &operatorv1alpha1.SubscriptionList{}
-	err = cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
+	subsList := &opv1a1.SubscriptionList{}
+	err = cli.List(ctx, subsList, &client.ListOptions{Namespace: desiredSubscription.Namespace})
 	if err != nil {
 		return nil, err
 	}
 
 	var subExsist bool
-	var actualSub *operatorv1alpha1.Subscription
+	var actualSub *opv1a1.Subscription
 	pkgName := desiredSubscription.Spec.Package
 	for i, sub := range subsList.Items {
 		if sub.Spec.Package == pkgName {
@@ -87,12 +80,9 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 			}
 			actualSub = &subsList.Items[i]
 
-			if !isProvider {
-				actualSub.Spec.Channel = desiredSubscription.Spec.Channel
-			}
-
+			actualSub.Spec.Channel = desiredSubscription.Spec.Channel
 			if actualSub.Spec.Config == nil && desiredSubscription.Spec.Config == nil {
-				actualSub.Spec.Config = &operatorv1alpha1.SubscriptionConfig{}
+				actualSub.Spec.Config = &opv1a1.SubscriptionConfig{}
 				actualSub.Spec.Config.Tolerations = odfSub.Spec.Config.Tolerations
 			} else if actualSub.Spec.Config == nil && desiredSubscription.Spec.Config != nil {
 				actualSub.Spec.Config = desiredSubscription.Spec.Config
@@ -120,7 +110,7 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 		}
 
 		if desiredSubscription.Spec.Config == nil {
-			desiredSubscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
+			desiredSubscription.Spec.Config = &opv1a1.SubscriptionConfig{
 				Tolerations: odfSub.Spec.Config.Tolerations,
 			}
 		} else {
@@ -129,26 +119,6 @@ func CheckExistingSubscriptions(cli client.Client, desiredSubscription *operator
 	}
 
 	return desiredSubscription, nil
-}
-
-func isProviderMode(cli client.Client) (bool, error) {
-
-	storageclusters := &ocsv1.StorageClusterList{}
-	err := cli.List(context.TODO(), storageclusters)
-	if err != nil {
-		if meta.IsNoMatchError(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	for _, storagecluster := range storageclusters.Items {
-		if storagecluster.Spec.AllowRemoteStorageConsumers {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }
 
 func getMergedTolerations(tol1, tol2 []corev1.Toleration) []corev1.Toleration {
@@ -209,11 +179,11 @@ func getMergedEnvVars(envList1, envList2 []corev1.EnvVar) []corev1.EnvVar {
 	return updatedEnvVars
 }
 
-func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv1alpha1.Subscription) error {
+func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 
 	var err error
 
-	desiredSubscription, err = CheckExistingSubscriptions(cli, desiredSubscription)
+	desiredSubscription, err := GetDesiredSubscription(ctx, cli, olmPkgRecord)
 	if err != nil {
 		return err
 	}
@@ -225,11 +195,11 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 	}
 
 	// create/update subscription
-	sub := &operatorv1alpha1.Subscription{}
+	sub := &opv1a1.Subscription{}
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, sub, func() error {
+	_, err = controllerutil.CreateOrUpdate(ctx, cli, sub, func() error {
 		sub.Spec = desiredSubscription.Spec
-		return SetOdfSubControllerReference(cli, sub)
+		return SetOdfSubControllerReference(ctx, cli, sub)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -238,9 +208,9 @@ func EnsureDesiredSubscription(cli client.Client, desiredSubscription *operatorv
 	return nil
 }
 
-func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
+func SetOdfSubControllerReference(ctx context.Context, cli client.Client, obj client.Object) error {
 
-	odfSub, err := GetOdfSubscription(cli)
+	odfSub, err := GetOdfSubscription(ctx, cli)
 	if err != nil {
 		return err
 	}
@@ -254,10 +224,10 @@ func SetOdfSubControllerReference(cli client.Client, obj client.Object) error {
 }
 
 // GetOdfSubscription returns the subscription for odf-operator.
-func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, error) {
+func GetOdfSubscription(ctx context.Context, cli client.Client) (*opv1a1.Subscription, error) {
 
-	subsList := &operatorv1alpha1.SubscriptionList{}
-	err := cli.List(context.TODO(), subsList, &client.ListOptions{Namespace: OperatorNamespace})
+	subsList := &opv1a1.SubscriptionList{}
+	err := cli.List(ctx, subsList, &client.ListOptions{Namespace: OperatorNamespace})
 	if err != nil {
 		return nil, err
 	}
@@ -271,153 +241,81 @@ func GetOdfSubscription(cli client.Client) (*operatorv1alpha1.Subscription, erro
 	return nil, fmt.Errorf("odf-operator subscription not found")
 }
 
-func GetVendorCsvNames(cli client.Client, kind odfv1alpha1.StorageKind) ([]string, error) {
+func EnsureCsv(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 
-	var csvNames []string
-	var err error
-	var isProvider bool
+	csvObj := &opv1a1.ClusterServiceVersion{}
+	csvObj.Name, csvObj.Namespace = olmPkgRecord.Csv, OperatorNamespace
 
-	if kind == VendorFlashSystemCluster() {
-		csvNames = []string{IbmSubscriptionStartingCSV}
-	} else if kind == VendorStorageCluster() {
-		csvNames = []string{OdfDepsSubscriptionStartingCSV, OcsSubscriptionStartingCSV, RookSubscriptionStartingCSV, NoobaaSubscriptionStartingCSV,
-			PrometheusSubscriptionStartingCSV, RecipeSubscriptionStartingCSV}
-
-		isProvider, err = isProviderMode(cli)
-		if err != nil {
-			return csvNames, err
-		}
-
-		if !isProvider {
-			csvNames = append(csvNames, OcsClientSubscriptionStartingCSV, CSIAddonsSubscriptionStartingCSV, CephCSISubscriptionStartingCSV)
-		}
-
-		// In provider mode, upgrades of the ocs-client-operator and csiaddons are managed by the provider, not the odf-operator.
-		// This can result in these operators lagging behind the odf-operator, with different CSV versions.
-		// Therefore, we need to fetch the CSV name from the operator deployment.
-		// We are only fetching the ocs-client-operator CSV name and ignoring the csiaddons
-		// Because the ocs-client-operator is essential when enabling provider mode as we need to bring it up.
-
-		// Fetch the CSV name from the client operator deployment and append it to the csv list
-		if isProvider {
-			// get ocs-client-operator deployment with label
-			deployments := &appsv1.DeploymentList{}
-			err = cli.List(context.TODO(), deployments, &client.ListOptions{
-				Namespace:     OperatorNamespace,
-				LabelSelector: labels.SelectorFromSet(map[string]string{"app": "ocs-client-operator"}),
-			})
-
-			if err != nil {
-				return csvNames, err
-			}
-
-			if len(deployments.Items) == 0 {
-				return csvNames, fmt.Errorf("ocs-client-operator deployment not found")
-			}
-
-			// get owner ref index from deployment
-			ownerRefIndex := slices.IndexFunc(deployments.Items[0].OwnerReferences, func(o metav1.OwnerReference) bool {
-				return o.Kind == "ClusterServiceVersion"
-			})
-			if ownerRefIndex == -1 {
-				return csvNames, fmt.Errorf("ClusterServiceVersion owner reference not found in ocs-client-operator deployment")
-			}
-
-			ownerRef := deployments.Items[0].OwnerReferences[ownerRefIndex]
-
-			// get csv name from owner ref
-			csvNames = append(csvNames, ownerRef.Name)
-		}
-	}
-
-	return csvNames, err
-}
-
-func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.ClusterServiceVersion, error) {
-
-	var err error
-
-	csvObj := &operatorv1alpha1.ClusterServiceVersion{}
-	err = cli.Get(context.TODO(), types.NamespacedName{
-		Name: csvName, Namespace: OperatorNamespace}, csvObj)
-	if err != nil {
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(csvObj), csvObj); err != nil {
 		if errors.IsNotFound(err) {
-			approvalErr := ApproveInstallPlanForCsv(cli, csvName)
-			if approvalErr != nil {
-				return nil, approvalErr
-			}
-		}
-		return nil, err
-	}
-	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
-		csvObj.OwnerReferences = []metav1.OwnerReference{}
-
-		// Shut down the OCS client operator CSV pods in non provider mode
-		if strings.HasPrefix(csvName, "ocs-client-operator") {
-			isProvider, err := isProviderMode(cli)
-			if err != nil {
+			if present, err := isSubscriptionPresent(ctx, cli, olmPkgRecord); err != nil {
 				return err
-			}
-
-			var replicas int32 = 0
-			if isProvider {
-				replicas = 1
-			}
-
-			for i := range csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
-				csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec.Replicas = &replicas
-			}
-
-			if replicas == 0 {
-				// delete the subscription webhook created by the ocs-client-operator
-				// we can not delete the webhook by the ocs-client-operator itself because the client operator is down
-				webhook := &admv1.ValidatingWebhookConfiguration{}
-				webhook.Name = "subscription.ocs.openshift.io"
-				if err = cli.Delete(context.TODO(), webhook); err != nil && !errors.IsNotFound(err) {
+			} else if present {
+				if err := ApproveInstallPlanForCsv(ctx, cli, olmPkgRecord.Csv); err != nil {
 					return err
 				}
 			}
+			return nil
 		}
-
-		return SetOdfSubControllerReference(cli, csvObj)
-	})
-	if err != nil && !errors.IsAlreadyExists(err) {
-		return nil, err
+		return err
 	}
 
-	isReady := csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
-		csvObj.Status.Reason == operatorv1alpha1.CSVReasonInstallSuccessful
+	if _, err := controllerutil.CreateOrUpdate(ctx, cli, csvObj, func() error {
+		return SetOdfSubControllerReference(ctx, cli, csvObj)
+	}); err != nil {
+		return err
+	}
+
+	isReady := csvObj.Status.Phase == opv1a1.CSVPhaseSucceeded &&
+		csvObj.Status.Reason == opv1a1.CSVReasonInstallSuccessful
 
 	if !isReady {
-		err = fmt.Errorf("CSV is not successfully installed")
-		return nil, err
+		return fmt.Errorf("CSV is not successfully installed")
 	}
 
-	return csvObj, err
+	return nil
+}
+
+func isSubscriptionPresent(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord) (bool, error) {
+
+	// get all subscriptions in the cluster
+	subList := &opv1a1.SubscriptionList{}
+	if err := cli.List(ctx, subList, client.InNamespace(OperatorNamespace)); err != nil {
+		return false, err
+	}
+
+	// check if subscription exists on cluster for the given csv
+	for _, sub := range subList.Items {
+		if sub.Spec.Package == olmPkgRecord.Pkg {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // ApproveInstallPlanForCsv approve the manual approval installPlan for the given CSV
 // and returns an error if none found
-func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
+func ApproveInstallPlanForCsv(ctx context.Context, cli client.Client, csvName string) error {
 
 	var finalError error
 	var foundInstallPlan bool
 
-	installPlans := &operatorv1alpha1.InstallPlanList{}
-	err := cli.List(context.TODO(), installPlans, &client.ListOptions{Namespace: OperatorNamespace})
+	installPlans := &opv1a1.InstallPlanList{}
+	err := cli.List(ctx, installPlans, &client.ListOptions{Namespace: OperatorNamespace})
 
 	if err != nil {
 		return err
 	}
 
 	for i, installPlan := range installPlans.Items {
-		if util.FindInSlice(installPlan.Spec.ClusterServiceVersionNames, csvName) {
+		if slices.Contains(installPlan.Spec.ClusterServiceVersionNames, csvName) {
 			foundInstallPlan = true
-			if installPlan.Spec.Approval == operatorv1alpha1.ApprovalManual &&
+			if installPlan.Spec.Approval == opv1a1.ApprovalManual &&
 				!installPlan.Spec.Approved {
 
 				installPlans.Items[i].Spec.Approved = true
-				err = cli.Update(context.TODO(), &installPlans.Items[i])
+				err = cli.Update(ctx, &installPlans.Items[i])
 				if err != nil {
 					multierr.AppendInto(&finalError, fmt.Errorf(
 						"Failed to approve installplan %s", installPlan.Name))
@@ -435,209 +333,33 @@ func ApproveInstallPlanForCsv(cli client.Client, csvName string) error {
 	return finalError
 }
 
-// GetSubscriptions returns all required Subscriptions for the given StorageKind
-func GetSubscriptions(k odfv1alpha1.StorageKind) []*operatorv1alpha1.Subscription {
+func AdjustSpecialCasesSubscriptionConfig(subscription *opv1a1.Subscription) {
 
-	subscriptions := []*operatorv1alpha1.Subscription{}
-	if k == StorageClusterKind {
-		subscriptions = GetStorageClusterSubscriptions()
-	} else if k == FlashSystemKind {
-		subscriptions = GetFlashSystemClusterSubscriptions()
-	}
+	switch subscription.Spec.Package {
 
-	return subscriptions
-}
-
-// GetStorageClusterSubscription return subscription for StorageCluster
-func GetStorageClusterSubscriptions() []*operatorv1alpha1.Subscription {
-
-	odfDepsSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      OdfDepsSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          OdfDepsSubscriptionCatalogSource,
-			CatalogSourceNamespace: OdfDepsSubscriptionCatalogSourceNamespace,
-			Package:                OdfDepsSubscriptionPackage,
-			Channel:                OdfDepsSubscriptionChannel,
-			StartingCSV:            OdfDepsSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
-	noobaaSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      NoobaaSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          NoobaaSubscriptionCatalogSource,
-			CatalogSourceNamespace: NoobaaSubscriptionCatalogSourceNamespace,
-			Package:                NoobaaSubscriptionPackage,
-			Channel:                NoobaaSubscriptionChannel,
-			StartingCSV:            NoobaaSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
-	roleARN := os.Getenv("ROLEARN")
-	if roleARN != "" {
-		noobaaSubscription.Spec.Config = &operatorv1alpha1.SubscriptionConfig{
-			Env: []corev1.EnvVar{
+	case "csi-addons", "odf-csi-addons-operator", "cephcsi-operator":
+		subscription.Spec.Config = &opv1a1.SubscriptionConfig{
+			Tolerations: []corev1.Toleration{
 				{
-					Name:  "ROLEARN",
-					Value: roleARN,
+					Key:      "node.ocs.openshift.io/storage",
+					Operator: "Equal",
+					Value:    "true",
+					Effect:   "NoSchedule",
 				},
 			},
 		}
-	}
 
-	ocsSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      OcsSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          OcsSubscriptionCatalogSource,
-			CatalogSourceNamespace: OcsSubscriptionCatalogSourceNamespace,
-			Package:                OcsSubscriptionPackage,
-			Channel:                OcsSubscriptionChannel,
-			StartingCSV:            OcsSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
-	ocsClientSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      OcsClientSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          OcsClientSubscriptionCatalogSource,
-			CatalogSourceNamespace: OcsClientSubscriptionCatalogSourceNamespace,
-			Package:                OcsClientSubscriptionPackage,
-			Channel:                OcsClientSubscriptionChannel,
-			StartingCSV:            OcsClientSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
-	csiAddonsSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      CSIAddonsSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          CSIAddonsSubscriptionCatalogSource,
-			CatalogSourceNamespace: CSIAddonsSubscriptionCatalogSourceNamespace,
-			Package:                CSIAddonsSubscriptionPackage,
-			Channel:                CSIAddonsSubscriptionChannel,
-			StartingCSV:            CSIAddonsSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-			Config: &operatorv1alpha1.SubscriptionConfig{
-				Tolerations: []corev1.Toleration{
+	case "noobaa-operator", "mcg-operator":
+		roleARN := os.Getenv("ROLEARN")
+		if roleARN != "" {
+			subscription.Spec.Config = &opv1a1.SubscriptionConfig{
+				Env: []corev1.EnvVar{
 					{
-						Key:      "node.ocs.openshift.io/storage",
-						Operator: "Equal",
-						Value:    "true",
-						Effect:   "NoSchedule",
+						Name:  "ROLEARN",
+						Value: roleARN,
 					},
 				},
-			},
-		},
+			}
+		}
 	}
-
-	cephCsiSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      CephCSISubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          CephCSISubscriptionCatalogSource,
-			CatalogSourceNamespace: CephCSISubscriptionCatalogSourceNamespace,
-			Package:                CephCSISubscriptionPackage,
-			Channel:                CephCSISubscriptionChannel,
-			StartingCSV:            CephCSISubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-			Config: &operatorv1alpha1.SubscriptionConfig{
-				Tolerations: []corev1.Toleration{
-					{
-						Key:      "node.ocs.openshift.io/storage",
-						Operator: "Equal",
-						Value:    "true",
-						Effect:   "NoSchedule",
-					},
-				},
-			},
-		},
-	}
-
-	rookSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      RookSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          RookSubscriptionCatalogSource,
-			CatalogSourceNamespace: RookSubscriptionCatalogSourceNamespace,
-			Package:                RookSubscriptionPackage,
-			Channel:                RookSubscriptionChannel,
-			StartingCSV:            RookSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
-	prometheusSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      PrometheusSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          PrometheusSubscriptionCatalogSource,
-			CatalogSourceNamespace: PrometheusSubscriptionCatalogSourceNamespace,
-			Package:                PrometheusSubscriptionPackage,
-			Channel:                PrometheusSubscriptionChannel,
-			StartingCSV:            PrometheusSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
-	recipeSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      RecipeSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          RecipeSubscriptionCatalogSource,
-			CatalogSourceNamespace: RecipeSubscriptionCatalogSourceNamespace,
-			Package:                RecipeSubscriptionPackage,
-			Channel:                RecipeSubscriptionChannel,
-			StartingCSV:            RecipeSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
-	return []*operatorv1alpha1.Subscription{odfDepsSubscription, ocsSubscription, rookSubscription, noobaaSubscription,
-		csiAddonsSubscription, cephCsiSubscription, ocsClientSubscription, prometheusSubscription, recipeSubscription}
-}
-
-// GetFlashSystemClusterSubscription return subscription for FlashSystemCluster
-func GetFlashSystemClusterSubscriptions() []*operatorv1alpha1.Subscription {
-	ibmSubscription := &operatorv1alpha1.Subscription{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      IbmSubscriptionName,
-			Namespace: OperatorNamespace,
-		},
-		Spec: &operatorv1alpha1.SubscriptionSpec{
-			CatalogSource:          IbmSubscriptionCatalogSource,
-			CatalogSourceNamespace: IbmSubscriptionCatalogSourceNamespace,
-			Package:                IbmSubscriptionPackage,
-			Channel:                IbmSubscriptionChannel,
-			StartingCSV:            IbmSubscriptionStartingCSV,
-			InstallPlanApproval:    operatorv1alpha1.ApprovalAutomatic,
-		},
-	}
-
-	return []*operatorv1alpha1.Subscription{ibmSubscription}
 }

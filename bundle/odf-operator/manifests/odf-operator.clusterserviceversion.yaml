@@ -35,7 +35,7 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2025-03-06T06:49:16Z"
+    createdAt: "2025-04-03T06:26:57Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
@@ -66,6 +66,7 @@ metadata:
     support: Red Hat
     vendors.odf.openshift.io/kind: '["storagecluster.ocs.openshift.io/v1", "flashsystemcluster.odf.ibm.com/v1alpha1"]'
   labels:
+    odf.openshift.io/odf-operator: "true"
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
@@ -149,6 +150,14 @@ spec:
         - apiGroups:
           - ""
           resources:
+          - configmaps
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
           - services
           verbs:
           - create
@@ -169,20 +178,12 @@ spec:
           - update
           - watch
         - apiGroups:
-          - admissionregistration.k8s.io
-          resources:
-          - validatingwebhookconfigurations
-          verbs:
-          - delete
-        - apiGroups:
           - apiextensions.k8s.io
           resources:
           - customresourcedefinitions
           verbs:
-          - create
           - get
           - list
-          - update
           - watch
         - apiGroups:
           - apps
@@ -277,7 +278,6 @@ spec:
           resources:
           - storageclusters
           verbs:
-          - create
           - delete
           - get
           - list
@@ -289,7 +289,6 @@ spec:
           resources:
           - flashsystemclusters
           verbs:
-          - create
           - delete
           - get
           - list
@@ -315,17 +314,8 @@ spec:
           verbs:
           - update
         - apiGroups:
-          - odf.openshift.io
-          resources:
-          - storagesystems/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
           - operators.coreos.com
           resources:
-          - catalogsources
           - clusterserviceversions
           - installplans
           - subscriptions
@@ -352,14 +342,6 @@ spec:
           - get
           - list
           - watch
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - subscriptions/status
-          verbs:
-          - get
-          - patch
-          - update
         - apiGroups:
           - authentication.k8s.io
           resources:
@@ -420,6 +402,9 @@ spec:
                 ports:
                 - containerPort: 9443
                   name: webhook-server
+                  protocol: TCP
+                - containerPort: 8443
+                  name: https
                   protocol: TCP
                 readinessProbe:
                   httpGet:

@@ -27,18 +27,19 @@ var (
 		Subsystem: "",
 		Name:      "system_map",
 		Help:      "Map of ODF StorageSystems to their target Custom Resource",
-	}, []string{"storage_system", "target_name", "target_namespace", "target_kind"})
+	}, []string{"storage_system", "target_name", "target_namespace", "target_kind", "target_apiversion"})
 )
 
 func init() {
 	metrics.Registry.MustRegister(storageSystemMap)
 }
 
-func ReportODFSystemMapMetrics(storageSystem, name, namespace, kind string) {
+func ReportODFSystemMapMetrics(storageSystem, name, namespace, kind, apiVersion string) {
 	storageSystemMap.With(prometheus.Labels{
-		"storage_system":   storageSystem,
-		"target_name":      name,
-		"target_namespace": namespace,
-		"target_kind":      kind,
+		"storage_system":    storageSystem,
+		"target_name":       name,
+		"target_namespace":  namespace,
+		"target_kind":       kind,
+		"target_apiversion": apiVersion,
 	}).Set(1)
 }
