@@ -92,7 +92,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 install-odf: operator-sdk ## install odf using the hack/install-odf.sh script
-	hack/install-odf.sh $(OPERATOR_SDK) $(BUNDLE_IMG) $(ODF_DEPS_CATALOG_IMG) $(CSV_NAMES)
+	hack/install-odf.sh $(OPERATOR_SDK) $(BUNDLE_IMG) $(ODF_DEPS_CATALOG_IMG) "$(CSV_NAMES)"
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
