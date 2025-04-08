@@ -62,7 +62,13 @@ ODF_OPERATOR_INSTALL ?= true
 ODF_OPERATOR_UNINSTALL ?= true
 e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
-	./hack/e2e-test.sh
+	cd e2e/odf && ${GINKGO} build && ./odf.test \
+		--odf-operator-install=${ODF_OPERATOR_INSTALL} \
+		--odf-operator-uninstall=${ODF_OPERATOR_UNINSTALL} \
+		--odf-catalog-image=${CATALOG_IMG} \
+		--odf-subscription-channel=${CHANNELS} \
+		--odf-cluster-service-version=odf-operator.v${VERSION} \
+		--csv-names="${CSV_NAMES}"
 
 update-mgr-config: ## Feed env variables to the manager configmap
 	@echo "$$CONFIGMAP_YAML" > config/manager/configmap.yaml
