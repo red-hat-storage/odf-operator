@@ -83,7 +83,7 @@ go-build: ## Run go build against code.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-docker-build: godeps-update test-setup ## Build docker image with the manager.
+docker-build: godeps-update test-setup go-test ## Build docker image with the manager.
 	docker build -t ${IMG} .
 
 docker-push: ## Push docker image with the manager.
