@@ -131,11 +131,11 @@ RECIPE_SUBSCRIPTION_PACKAGE ?= recipe
 RECIPE_SUBSCRIPTION_CHANNEL ?= alpha
 RECIPE_SUBSCRIPTION_CSVNAME ?= $(RECIPE_SUBSCRIPTION_PACKAGE).$(RECIPE_BUNDLE_VERSION)
 
-IBM_BUNDLE_IMG ?= quay.io/ibmodffs/ibm-storage-odf-operator-bundle:1.7.0
-IBM_BUNDLE_VERSION ?= v1.7.0
-IBM_SUBSCRIPTION_PACKAGE ?= ibm-storage-odf-operator
-IBM_SUBSCRIPTION_CHANNEL ?= stable-v1.7
-IBM_SUBSCRIPTION_CSVNAME ?= $(IBM_SUBSCRIPTION_PACKAGE).$(IBM_BUNDLE_VERSION)
+IBM_ODF_BUNDLE_IMG ?= quay.io/ibmodffs/ibm-storage-odf-operator-bundle:1.7.0
+IBM_ODF_BUNDLE_VERSION ?= v1.7.0
+IBM_ODF_SUBSCRIPTION_PACKAGE ?= ibm-storage-odf-operator
+IBM_ODF_SUBSCRIPTION_CHANNEL ?= stable-v1.7
+IBM_ODF_SUBSCRIPTION_CSVNAME ?= $(IBM_ODF_SUBSCRIPTION_PACKAGE).$(IBM_ODF_BUNDLE_VERSION)
 
 
 # A space-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0 example.com/operator-bundle:v0.2.0).
@@ -150,7 +150,7 @@ BUNDLE_IMGS ?= $(BUNDLE_IMG) \
 	$(CSIADDONS_BUNDLE_IMG) \
 	$(PROMETHEUS_BUNDLE_IMG) \
 	$(RECIPE_BUNDLE_IMG_TAG) \
-	$(IBM_BUNDLE_IMG)
+	$(IBM_ODF_BUNDLE_IMG)
 
 # The 'odf-operator' CSV name must always be at index 0 in this list,
 # as some e2e tests explicitly skip the first element.

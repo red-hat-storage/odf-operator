@@ -18,10 +18,10 @@ data:
     pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
-  IBM: |
-    channel: $(IBM_SUBSCRIPTION_CHANNEL)
-    csv: $(IBM_SUBSCRIPTION_CSVNAME)
-    pkg: $(IBM_SUBSCRIPTION_PACKAGE)
+  IBM_ODF: |
+    channel: $(IBM_ODF_SUBSCRIPTION_CHANNEL)
+    csv: $(IBM_ODF_SUBSCRIPTION_CSVNAME)
+    pkg: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
   NOOBAA: |
@@ -217,14 +217,14 @@ entries:
   - name: $(RECIPE_SUBSCRIPTION_CSVNAME)
 
 ---
-defaultChannel: $(IBM_SUBSCRIPTION_CHANNEL)
-name: $(IBM_SUBSCRIPTION_PACKAGE)
+defaultChannel: $(IBM_ODF_SUBSCRIPTION_CHANNEL)
+name: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
 schema: olm.package
 ---
 schema: olm.channel
-package: $(IBM_SUBSCRIPTION_PACKAGE)
-name: $(IBM_SUBSCRIPTION_CHANNEL)
+package: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
+name: $(IBM_ODF_SUBSCRIPTION_CHANNEL)
 entries:
-  - name: $(IBM_SUBSCRIPTION_CSVNAME)
+  - name: $(IBM_ODF_SUBSCRIPTION_CSVNAME)
 endef
 export INDEX_YAML
