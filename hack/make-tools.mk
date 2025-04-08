@@ -15,7 +15,7 @@ kustomize: ## Download kustomize locally if necessary.
 
 GINKGO = $(BIN_DIR)/ginkgo
 ginkgo: ## Download ginkgo locally if necessary.
-	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@v2.20.1)
+	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@v2.23.3)
 
 OPERATOR_SDK = $(BIN_DIR)/operator-sdk
 operator-sdk: ## Download operator-sdk locally if necessary.

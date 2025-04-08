@@ -21,3 +21,11 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	tests.TearDown()
 })
+
+var _ = Describe("Webhook test", func() {
+	Context("Checking the webhook", func() {
+		It("Should check the webhook", func() {
+			tests.TestWebhook()
+		})
+	})
+})
