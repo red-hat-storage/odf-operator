@@ -62,7 +62,7 @@ ODF_OPERATOR_INSTALL ?= true
 ODF_OPERATOR_UNINSTALL ?= true
 e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
-	cd e2e/odf && ${GINKGO} build && ./odf.test \
+	cd e2e/odf && ${GINKGO} build && ./odf.test --ginkgo.v \
 		--odf-operator-install=${ODF_OPERATOR_INSTALL} \
 		--odf-operator-uninstall=${ODF_OPERATOR_UNINSTALL} \
 		--odf-catalog-image=${CATALOG_IMG} \
