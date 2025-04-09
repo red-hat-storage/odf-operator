@@ -20,9 +20,6 @@ COPY console/ console/
 COPY hack/ hack/
 COPY main.go Makefile ./
 
-# Run tests and linting
-RUN make go-test
-
 # Build
 RUN make go-build
 

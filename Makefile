@@ -62,7 +62,13 @@ ODF_OPERATOR_INSTALL ?= true
 ODF_OPERATOR_UNINSTALL ?= true
 e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
-	./hack/e2e-test.sh
+	cd e2e/odf && ${GINKGO} build && ./odf.test \
+		--odf-operator-install=${ODF_OPERATOR_INSTALL} \
+		--odf-operator-uninstall=${ODF_OPERATOR_UNINSTALL} \
+		--odf-catalog-image=${CATALOG_IMG} \
+		--odf-subscription-channel=${CHANNELS} \
+		--odf-cluster-service-version=odf-operator.v${VERSION} \
+		--csv-names="${CSV_NAMES}"
 
 update-mgr-config: ## Feed env variables to the manager configmap
 	@echo "$$CONFIGMAP_YAML" > config/manager/configmap.yaml
@@ -77,7 +83,7 @@ go-build: ## Run go build against code.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
-docker-build: godeps-update test-setup ## Build docker image with the manager.
+docker-build: godeps-update test-setup go-test ## Build docker image with the manager.
 	docker build -t ${IMG} .
 
 docker-push: ## Push docker image with the manager.
@@ -92,7 +98,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 install-odf: operator-sdk ## install odf using the hack/install-odf.sh script
-	hack/install-odf.sh $(OPERATOR_SDK) $(BUNDLE_IMG) $(ODF_DEPS_CATALOG_IMG) $(STARTING_CSVS)
+	hack/install-odf.sh $(OPERATOR_SDK) $(BUNDLE_IMG) $(ODF_DEPS_CATALOG_IMG) "$(CSV_NAMES)"
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
@@ -163,7 +169,7 @@ catalog: opm ## Generate catalog manifests and then validate generated files.
 	$(OPM) render --output=yaml $(ODF_DEPS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf-dependencies.yaml
 	$(OPM) render --output=yaml $(OCS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs.yaml
 	$(OPM) render --output=yaml $(OCS_CLIENT_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs-client.yaml
-	$(OPM) render --output=yaml $(IBM_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm.yaml
+	$(OPM) render --output=yaml $(IBM_ODF_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm.yaml
 	$(OPM) render --output=yaml $(NOOBAA_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/noobaa.yaml
 	$(OPM) render --output=yaml $(CSIADDONS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/csiaddons.yaml
 	$(OPM) render --output=yaml $(CEPHCSI_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/cephcsi.yaml
