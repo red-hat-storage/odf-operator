@@ -21,3 +21,17 @@ func TestWebhook() {
 
 	debug("Webhook Test: completed\n")
 }
+
+func TestOperatorScaler() {
+
+	debug("OperatorScaler Test: started\n")
+
+	SuiteFailed = true
+
+	err := DeployManager.ValidateOperatorScaler()
+	gomega.Expect(err).To(gomega.BeNil())
+
+	SuiteFailed = false
+
+	debug("OperatorScaler Test: completed\n")
+}

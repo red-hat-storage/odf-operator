@@ -22,10 +22,18 @@ var _ = AfterSuite(func() {
 	tests.TearDown()
 })
 
-var _ = Describe("Webhook test", func() {
+var _ = Describe("Webhook test", Serial, func() {
 	Context("Checking the webhook", func() {
 		It("Should check the webhook", func() {
 			tests.TestWebhook()
+		})
+	})
+})
+
+var _ = Describe("Operator scaler test", Serial, func() {
+	Context("Checking the csv deployments", func() {
+		It("Should check the csv deployments", func() {
+			tests.TestOperatorScaler()
 		})
 	})
 })
