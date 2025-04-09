@@ -154,7 +154,7 @@ BUNDLE_IMGS ?= $(BUNDLE_IMG) \
 
 # The 'odf-operator' CSV name must always be at index 0 in this list,
 # as some e2e tests explicitly skip the first element.
-CSV_NAMES ?= $(IMAGE_NAME).v$(VERSION) \
+CSV_NAMES ?= odf-operator.v$(VERSION) \
 	$(ODF_DEPS_SUBSCRIPTION_CSVNAME) \
 	$(OCS_SUBSCRIPTION_CSVNAME) \
 	$(OCS_CLIENT_SUBSCRIPTION_CSVNAME) \
