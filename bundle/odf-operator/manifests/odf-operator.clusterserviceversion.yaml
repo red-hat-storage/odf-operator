@@ -430,6 +430,7 @@ spec:
                 - mountPath: /tmp/k8s-webhook-server/serving-certs
                   name: cert
                   readOnly: true
+              priorityClassName: system-cluster-critical
               securityContext:
                 runAsNonRoot: true
               serviceAccountName: odf-operator-controller-manager
@@ -494,6 +495,7 @@ spec:
                   name: odf-console-nginx-log
                 - mountPath: /var/lib/nginx/tmp
                   name: odf-console-nginx-tmp
+              priorityClassName: system-cluster-critical
               securityContext:
                 runAsNonRoot: true
               tolerations:

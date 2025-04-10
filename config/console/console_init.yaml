@@ -64,5 +64,6 @@ spec:
           emptyDir: {}
         - name: odf-console-nginx-tmp
           emptyDir: {}
+      priorityClassName: system-cluster-critical
       securityContext:
         runAsNonRoot: true
