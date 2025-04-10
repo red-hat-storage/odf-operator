@@ -6,6 +6,7 @@ spec:
   selector:
     matchLabels:
       app: odf-console
+  replicas: 1
   template:
     metadata:
       labels:
