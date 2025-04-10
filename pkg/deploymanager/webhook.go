@@ -1,6 +1,7 @@
 package deploymanager
 
 import (
+	stderrors "errors"
 	"fmt"
 
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -9,19 +10,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+var ErrDeploymentsNotScaledDown = stderrors.New("deployments are not scaled down")
+
 func (d *DeployManager) ValidateWebhookResources() error {
 
 	// Check if the Service is present
 	service := &corev1.Service{}
-	err := d.Client.Get(d.Ctx, client.ObjectKey{Name: "odf-operator-webhook-server-service", Namespace: InstallNamespace}, service)
-	if err != nil {
+	if err := d.Client.Get(d.Ctx, client.ObjectKey{Name: "odf-operator-webhook-server-service", Namespace: InstallNamespace}, service); err != nil {
+		d.Log.Error(err, "failed to get service")
 		return err
 	}
 
 	// Check if the MutatingWebhookConfiguration is present
 	webhook := &admrv1.MutatingWebhookConfiguration{}
-	err = d.Client.Get(d.Ctx, client.ObjectKey{Name: "csv.odf.openshift.io"}, webhook)
-	if err != nil {
+	if err := d.Client.Get(d.Ctx, client.ObjectKey{Name: "csv.odf.openshift.io"}, webhook); err != nil {
+		d.Log.Error(err, "failed to get webhook")
 		return err
 	}
 
@@ -32,8 +35,8 @@ func (d *DeployManager) ValidateCsvsDeploymentsReplicasAreScaledDown(csvNames []
 
 	for _, csvName := range csvNames {
 		csv := &opv1a1.ClusterServiceVersion{}
-		err := d.Client.Get(d.Ctx, client.ObjectKey{Name: csvName, Namespace: InstallNamespace}, csv)
-		if err != nil {
+		if err := d.Client.Get(d.Ctx, client.ObjectKey{Name: csvName, Namespace: InstallNamespace}, csv); err != nil {
+			d.Log.Error(err, "failed to get the csv")
 			return err
 		}
 
@@ -41,7 +44,9 @@ func (d *DeployManager) ValidateCsvsDeploymentsReplicasAreScaledDown(csvNames []
 		for i := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 			deploymentSpec := csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec
 			if deploymentSpec.Replicas == nil || *deploymentSpec.Replicas != 0 {
-				return fmt.Errorf("csv %s is not scaled down", csvName)
+				err := fmt.Errorf("csv %s %w", csvName, ErrDeploymentsNotScaledDown)
+				d.Log.Error(err, "csv deployments are not scaled down")
+				return err
 			}
 		}
 	}

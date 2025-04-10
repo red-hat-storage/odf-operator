@@ -8,6 +8,8 @@ import (
 	"github.com/go-logr/logr"
 	opv1 "github.com/operator-framework/api/pkg/operators/v1"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"go.uber.org/zap/zapcore"
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
@@ -28,6 +30,7 @@ func init() {
 	utilruntime.Must(odfv1a1.AddToScheme(scheme))
 	utilruntime.Must(opv1.AddToScheme(scheme))
 	utilruntime.Must(opv1a1.AddToScheme(scheme))
+	utilruntime.Must(extv1.AddToScheme(scheme))
 }
 
 type DeployManager struct {
@@ -53,7 +56,7 @@ func NewDeployManager() (*DeployManager, error) {
 		return nil, err
 	}
 
-	log.SetLogger(zap.New(zap.UseDevMode(true)))
+	log.SetLogger(zap.New(zap.UseDevMode(true), zap.StacktraceLevel(zapcore.FatalLevel)))
 
 	return &DeployManager{
 		Client: client,
