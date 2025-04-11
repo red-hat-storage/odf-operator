@@ -448,6 +448,7 @@ spec:
           app: odf-console
         name: odf-console
         spec:
+          replicas: 1
           selector:
             matchLabels:
               app: odf-console
