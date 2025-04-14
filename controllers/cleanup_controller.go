@@ -78,7 +78,7 @@ func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	//  odf-operator has already deleted both the ownerReference and StorageSystem CR
 	// The function ensures that ocs-operator CSV upgrades before running the cleanup, preventing this race condition.
 	// In 4.19 we are not using StorageSystem CR, so the check should be removed in 4.20
-	if err := r.isOcsOperatorSubAndCSVAt419(ctx); err != nil {
+	if err := r.isOcsOperatorSubAndCSVAt419(ctx, logger); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -90,7 +90,7 @@ func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{}, nil
 }
 
-func (r *CleanupReconciler) isOcsOperatorSubAndCSVAt419(ctx context.Context) error {
+func (r *CleanupReconciler) isOcsOperatorSubAndCSVAt419(ctx context.Context, logger logr.Logger) error {
 	subscriptionList := &opv1a1.SubscriptionList{}
 	if err := r.List(ctx, subscriptionList, client.InNamespace(r.OperatorNamespace)); err != nil {
 		return fmt.Errorf("failed to list subscriptions: %v", err)
@@ -103,12 +103,34 @@ func (r *CleanupReconciler) isOcsOperatorSubAndCSVAt419(ctx context.Context) err
 	} else if strings.HasSuffix(ocsOperatorSubscription.Spec.Channel, "4.18") {
 		return fmt.Errorf("subscription of 'ocs-operator' still points to '4.18'")
 	} else if !strings.HasSuffix(ocsOperatorSubscription.Spec.Channel, "4.19") {
-		// a guard that this code should be skipped in 4.19 even if the code isn't removed
+		// a guard that this code should be skipped in 4.19+ even if the code isn't removed
 		return nil
 	}
 	if !strings.Contains(ocsOperatorSubscription.Status.InstalledCSV, "4.19") {
 		return fmt.Errorf("waiting for 'ocs-operator' installed CSV at '4.19'")
 	}
+
+	return r.isOcsCsvReady(ctx, logger, ocsOperatorSubscription.Status.InstalledCSV)
+}
+
+func (r *CleanupReconciler) isOcsCsvReady(ctx context.Context, logger logr.Logger, ocsCsvName string) error {
+
+	ocsCsv := &opv1a1.ClusterServiceVersion{}
+	ocsCsv.Name = ocsCsvName
+	ocsCsv.Namespace = OperatorNamespace
+
+	err := r.Client.Get(ctx, client.ObjectKeyFromObject(ocsCsv), ocsCsv)
+	if err != nil {
+		logger.Error(err, "failed getting ocs csv", "csvName", ocsCsv)
+		return err
+	}
+
+	if ocsCsv.Status.Phase != opv1a1.CSVPhaseSucceeded {
+		err = fmt.Errorf("csv %s is not in succeeded state", ocsCsvName)
+		logger.Error(err, "waiting for csv to be in succeeded state")
+		return err
+	}
+
 	return nil
 }
 
