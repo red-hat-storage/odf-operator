@@ -117,6 +117,9 @@ func TestEnsureSubscription(t *testing.T) {
 						expectedSubscription.Spec.CatalogSource = odfSub.Spec.CatalogSource
 						expectedSubscription.Spec.CatalogSourceNamespace = odfSub.Spec.CatalogSourceNamespace
 						assert.Equal(t, expectedSubscription.Spec, actualSubscription.Spec)
+					} else if expectedSubscription.Spec.Package == IbmSubscriptionPackage {
+						assert.NoError(t, err)
+						assert.Equal(t, expectedSubscription.Spec, actualSubscription.Spec)
 					} else {
 						assert.Error(t, err)
 						assert.True(t, errors.IsNotFound(err))
