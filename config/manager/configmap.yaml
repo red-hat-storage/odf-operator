@@ -17,7 +17,7 @@ data:
       - cephclusters.ceph.rook.io
   IBM_ODF: |
     channel: stable-v1.7
-    csv: ibm-storage-odf-operator.v1.7.0
+    csv: ibm-storage-odf-operator.v1.7.1
     pkg: ibm-storage-odf-operator
     scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
