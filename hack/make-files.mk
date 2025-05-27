@@ -36,6 +36,12 @@ data:
     pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
+  SNAPSHOT_CONTROLLER: |
+    channel: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL)
+    csv: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CSVNAME)
+    pkg: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
   IBM_ODF: |
     channel: $(IBM_ODF_SUBSCRIPTION_CHANNEL)
     csv: $(IBM_ODF_SUBSCRIPTION_CSVNAME)
@@ -107,6 +113,10 @@ dependencies:
   value:
     packageName: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
     version: "$(subst v,,$(CSIADDONS_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(ODF_SNAPSHOT_CONTROLLER_BUNDLE_VERSION))"
 - type: olm.package
   value:
     packageName: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
@@ -189,6 +199,17 @@ package: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
 name: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
 entries:
   - name: $(CSIADDONS_SUBSCRIPTION_CSVNAME)
+
+---
+defaultChannel: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL)
+name: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
+name: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CSVNAME)
 
 ---
 defaultChannel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
