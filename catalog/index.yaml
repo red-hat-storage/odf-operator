@@ -66,6 +66,17 @@ entries:
 
 ---
 defaultChannel: alpha
+name: odf-snapshot-controller
+schema: olm.package
+---
+schema: olm.channel
+package: odf-snapshot-controller
+name: alpha
+entries:
+  - name: odf-snapshot-controller.v4.20.0
+
+---
+defaultChannel: alpha
 name: cephcsi-operator
 schema: olm.package
 ---
