@@ -15,6 +15,7 @@ package controllers
 
 import (
 	"context"
+	"os"
 
 	"github.com/go-logr/logr"
 	consolev1 "github.com/openshift/api/console/v1"
@@ -25,6 +26,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
+
+var _ = os.Setenv("OPERATOR_NAMESPACE", "openshift-storage")
+var _ = os.Setenv("PKGS_CONFIG_MAP_NAME", "odf-operator-pkgs-config")
 
 var (
 	testScheme  *runtime.Scheme

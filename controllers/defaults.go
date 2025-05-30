@@ -17,6 +17,7 @@ limitations under the License.
 package controllers
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -26,17 +27,18 @@ const (
 )
 
 var (
-	DefaultValMap = map[string]string{
-		"OPERATOR_NAMESPACE": "openshift-storage",
-	}
-
-	OperatorNamespace = GetEnvOrDefault("OPERATOR_NAMESPACE")
+	OperatorNamespace        string
+	odfOperatorConfigMapName string
 )
 
-func GetEnvOrDefault(env string) string {
+func init() {
+	OperatorNamespace = GetEnvOrPanic("OPERATOR_NAMESPACE")
+	odfOperatorConfigMapName = GetEnvOrPanic("PKGS_CONFIG_MAP_NAME")
+}
+
+func GetEnvOrPanic(env string) string {
 	if val := os.Getenv(env); val != "" {
 		return val
 	}
-
-	return DefaultValMap[env]
+	panic(fmt.Sprintf("Environment variable %s is not set", env))
 }
