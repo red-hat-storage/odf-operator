@@ -71,6 +71,7 @@ e2e-test: ginkgo ## Run end to end functional tests.
 		--csv-names="${CSV_NAMES}"
 
 update-mgr-config: ## Feed env variables to the manager configmap
+	@echo "$$DEPLOYMENT_ENV_PATCH" > config/manager/deployment-env-patch.yaml
 	@echo "$$CONFIGMAP_YAML" > config/manager/configmap.yaml
 
 ##@ Build
@@ -144,6 +145,7 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
 		$(KUSTOMIZE) edit add patch --name odf-operator.v0.0.0 --kind ClusterServiceVersion \
 		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
+	rm -rf bundle/odf-operator/manifests
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
 		--output-dir bundle/odf-operator
 	$(OPERATOR_SDK) bundle validate bundle/odf-operator

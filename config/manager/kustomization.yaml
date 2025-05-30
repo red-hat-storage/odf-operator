@@ -1,6 +1,7 @@
 resources:
 - manager.yaml
 - webhook_service.yaml
+- configmap.yaml
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -13,7 +14,7 @@ configMapGenerator:
   name: manager-config
 
 patchesStrategicMerge:
-- configmap.yaml
+- deployment-env-patch.yaml
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
