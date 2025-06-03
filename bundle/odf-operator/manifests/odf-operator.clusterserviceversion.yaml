@@ -41,6 +41,8 @@ metadata:
     features.operators.openshift.io/token-auth-aws: "true"
     olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.19"}]'
     olm.skipRange: ""
+    operator.openshift.io/uninstall-message: 'Warning: deleting the operand (StorageSystem)
+      will result in data loss'
     operatorframework.io/initialization-resource: |-
       {
         "apiVersion": "odf.openshift.io/v1alpha1",
