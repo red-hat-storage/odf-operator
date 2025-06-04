@@ -1,10 +1,28 @@
+define DEPLOYMENT_ENV_PATCH
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        env:
+        - name: PKGS_CONFIG_MAP_NAME
+          value: odf-operator-pkgs-config-$(VERSION)
+endef
+export DEPLOYMENT_ENV_PATCH
+
+
 # In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
 # scale up client op based on cephCluster instead of storageClient CR
 define CONFIGMAP_YAML
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: manager-config
+  name: pkgs-config-$(VERSION)
 data:
   CEPHCSI: |
     channel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
