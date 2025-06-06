@@ -60,6 +60,10 @@ test: test-setup go-test ## Run go unit tests.
 
 ODF_OPERATOR_INSTALL ?= false
 ODF_OPERATOR_UNINSTALL ?= false
+# PKGS_CONFIG_MAP_NAME is used by the ODF operator to read subscription-related configuration.
+# It must be set before the test binary runs, so that dependent packages like deploymanager
+# can read it during their execution.
+e2e-test: export PKGS_CONFIG_MAP_NAME=odf-operator-pkgs-config-${VERSION}
 e2e-test: ginkgo ## Run end to end functional tests.
 	@echo "build and run e2e tests"
 	cd e2e/odf && ${GINKGO} build && ./odf.test --ginkgo.v \
@@ -71,6 +75,7 @@ e2e-test: ginkgo ## Run end to end functional tests.
 		--csv-names="${CSV_NAMES}"
 
 update-mgr-config: ## Feed env variables to the manager configmap
+	@echo "$$DEPLOYMENT_ENV_PATCH" > config/manager/deployment-env-patch.yaml
 	@echo "$$CONFIGMAP_YAML" > config/manager/configmap.yaml
 
 ##@ Build
@@ -144,6 +149,7 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
 		$(KUSTOMIZE) edit add patch --name odf-operator.v0.0.0 --kind ClusterServiceVersion \
 		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
+	rm -rf bundle/odf-operator/manifests
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
 		--output-dir bundle/odf-operator
 	$(OPERATOR_SDK) bundle validate bundle/odf-operator
@@ -172,6 +178,7 @@ catalog: opm ## Generate catalog manifests and then validate generated files.
 	$(OPM) render --output=yaml $(IBM_ODF_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm.yaml
 	$(OPM) render --output=yaml $(NOOBAA_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/noobaa.yaml
 	$(OPM) render --output=yaml $(CSIADDONS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/csiaddons.yaml
+	$(OPM) render --output=yaml $(ODF_SNAPSHOT_CONTROLLER_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf-snapshot-controller.yaml
 	$(OPM) render --output=yaml $(CEPHCSI_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/cephcsi.yaml
 	$(OPM) render --output=yaml $(ROOK_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/rook.yaml
 	$(OPM) render --output=yaml $(PROMETHEUS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/prometheus.yaml

@@ -1,10 +1,28 @@
+define DEPLOYMENT_ENV_PATCH
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        env:
+        - name: PKGS_CONFIG_MAP_NAME
+          value: odf-operator-pkgs-config-$(VERSION)
+endef
+export DEPLOYMENT_ENV_PATCH
+
+
 # In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
 # scale up client op based on cephCluster instead of storageClient CR
 define CONFIGMAP_YAML
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: manager-config
+  name: pkgs-config-$(VERSION)
 data:
   CEPHCSI: |
     channel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
@@ -16,6 +34,12 @@ data:
     channel: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
     csv: $(CSIADDONS_SUBSCRIPTION_CSVNAME)
     pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
+  SNAPSHOT_CONTROLLER: |
+    channel: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL)
+    csv: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CSVNAME)
+    pkg: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM_ODF: |
@@ -89,6 +113,10 @@ dependencies:
   value:
     packageName: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
     version: "$(subst v,,$(CSIADDONS_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(ODF_SNAPSHOT_CONTROLLER_BUNDLE_VERSION))"
 - type: olm.package
   value:
     packageName: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
@@ -171,6 +199,17 @@ package: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
 name: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
 entries:
   - name: $(CSIADDONS_SUBSCRIPTION_CSVNAME)
+
+---
+defaultChannel: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL)
+name: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
+name: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CSVNAME)
 
 ---
 defaultChannel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)

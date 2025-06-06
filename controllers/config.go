@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"slices"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -26,12 +25,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const (
-	odfOperatorConfigMapName = "odf-operator-manager-config"
-)
-
 var (
-	configMapIgnoreKeys             = []string{"controller_manager_config.yaml"}
 	EmptyOdfOperatorConfigMapRecord = OdfOperatorConfigMapRecord{}
 )
 
@@ -77,11 +71,6 @@ func ParseOdfConfigMapRecords(logger logr.Logger, configmap corev1.ConfigMap, fn
 	var record OdfOperatorConfigMapRecord
 
 	for key, value := range configmap.Data {
-
-		// skip parsing known environment variable and keys from the configmap.
-		if slices.Contains(configMapIgnoreKeys, key) {
-			continue
-		}
 
 		record = EmptyOdfOperatorConfigMapRecord
 		if err := yaml.Unmarshal([]byte(value), &record); err != nil {
