@@ -10,20 +10,7 @@ metadata:
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
-    operatorframework.io/initialization-resource: |-
-      {
-        "apiVersion": "odf.openshift.io/v1alpha1",
-        "kind": "StorageSystem",
-        "metadata": {
-          "name": "ocs-storagecluster-storagesystem",
-          "namespace": "openshift-storage"
-        },
-        "spec": {
-          "kind": "storagecluster.ocs.openshift.io/v1",
-          "name": "ocs-storagecluster",
-          "namespace": "openshift-storage"
-        }
-      }
+    operatorframework.io/initialization-link: /odf/cluster
     operatorframework.io/suggested-namespace: openshift-storage
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.openshift.io/valid-subscription: '["OpenShift Platform Plus","OpenShift
