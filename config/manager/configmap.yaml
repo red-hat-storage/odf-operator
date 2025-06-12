@@ -15,6 +15,12 @@ data:
     pkg: csi-addons
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
+  SNAPSHOT_CONTROLLER: |
+    channel: alpha
+    csv: odf-external-snapshotter-operator.v4.20.0
+    pkg: odf-external-snapshotter-operator
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
   IBM_ODF: |
     channel: stable-v1.7
     csv: ibm-storage-odf-operator.v1.7.1
