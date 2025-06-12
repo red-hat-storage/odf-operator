@@ -57,6 +57,12 @@ data:
     pkg: rook-ceph-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
+  SNAPSHOT_CONTROLLER: |
+    channel: alpha
+    csv: odf-external-snapshotter-operator.v4.20.0
+    pkg: odf-external-snapshotter-operator
+    scaleUpOnInstanceOf:
+      - cephclusters.ceph.rook.io
 kind: ConfigMap
 metadata:
   name: odf-operator-pkgs-config-4.19.0

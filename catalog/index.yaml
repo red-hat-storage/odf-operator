@@ -66,6 +66,17 @@ entries:
 
 ---
 defaultChannel: alpha
+name: odf-external-snapshotter-operator
+schema: olm.package
+---
+schema: olm.channel
+package: odf-external-snapshotter-operator
+name: alpha
+entries:
+  - name: odf-external-snapshotter-operator.v4.20.0
+
+---
+defaultChannel: alpha
 name: cephcsi-operator
 schema: olm.package
 ---

@@ -21,6 +21,10 @@ dependencies:
     version: "0.12.0"
 - type: olm.package
   value:
+    packageName: odf-external-snapshotter-operator
+    version: "4.20.0"
+- type: olm.package
+  value:
     packageName: cephcsi-operator
     version: "4.19.0"
 - type: olm.package
