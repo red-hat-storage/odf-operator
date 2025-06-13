@@ -66,14 +66,14 @@ entries:
 
 ---
 defaultChannel: alpha
-name: odf-snapshot-controller
+name: odf-external-snapshotter-operator
 schema: olm.package
 ---
 schema: olm.channel
-package: odf-snapshot-controller
+package: odf-external-snapshotter-operator
 name: alpha
 entries:
-  - name: odf-snapshot-controller.v4.20.0
+  - name: odf-external-snapshotter-operator.v4.20.0
 
 ---
 defaultChannel: alpha

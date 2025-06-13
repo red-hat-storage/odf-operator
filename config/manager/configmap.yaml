@@ -17,8 +17,8 @@ data:
       - cephclusters.ceph.rook.io
   SNAPSHOT_CONTROLLER: |
     channel: alpha
-    csv: odf-snapshot-controller.v4.20.0
-    pkg: odf-snapshot-controller
+    csv: odf-external-snapshotter-operator.v4.20.0
+    pkg: odf-external-snapshotter-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM_ODF: |
