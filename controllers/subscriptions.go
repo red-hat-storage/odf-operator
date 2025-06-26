@@ -337,17 +337,20 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 		}
 		return nil, err
 	}
+
+	var replicas int32
+	var isProvider bool
+
 	_, err = controllerutil.CreateOrUpdate(context.TODO(), cli, csvObj, func() error {
 		csvObj.OwnerReferences = []metav1.OwnerReference{}
 
 		// Shut down the OCS client operator CSV pods in non provider mode
 		if strings.HasPrefix(csvName, "ocs-client-operator") {
-			isProvider, err := isProviderMode(cli)
+			isProvider, err = isProviderMode(cli)
 			if err != nil {
 				return err
 			}
 
-			var replicas int32 = 0
 			if isProvider {
 				replicas = 1
 			}
@@ -355,22 +358,41 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 			for i := range csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 				csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec.Replicas = &replicas
 			}
-
-			if replicas == 0 {
-				// delete the subscription webhook created by the ocs-client-operator
-				// we can not delete the webhook by the ocs-client-operator itself because the client operator is down
-				webhook := &admv1.ValidatingWebhookConfiguration{}
-				webhook.Name = "subscription.ocs.openshift.io"
-				if err = cli.Delete(context.TODO(), webhook); err != nil && !errors.IsNotFound(err) {
-					return err
-				}
-			}
 		}
 
 		return SetOdfSubControllerReference(cli, csvObj)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return nil, err
+	}
+
+	if strings.HasPrefix(csvName, "ocs-client-operator") {
+
+		// Patch to set deployments replicas
+		patchStr := fmt.Sprintf(`{"spec":{"replicas":%d}}`, replicas)
+		patch := client.RawPatch(types.MergePatchType, []byte(patchStr))
+
+		// Shut down the OCS client operator pods in non provider mode
+		for _, deployment := range []string{"ocs-client-operator-console", "ocs-client-operator-controller-manager"} {
+			// Target object
+			target := &appsv1.Deployment{}
+			target.Name = deployment
+			target.Namespace = csvObj.Namespace
+
+			if err := cli.Patch(context.TODO(), target, patch); err != nil {
+				return nil, err
+			}
+		}
+
+		if replicas == 0 {
+			// delete the subscription webhook created by the ocs-client-operator
+			// we can not delete the webhook by the ocs-client-operator itself because the client operator is down
+			webhook := &admv1.ValidatingWebhookConfiguration{}
+			webhook.Name = "subscription.ocs.openshift.io"
+			if err = cli.Delete(context.TODO(), webhook); err != nil && !errors.IsNotFound(err) {
+				return nil, err
+			}
+		}
 	}
 
 	isReady := csvObj.Status.Phase == operatorv1alpha1.CSVPhaseSucceeded &&
@@ -381,7 +403,7 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 		return nil, err
 	}
 
-	return csvObj, err
+	return csvObj, nil
 }
 
 // ApproveInstallPlanForCsv approve the manual approval installPlan for the given CSV
