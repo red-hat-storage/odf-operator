@@ -2,59 +2,18 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
-    alm-examples: |-
-      [
-        {
-          "apiVersion": "odf.openshift.io/v1alpha1",
-          "kind": "StorageSystem",
-          "metadata": {
-            "name": "my-flashsystemcluster-storagesystem",
-            "namespace": "openshift-storage"
-          },
-          "spec": {
-            "kind": "flashsystemcluster.odf.ibm.com/v1alpha1",
-            "name": "my-flashsystemcluster",
-            "namespace": "openshift-storage"
-          }
-        },
-        {
-          "apiVersion": "odf.openshift.io/v1alpha1",
-          "kind": "StorageSystem",
-          "metadata": {
-            "name": "my-storagecluster-storagesystem",
-            "namespace": "openshift-storage"
-          },
-          "spec": {
-            "kind": "storagecluster.ocs.openshift.io/v1",
-            "name": "my-storagecluster",
-            "namespace": "openshift-storage"
-          }
-        }
-      ]
+    alm-examples: '[]'
     capabilities: Deep Insights
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2025-06-11T09:08:47Z"
+    createdAt: "2025-06-24T10:43:05Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
     olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.20"}]'
     olm.skipRange: ""
-    operatorframework.io/initialization-resource: |-
-      {
-        "apiVersion": "odf.openshift.io/v1alpha1",
-        "kind": "StorageSystem",
-        "metadata": {
-          "name": "ocs-storagecluster-storagesystem",
-          "namespace": "openshift-storage"
-        },
-        "spec": {
-          "kind": "storagecluster.ocs.openshift.io/v1",
-          "name": "ocs-storagecluster",
-          "namespace": "openshift-storage"
-        }
-      }
+    operatorframework.io/initialization-link: /odf/resource/odf.openshift.io~v1alpha1~StorageSystem/create/~new
     operatorframework.io/suggested-namespace: openshift-storage
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.openshift.io/valid-subscription: '["OpenShift Platform Plus","OpenShift
@@ -74,20 +33,7 @@ metadata:
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
-  customresourcedefinitions:
-    owned:
-    - description: StorageSystem is the Schema for the storagesystems API
-      displayName: Storage System
-      kind: StorageSystem
-      name: storagesystems.odf.openshift.io
-      resources:
-      - kind: FlashSystemCluster
-        name: flashsystemclusters.odf.ibm.com
-        version: v1alpha1
-      - kind: StorageCluster
-        name: storageclusters.ocs.openshift.io
-        version: v1
-      version: v1alpha1
+  customresourcedefinitions: {}
   description: |
     **Red Hat OpenShift Data Foundation** deploys three operators.
 
