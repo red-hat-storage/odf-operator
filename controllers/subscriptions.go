@@ -356,6 +356,21 @@ func EnsureVendorCsv(cli client.Client, csvName string) (*operatorv1alpha1.Clust
 				csvObj.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec.Replicas = &replicas
 			}
 
+			// Patch to set deployments replicas
+			patchStr := fmt.Sprintf(`{"spec":{"replicas":%d}}`, replicas)
+			patch := client.RawPatch(types.MergePatchType, []byte(patchStr))
+
+			for _, deployment := range []string{"ocs-client-operator-console", "ocs-client-operator-controller-manager"} {
+				// Target object
+				target := &appsv1.Deployment{}
+				target.Name = deployment
+				target.Namespace = csvObj.Namespace
+
+				if err := cli.Patch(context.TODO(), target, patch); err != nil {
+					return err
+				}
+			}
+
 			if replicas == 0 {
 				// delete the subscription webhook created by the ocs-client-operator
 				// we can not delete the webhook by the ocs-client-operator itself because the client operator is down
