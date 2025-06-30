@@ -24,6 +24,7 @@ import (
 
 	"github.com/go-logr/logr"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -193,6 +194,25 @@ func (r *CleanupReconciler) safelyDeleteStorageSystem(ctx context.Context, logge
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *CleanupReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	cli, err := client.New(mgr.GetConfig(), client.Options{
+		Scheme: mgr.GetScheme(),
+	})
+	if err != nil {
+		return err
+	}
+
+	storageSystemCrd := &extv1.CustomResourceDefinition{}
+	storageSystemCrd.Name = "storagesystems.odf.openshift.io"
+
+	if err := cli.Get(context.Background(), client.ObjectKeyFromObject(storageSystemCrd), storageSystemCrd); err != nil {
+		if errors.IsNotFound(err) {
+			// It is fresh install in 4.19 where storagesystem crd does not exist
+			// we do not require a cleanup controller
+			return nil
+		}
+		return err
+	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(
