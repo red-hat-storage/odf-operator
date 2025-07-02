@@ -92,6 +92,7 @@ func main() {
 	defaultNamespaces := map[string]cache.Config{
 		operatorNamespace:            {},
 		"openshift-storage-extended": {},
+		"ibm-spectrum-scale":         {},
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
