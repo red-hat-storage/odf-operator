@@ -42,7 +42,7 @@ func GetDesiredSubscription(ctx context.Context, cli client.Client, record *OlmP
 	desiredSubscription := &opv1a1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      record.Pkg,
-			Namespace: OperatorNamespace,
+			Namespace: record.Namespace,
 		},
 		Spec: &opv1a1.SubscriptionSpec{
 			Package:     record.Pkg,
@@ -244,14 +244,14 @@ func GetOdfSubscription(ctx context.Context, cli client.Client) (*opv1a1.Subscri
 func EnsureCsv(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord) error {
 
 	csvObj := &opv1a1.ClusterServiceVersion{}
-	csvObj.Name, csvObj.Namespace = olmPkgRecord.Csv, OperatorNamespace
+	csvObj.Name, csvObj.Namespace = olmPkgRecord.Csv, olmPkgRecord.Namespace
 
 	if err := cli.Get(ctx, client.ObjectKeyFromObject(csvObj), csvObj); err != nil {
 		if errors.IsNotFound(err) {
 			if present, err := isSubscriptionPresent(ctx, cli, olmPkgRecord); err != nil {
 				return err
 			} else if present {
-				if err := ApproveInstallPlanForCsv(ctx, cli, olmPkgRecord.Csv); err != nil {
+				if err := ApproveInstallPlanForCsv(ctx, cli, olmPkgRecord.Csv, olmPkgRecord.Namespace); err != nil {
 					return err
 				}
 			}
@@ -280,7 +280,7 @@ func isSubscriptionPresent(ctx context.Context, cli client.Client, olmPkgRecord 
 
 	// get all subscriptions in the cluster
 	subList := &opv1a1.SubscriptionList{}
-	if err := cli.List(ctx, subList, client.InNamespace(OperatorNamespace)); err != nil {
+	if err := cli.List(ctx, subList, client.InNamespace(olmPkgRecord.Namespace)); err != nil {
 		return false, err
 	}
 
@@ -296,13 +296,13 @@ func isSubscriptionPresent(ctx context.Context, cli client.Client, olmPkgRecord 
 
 // ApproveInstallPlanForCsv approve the manual approval installPlan for the given CSV
 // and returns an error if none found
-func ApproveInstallPlanForCsv(ctx context.Context, cli client.Client, csvName string) error {
+func ApproveInstallPlanForCsv(ctx context.Context, cli client.Client, csvName string, namespace string) error {
 
 	var finalError error
 	var foundInstallPlan bool
 
 	installPlans := &opv1a1.InstallPlanList{}
-	err := cli.List(ctx, installPlans, &client.ListOptions{Namespace: OperatorNamespace})
+	err := cli.List(ctx, installPlans, &client.ListOptions{Namespace: namespace})
 
 	if err != nil {
 		return err
