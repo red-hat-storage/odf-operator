@@ -80,14 +80,14 @@ var (
 	}
 )
 
-func reconcileCsvWebhook(ctx context.Context, cli client.Client, logger logr.Logger, operatorNamespace string) error {
+func reconcileCsvWebhook(ctx context.Context, cli client.Client, logger logr.Logger, operatorNamespace string, targetNamespaces []string) error {
 
 	if err := reconcileCsvMutatingWebhookService(ctx, cli, logger, operatorNamespace); err != nil {
 		logger.Error(err, "unable to reconcile webhook service")
 		return err
 	}
 
-	if err := reconcileCsvMutatingWebhookConfiguration(ctx, cli, logger, operatorNamespace); err != nil {
+	if err := reconcileCsvMutatingWebhookConfiguration(ctx, cli, logger, operatorNamespace, targetNamespaces); err != nil {
 		logger.Error(err, "unable to register csv mutating webhook")
 		return err
 	}
@@ -117,7 +117,7 @@ func reconcileCsvMutatingWebhookService(ctx context.Context, cli client.Client, 
 	return nil
 }
 
-func reconcileCsvMutatingWebhookConfiguration(ctx context.Context, cli client.Client, logger logr.Logger, operatorNamespace string) error {
+func reconcileCsvMutatingWebhookConfiguration(ctx context.Context, cli client.Client, logger logr.Logger, operatorNamespace string, targetNamespaces []string) error {
 
 	whConfig := &admrv1.MutatingWebhookConfiguration{}
 	whConfig.Name = csvWebhook.Name
@@ -145,8 +145,12 @@ func reconcileCsvMutatingWebhookConfiguration(ctx context.Context, cli client.Cl
 		wh.Name = whConfig.Name
 		// only send requests received from own namespace
 		wh.NamespaceSelector = &metav1.LabelSelector{
-			MatchLabels: map[string]string{
-				"kubernetes.io/metadata.name": operatorNamespace,
+			MatchExpressions: []metav1.LabelSelectorRequirement{
+				{
+					Key:      "kubernetes.io/metadata.name",
+					Operator: metav1.LabelSelectorOpIn,
+					Values:   targetNamespaces,
+				},
 			},
 		}
 

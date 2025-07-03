@@ -165,10 +165,6 @@ func (r *ClusterServiceVersionDeploymentScaler) scaleDownCsvDeployments(logger l
 
 func (r *ClusterServiceVersionDeploymentScaler) isCsvManagedByOdf(csv *opv1a1.ClusterServiceVersion) bool {
 
-	if csv.Namespace != r.OperatorNamespace {
-		return false
-	}
-
 	return r.odfOwnedCsvNames[csv.Name]
 }
 

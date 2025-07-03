@@ -34,12 +34,14 @@ type OdfOperatorConfigMapRecord struct {
 	   channel: alpha
 	   csv: ocs-operator.v4.18.0
 	   pkg: ocs-operator
+	   namespace: openshift-storage
 	   scaleUpOnInstanceOf:
 	     - storageclusters.ocs.openshift.io
 	   ---------------------------------------
 	   channel: beta
 	   csv: odf-prometheus-operator.v4.18.0
 	   pkg: odf-prometheus-operator
+	   namespace: "" (empty will be treated as operator namespace)
 	   scaleUpOnInstanceOf:
 	     - alertmanagers.monitoring.coreos.com
 	     - prometheuses.monitoring.coreos.com
@@ -48,6 +50,7 @@ type OdfOperatorConfigMapRecord struct {
 	Channel             string   `yaml:"channel"`
 	Csv                 string   `yaml:"csv"`
 	Pkg                 string   `yaml:"pkg"`
+	Namespace           string   `yaml:"namespace"`
 	ScaleUpOnInstanceOf []string `yaml:"scaleUpOnInstanceOf"`
 }
 
@@ -76,6 +79,10 @@ func ParseOdfConfigMapRecords(logger logr.Logger, configmap corev1.ConfigMap, fn
 		if err := yaml.Unmarshal([]byte(value), &record); err != nil {
 			logger.Error(err, "failed to unmarshal configmap data", "key", key)
 			continue
+		}
+
+		if record.Namespace == "" {
+			record.Namespace = OperatorNamespace
 		}
 
 		fn(&record, key, value)
