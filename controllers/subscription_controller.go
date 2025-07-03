@@ -45,11 +45,13 @@ type OlmPkgRecord struct {
 	   channel: alpha
 	   csv: ocs-operator.v4.18.0
 	   pkg: ocs-operator
+	   namespace: openshift-storage
 	*/
 
-	Channel string `yaml:"channel"`
-	Csv     string `yaml:"csv"`
-	Pkg     string `yaml:"pkg"`
+	Channel   string `yaml:"channel"`
+	Csv       string `yaml:"csv"`
+	Pkg       string `yaml:"pkg"`
+	Namespace string `yaml:"namespace"`
 }
 
 type SubscriptionReconciler struct {
@@ -85,7 +87,9 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if err := reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace); err != nil {
+	targetNamespaces := getTargetNamespaces(olmPkgRecords)
+
+	if err := reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace, targetNamespaces); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -95,6 +99,21 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 
 	logger.Info("reconcile completed successfully")
 	return ctrl.Result{}, nil
+}
+
+func getTargetNamespaces(olmPkgRecords []*OlmPkgRecord) []string {
+
+	var namespacesMap = make(map[string]bool)
+	var namespaces []string
+
+	for _, olmPkgRecord := range olmPkgRecords {
+		if !namespacesMap[olmPkgRecord.Namespace] {
+			namespaces = append(namespaces, olmPkgRecord.Namespace)
+		}
+		namespacesMap[olmPkgRecord.Namespace] = true
+	}
+
+	return namespaces
 }
 
 func (r *SubscriptionReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, olmPkgRecords *[]*OlmPkgRecord, csvNamesMap map[string]struct{}) error {
@@ -111,9 +130,10 @@ func (r *SubscriptionReconciler) loadOdfConfigMapData(ctx context.Context, logge
 		}
 
 		*olmPkgRecords = append(*olmPkgRecords, &OlmPkgRecord{
-			Channel: record.Channel,
-			Csv:     record.Csv,
-			Pkg:     record.Pkg,
+			Channel:   record.Channel,
+			Csv:       record.Csv,
+			Pkg:       record.Pkg,
+			Namespace: record.Namespace,
 		})
 		csvNamesMap[record.Csv] = struct{}{}
 	})

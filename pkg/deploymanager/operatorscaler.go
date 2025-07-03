@@ -34,7 +34,7 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 				"kind":       kindCsvRecord.Kind,
 				"metadata": map[string]any{
 					"name":      "test-obj",
-					"namespace": InstallNamespace,
+					"namespace": kindCsvRecord.Namespace,
 				},
 				// Add required spec fields here
 				"spec": map[string]any{
@@ -60,7 +60,7 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 
 		// Cleanup: Restore CSV replica to original state
 		//nolint:errcheck
-		defer d.ScaleDownCsvsDeploymentsReplicas(kindCsvRecord.CsvNames)
+		defer d.ScaleDownCsvsDeploymentsReplicas(kindCsvRecord.CsvNames, kindCsvRecord.Namespace)
 		d.Log.Info("cleanup", "csvs", kindCsvRecord.CsvNames)
 		// Cleanup: Delete the CR
 		//nolint:errcheck
@@ -73,7 +73,7 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 				return stderrors.Is(err, ErrDeploymentsNotScaledUp)
 			},
 			func() error {
-				if err := d.ValidateCsvsDeploymentsReplicasAreScaledUp(kindCsvRecord.CsvNames); err != nil {
+				if err := d.ValidateCsvsDeploymentsReplicasAreScaledUp(kindCsvRecord.CsvNames, kindCsvRecord.Namespace); err != nil {
 					d.Log.Error(err, "failed to validate csv deployment replicas")
 					return err
 				}
@@ -110,6 +110,7 @@ func (d *DeployManager) LoadOdfConfigMapData(kindMapping map[string]*controllers
 				rec = &controllers.KindCsvsRecord{}
 			}
 			rec.CsvNames = append(rec.CsvNames, record.Csv)
+			rec.Namespace = record.Namespace
 
 			// populate the apiVersion and kind
 			crd := &extv1.CustomResourceDefinition{}
@@ -134,11 +135,11 @@ func (d *DeployManager) LoadOdfConfigMapData(kindMapping map[string]*controllers
 	return combinedErr
 }
 
-func (d *DeployManager) ValidateCsvsDeploymentsReplicasAreScaledUp(csvNames []string) error {
+func (d *DeployManager) ValidateCsvsDeploymentsReplicasAreScaledUp(csvNames []string, namespace string) error {
 
 	for _, csvName := range csvNames {
 		csv := &opv1a1.ClusterServiceVersion{}
-		if err := d.Client.Get(d.Ctx, client.ObjectKey{Name: csvName, Namespace: InstallNamespace}, csv); err != nil {
+		if err := d.Client.Get(d.Ctx, client.ObjectKey{Name: csvName, Namespace: namespace}, csv); err != nil {
 			d.Log.Error(err, "failed to get the csv")
 			return err
 		}
@@ -157,13 +158,13 @@ func (d *DeployManager) ValidateCsvsDeploymentsReplicasAreScaledUp(csvNames []st
 	return nil
 }
 
-func (d *DeployManager) ScaleDownCsvsDeploymentsReplicas(csvNames []string) error {
+func (d *DeployManager) ScaleDownCsvsDeploymentsReplicas(csvNames []string, namespace string) error {
 
 	for _, csvName := range csvNames {
 		if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 
 			csv := &opv1a1.ClusterServiceVersion{}
-			if err := d.Client.Get(d.Ctx, client.ObjectKey{Name: csvName, Namespace: InstallNamespace}, csv); err != nil {
+			if err := d.Client.Get(d.Ctx, client.ObjectKey{Name: csvName, Namespace: namespace}, csv); err != nil {
 				d.Log.Error(err, "failed to get the csv")
 				return err
 			}
