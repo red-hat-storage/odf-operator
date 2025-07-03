@@ -28,24 +28,28 @@ data:
     channel: $(CEPHCSI_SUBSCRIPTION_CHANNEL)
     csv: $(CEPHCSI_SUBSCRIPTION_CSVNAME)
     pkg: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   CSIADDONS: |
     channel: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
     csv: $(CSIADDONS_SUBSCRIPTION_CSVNAME)
     pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   SNAPSHOT_CONTROLLER: |
     channel: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL)
     csv: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CSVNAME)
     pkg: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM_ODF: |
     channel: $(IBM_ODF_SUBSCRIPTION_CHANNEL)
     csv: $(IBM_ODF_SUBSCRIPTION_CSVNAME)
     pkg: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
   IBM_CSI: |
@@ -58,28 +62,33 @@ data:
     channel: $(NOOBAA_SUBSCRIPTION_CHANNEL)
     csv: $(NOOBAA_SUBSCRIPTION_CSVNAME)
     pkg: $(NOOBAA_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - noobaas.noobaa.io
   OCS_CLIENT: |
     channel: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)
     csv: $(OCS_CLIENT_SUBSCRIPTION_CSVNAME)
     pkg: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   OCS: |
     channel: $(OCS_SUBSCRIPTION_CHANNEL)
     csv: $(OCS_SUBSCRIPTION_CSVNAME)
     pkg: $(OCS_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - storageclusters.ocs.openshift.io
   ODF_DEPS: |
     channel: $(ODF_DEPS_SUBSCRIPTION_CHANNEL)
     csv: $(ODF_DEPS_SUBSCRIPTION_CSVNAME)
     pkg: $(ODF_DEPS_SUBSCRIPTION_PACKAGE)
+    namespace: ""
   PROMETHEUS: |
     channel: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
     csv: $(PROMETHEUS_SUBSCRIPTION_CSVNAME)
     pkg: $(PROMETHEUS_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - alertmanagers.monitoring.coreos.com
       - prometheuses.monitoring.coreos.com
@@ -87,10 +96,12 @@ data:
     channel: $(RECIPE_SUBSCRIPTION_CHANNEL)
     csv: $(RECIPE_SUBSCRIPTION_CSVNAME)
     pkg: $(RECIPE_SUBSCRIPTION_PACKAGE)
+    namespace: ""
   ROOK: |
     channel: $(ROOK_SUBSCRIPTION_CHANNEL)
     csv: $(ROOK_SUBSCRIPTION_CSVNAME)
     pkg: $(ROOK_SUBSCRIPTION_PACKAGE)
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
 endef
