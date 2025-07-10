@@ -35,3 +35,7 @@ dependencies:
   value:
     packageName: recipe
     version: "0.0.1"
+- type: olm.package
+  value:
+    packageName: ibm-storage-odf-operator
+    version: "1.8.0"
