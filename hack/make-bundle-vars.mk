@@ -143,6 +143,12 @@ IBM_ODF_SUBSCRIPTION_PACKAGE ?= ibm-storage-odf-operator
 IBM_ODF_SUBSCRIPTION_CHANNEL ?= stable-v1.8
 IBM_ODF_SUBSCRIPTION_CSVNAME ?= $(IBM_ODF_SUBSCRIPTION_PACKAGE).$(IBM_ODF_BUNDLE_VERSION)
 
+IBM_CSI_BUNDLE_IMG ?= quay.io/ibmcsiblock/ibm-block-csi-operator-bundle:1.12.4
+IBM_CSI_BUNDLE_VERSION ?= v1.12.4
+IBM_CSI_SUBSCRIPTION_PACKAGE ?= ibm-block-csi-operator
+IBM_CSI_SUBSCRIPTION_CHANNEL ?= stable-v1.12.4
+IBM_CSI_SUBSCRIPTION_CSVNAME ?= $(IBM_CSI_SUBSCRIPTION_PACKAGE).$(IBM_CSI_BUNDLE_VERSION)
+
 
 # A space-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0 example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
@@ -157,7 +163,8 @@ BUNDLE_IMGS ?= $(BUNDLE_IMG) \
 	$(ODF_SNAPSHOT_CONTROLLER_BUNDLE_IMG) \
 	$(PROMETHEUS_BUNDLE_IMG) \
 	$(RECIPE_BUNDLE_IMG_TAG) \
-	$(IBM_ODF_BUNDLE_IMG)
+	$(IBM_ODF_BUNDLE_IMG) \
+	$(IBM_CSI_BUNDLE_IMG)
 
 # The 'odf-operator' CSV name must always be at index 0 in this list,
 # as some e2e tests explicitly skip the first element.
