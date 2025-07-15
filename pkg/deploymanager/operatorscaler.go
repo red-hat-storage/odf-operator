@@ -53,6 +53,22 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 			}
 		}
 
+		if kindCsvRecord.Kind == "FlashSystemCluster" {
+			// Set the required field
+			if err := unstructured.SetNestedField(
+				obj.Object, "dummy-name",
+				"spec", "name"); err != nil {
+				d.Log.Error(err, "failed to set spec.name")
+				return err
+			}
+			if err := unstructured.SetNestedField(
+				obj.Object, "dummy-secret",
+				"spec", "secret", "name"); err != nil {
+				d.Log.Error(err, "failed to set spec.secret")
+				return err
+			}
+		}
+
 		if err := d.Client.Create(d.Ctx, obj); err != nil {
 			d.Log.Error(err, "failed to create object", "kind", kindCsvRecord.Kind)
 			return err

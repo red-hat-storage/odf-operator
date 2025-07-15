@@ -176,6 +176,7 @@ catalog: opm ## Generate catalog manifests and then validate generated files.
 	$(OPM) render --output=yaml $(OCS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs.yaml
 	$(OPM) render --output=yaml $(OCS_CLIENT_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs-client.yaml
 	$(OPM) render --output=yaml $(IBM_ODF_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm.yaml
+	$(OPM) render --output=yaml $(IBM_CSI_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm-csi.yaml
 	$(OPM) render --output=yaml $(NOOBAA_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/noobaa.yaml
 	$(OPM) render --output=yaml $(CSIADDONS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/csiaddons.yaml
 	$(OPM) render --output=yaml $(ODF_SNAPSHOT_CONTROLLER_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf-external-snapshotter-operator.yaml
