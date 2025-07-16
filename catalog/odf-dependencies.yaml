@@ -19,10 +19,6 @@ properties:
     versionRange: 0.12.0
 - type: olm.package.required
   value:
-    packageName: ibm-storage-odf-operator
-    versionRange: 1.8.0
-- type: olm.package.required
-  value:
     packageName: noobaa-operator
     versionRange: 5.19.0
 - type: olm.package.required
