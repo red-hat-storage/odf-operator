@@ -66,11 +66,13 @@ type KindCsvsRecord struct {
 	/* examples
 	   ApiVersion: "ceph.rook.io/v1",
 	   Kind:       "CephCluster",
+	   Namespace:  "openshift-storage",
 	   CsvNames:   []string{rook-operator.v0.0.1, cephcsi-operator.v0.0.1, csi-addons.v0.0.1, ocs-client-operator.v0.0.1},
 	*/
 
 	ApiVersion string
 	Kind       string
+	Namespace  string
 	CsvNames   []string
 }
 
@@ -152,6 +154,7 @@ func (r *OperatorScalerReconciler) loadOdfConfigMapData(ctx context.Context, log
 				rec = &KindCsvsRecord{}
 			}
 			rec.CsvNames = append(rec.CsvNames, record.Csv)
+			rec.Namespace = record.Namespace
 
 			// populate the apiVersion and kind
 			crd := &extv1.CustomResourceDefinition{}
@@ -269,7 +272,7 @@ func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logge
 
 				csv := &opv1a1.ClusterServiceVersion{}
 				csv.Name = csvName
-				csv.Namespace = OperatorNamespace
+				csv.Namespace = resourceMapping.Namespace
 				err = r.Client.Get(ctx, client.ObjectKeyFromObject(csv), csv)
 				if err != nil {
 					logger.Error(err, "failed getting csv ", "name", csvName)

@@ -7,24 +7,28 @@ data:
     channel: alpha
     csv: cephcsi-operator.v4.19.0
     pkg: cephcsi-operator
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   CSIADDONS: |
     channel: alpha
     csv: csi-addons.v0.12.0
     pkg: csi-addons
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   SNAPSHOT_CONTROLLER: |
     channel: alpha
     csv: odf-external-snapshotter-operator.v4.20.0
     pkg: odf-external-snapshotter-operator
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM_ODF: |
     channel: stable-v1.8
     csv: ibm-storage-odf-operator.v1.8.0
     pkg: ibm-storage-odf-operator
+    namespace: ""
     scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
   IBM_CSI: |
@@ -37,28 +41,33 @@ data:
     channel: alpha
     csv: noobaa-operator.v5.19.0
     pkg: noobaa-operator
+    namespace: ""
     scaleUpOnInstanceOf:
       - noobaas.noobaa.io
   OCS_CLIENT: |
     channel: alpha
     csv: ocs-client-operator.v4.19.0
     pkg: ocs-client-operator
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   OCS: |
     channel: alpha
     csv: ocs-operator.v4.19.0
     pkg: ocs-operator
+    namespace: ""
     scaleUpOnInstanceOf:
       - storageclusters.ocs.openshift.io
   ODF_DEPS: |
     channel: alpha
     csv: odf-dependencies.v4.19.0
     pkg: odf-dependencies
+    namespace: ""
   PROMETHEUS: |
     channel: beta
     csv: odf-prometheus-operator.v4.19.0
     pkg: odf-prometheus-operator
+    namespace: ""
     scaleUpOnInstanceOf:
       - alertmanagers.monitoring.coreos.com
       - prometheuses.monitoring.coreos.com
@@ -66,9 +75,11 @@ data:
     channel: alpha
     csv: recipe.v0.0.1
     pkg: recipe
+    namespace: ""
   ROOK: |
     channel: alpha
     csv: rook-ceph-operator.v4.19.0
     pkg: rook-ceph-operator
+    namespace: ""
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
