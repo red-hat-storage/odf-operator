@@ -125,10 +125,6 @@ dependencies:
   value:
     packageName: $(RECIPE_SUBSCRIPTION_PACKAGE)
     version: "$(subst v,,$(RECIPE_BUNDLE_VERSION))"
-- type: olm.package
-  value:
-    packageName: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
-    version: "$(subst v,,$(IBM_ODF_BUNDLE_VERSION))"
 endef
 export DEPENDENCIES_YAML
 
