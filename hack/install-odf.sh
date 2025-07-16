@@ -75,6 +75,4 @@ oc wait --timeout=5m --for condition=Available -n "$INSTALL_NAMESPACE" deploymen
     prometheus-operator \
     rook-ceph-operator \
     ux-backend-server \
-    odf-external-snapshotter-operator \
-    ibm-storage-odf-operator \
-    ibm-block-csi-operator
+    odf-external-snapshotter-operator
