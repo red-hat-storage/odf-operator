@@ -21,12 +21,14 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	opv1 "github.com/operator-framework/api/pkg/operators/v1"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	opv2 "github.com/operator-framework/api/pkg/operators/v2"
 	"github.com/operator-framework/operator-lib/conditions"
 	"go.uber.org/multierr"
 	admrv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -70,7 +72,9 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorgroups,verbs=create
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=namespaces,verbs=create
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update
 
 func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
@@ -90,6 +94,14 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 	targetNamespaces := getTargetNamespaces(olmPkgRecords)
 
 	if err := reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace, targetNamespaces); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := ensureNamespace(ctx, r.Client, logger, olmPkgRecords); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := ensureOperatorGroup(ctx, r.Client, logger, olmPkgRecords); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -114,6 +126,72 @@ func getTargetNamespaces(olmPkgRecords []*OlmPkgRecord) []string {
 	}
 
 	return namespaces
+}
+
+func ensureNamespace(ctx context.Context, cli client.Client, logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
+
+	namespacesMap := make(map[string]bool)
+
+	for _, olmPkgRecord := range olmPkgRecords {
+
+		if olmPkgRecord.Namespace == "" || olmPkgRecord.Namespace == OperatorNamespace {
+			logger.Info("skipping namespace creation", "record", olmPkgRecord)
+			continue
+		}
+
+		if !namespacesMap[olmPkgRecord.Namespace] {
+			ns := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: olmPkgRecord.Namespace,
+				},
+			}
+			if err := cli.Create(ctx, ns); err != nil && !errors.IsAlreadyExists(err) {
+				logger.Error(err, "failed to create namespace", "namespace", olmPkgRecord.Namespace)
+				return err
+			} else {
+				logger.Info("created namespace", "namespace", olmPkgRecord.Namespace)
+			}
+
+			namespacesMap[olmPkgRecord.Namespace] = true
+		}
+	}
+
+	return nil
+}
+
+func ensureOperatorGroup(ctx context.Context, cli client.Client, logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
+
+	namespacesMap := make(map[string]bool)
+
+	for _, olmPkgRecord := range olmPkgRecords {
+
+		if olmPkgRecord.Namespace == "" || olmPkgRecord.Namespace == OperatorNamespace {
+			logger.Info("skipping operatorGroup creation", "record", olmPkgRecord)
+			continue
+		}
+
+		if !namespacesMap[olmPkgRecord.Namespace] {
+			opGroup := &opv1.OperatorGroup{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      olmPkgRecord.Namespace + "-operator-group",
+					Namespace: olmPkgRecord.Namespace,
+				},
+				Spec: opv1.OperatorGroupSpec{
+					TargetNamespaces: []string{olmPkgRecord.Namespace},
+				},
+			}
+			if err := cli.Create(ctx, opGroup); err != nil && !errors.IsAlreadyExists(err) {
+				logger.Error(err, "failed to create operatorGroup", "namespace", olmPkgRecord.Namespace)
+				return err
+			} else {
+				logger.Info("created operatorGroup", "namespace", olmPkgRecord.Namespace)
+			}
+
+			namespacesMap[olmPkgRecord.Namespace] = true
+		}
+	}
+
+	return nil
 }
 
 func (r *SubscriptionReconciler) loadOdfConfigMapData(ctx context.Context, logger logr.Logger, olmPkgRecords *[]*OlmPkgRecord, csvNamesMap map[string]struct{}) error {
