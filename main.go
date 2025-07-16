@@ -27,6 +27,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	consolev1 "github.com/openshift/api/console/v1"
+	opv1 "github.com/operator-framework/api/pkg/operators/v1"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	opv2 "github.com/operator-framework/api/pkg/operators/v2"
 	admrv1 "k8s.io/api/admissionregistration/v1"
@@ -60,6 +61,7 @@ func init() {
 	utilruntime.Must(k8sscheme.AddToScheme(scheme))
 	utilruntime.Must(odfv1a1.AddToScheme(scheme))
 	utilruntime.Must(opv1a1.AddToScheme(scheme))
+	utilruntime.Must(opv1.AddToScheme(scheme))
 	utilruntime.Must(opv2.AddToScheme(scheme))
 	utilruntime.Must(consolev1.AddToScheme(scheme))
 	utilruntime.Must(admrv1.AddToScheme(scheme))

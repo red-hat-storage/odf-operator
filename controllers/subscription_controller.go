@@ -23,6 +23,7 @@ import (
 	"slices"
 
 	"github.com/go-logr/logr"
+	opv1 "github.com/operator-framework/api/pkg/operators/v1"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	opv2 "github.com/operator-framework/api/pkg/operators/v2"
 	"github.com/operator-framework/operator-lib/conditions"
@@ -40,6 +41,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/red-hat-storage/odf-operator/pkg/util"
+)
+
+const (
+	managedByLabel = "odf.openshift.io/managed-by-odf-operator"
 )
 
 type OlmPkgRecord struct {
@@ -72,7 +77,9 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorgroups,verbs=get;list;watch;create
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update
 
 func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
@@ -92,6 +99,14 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 	targetNamespaces := r.getTargetNamespaces(olmPkgRecords)
 
 	if err := reconcileCsvWebhook(ctx, r.Client, logger, r.OperatorNamespace, targetNamespaces); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.reconcileNamespaces(ctx, logger, targetNamespaces); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.reconcileOperatorGroups(ctx, logger, targetNamespaces); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -141,6 +156,71 @@ func (r *SubscriptionReconciler) getTargetNamespaces(olmPkgRecords []*OlmPkgReco
 	namespaces := slices.Collect(maps.Keys(namespacesMap))
 
 	return namespaces
+}
+
+func (r *SubscriptionReconciler) reconcileNamespaces(ctx context.Context, logger logr.Logger, namespaces []string) error {
+
+	for _, namespace := range namespaces {
+
+		ns := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+				Labels: map[string]string{
+					managedByLabel: "",
+				},
+			},
+		}
+
+		if err := r.Client.Get(ctx, client.ObjectKeyFromObject(ns), ns); err == nil {
+			continue
+		}
+
+		if err := r.Client.Create(ctx, ns); err != nil {
+			logger.Error(err, "failed to create namespace", "namespace", namespace)
+			return err
+		} else {
+			logger.Info("created namespace", "namespace", namespace)
+		}
+	}
+
+	return nil
+}
+
+func (r *SubscriptionReconciler) reconcileOperatorGroups(ctx context.Context, logger logr.Logger, namespaces []string) error {
+
+	for _, namespace := range namespaces {
+
+		// Do not create OperatorGroup for odf namespace
+		if namespace == OperatorNamespace {
+			continue
+		}
+
+		opGroup := &opv1.OperatorGroup{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      namespace + "-operator-group",
+				Namespace: namespace,
+				Labels: map[string]string{
+					managedByLabel: "",
+				},
+			},
+			Spec: opv1.OperatorGroupSpec{
+				TargetNamespaces: []string{namespace},
+			},
+		}
+
+		if err := r.Client.Get(ctx, client.ObjectKeyFromObject(opGroup), opGroup); err == nil {
+			continue
+		}
+
+		if err := r.Client.Create(ctx, opGroup); err != nil {
+			logger.Error(err, "failed to create operatorGroup", "operatorGroup", opGroup.Name)
+			return err
+		} else {
+			logger.Info("created operatorGroup", "operatorGroup", opGroup.Name)
+		}
+	}
+
+	return nil
 }
 
 func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
