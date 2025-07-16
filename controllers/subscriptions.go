@@ -199,7 +199,12 @@ func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRec
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
 	_, err = controllerutil.CreateOrUpdate(ctx, cli, sub, func() error {
 		sub.Spec = desiredSubscription.Spec
-		return SetOdfSubControllerReference(ctx, cli, sub)
+
+		if desiredSubscription.Namespace == OperatorNamespace {
+			return SetOdfSubControllerReference(ctx, cli, sub)
+		}
+
+		return nil
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
@@ -261,7 +266,12 @@ func EnsureCsv(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecor
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, cli, csvObj, func() error {
-		return SetOdfSubControllerReference(ctx, cli, csvObj)
+
+		if csvObj.Namespace == OperatorNamespace {
+			return SetOdfSubControllerReference(ctx, cli, csvObj)
+		}
+
+		return nil
 	}); err != nil {
 		return err
 	}
