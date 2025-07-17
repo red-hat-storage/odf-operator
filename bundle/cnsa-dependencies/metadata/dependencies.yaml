@@ -1,0 +1,5 @@
+dependencies:
+- type: olm.package
+  value:
+    packageName: recipe
+    version: "0.0.1"
