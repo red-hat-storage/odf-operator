@@ -97,7 +97,7 @@ endef
 export CONFIGMAP_YAML
 
 
-define DEPENDENCIES_YAML
+define ODF_DEPENDENCIES_YAML
 dependencies:
 - type: olm.package
   value:
@@ -140,7 +140,13 @@ dependencies:
     packageName: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
     version: "$(subst v,,$(IBM_ODF_BUNDLE_VERSION))"
 endef
-export DEPENDENCIES_YAML
+export ODF_DEPENDENCIES_YAML
+
+
+define CNSA_DEPENDENCIES_YAML
+dependencies:
+endef
+export CNSA_DEPENDENCIES_YAML
 
 
 define INDEX_YAML
