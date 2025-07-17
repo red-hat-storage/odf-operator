@@ -121,24 +121,39 @@ deploy-with-olm: kustomize ## Deploy controller to the K8s cluster via OLM
 undeploy-with-olm: ## Undeploy controller from the K8s cluster
 	$(KUSTOMIZE) build config/install | kubectl delete -f -
 
-# Make target to ignore (git checkout) changes if there are only timestamp changes in the bundle
-checkout-bundle-timestamp:
-	(git diff --quiet --ignore-matching-lines createdAt bundle/odf-operator && git checkout --quiet bundle/odf-operator) || true
-	(git diff --quiet --ignore-matching-lines createdAt bundle/odf-dependencies && git checkout --quiet bundle/odf-dependencies) || true
+checkout-bundle-timestamp: ## Ignore (git checkout) changes if there are only timestamp changes in the bundle
+	(git diff --quiet --ignore-matching-lines createdAt bundle/$(BUNDLE_DIR) && git checkout --quiet bundle/$(BUNDLE_DIR)) || true
+
+bundle-dependencies: ## Generate dependencies bundle manifests and metadata, then validate generated files.
+	@test -n "$$DEPS_YAML" || (echo "ERROR: DEPS_YAML is not set."; exit 1)
+	@test -n "$(PKG_NAME)" || (echo "ERROR: PKG_NAME is not set."; exit 1)
+	@test -n "$(DOCKERFILE_NAME)" || (echo "ERROR: DOCKERFILE_NAME is not set."; exit 1)
+
+	@echo "$$DEPS_YAML" > bundle/$(PKG_NAME)/metadata/dependencies.yaml
+	cd config/bundles/$(PKG_NAME) && $(KUSTOMIZE) edit add annotation --force \
+		'olm.skipRange':"$(SKIP_RANGE)" \
+		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
+		$(KUSTOMIZE) edit add patch --name $(PKG_NAME).v0.0.0 --kind ClusterServiceVersion \
+		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
+	$(KUSTOMIZE) build config/bundles/$(PKG_NAME) | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
+		--output-dir bundle/$(PKG_NAME) --package $(PKG_NAME)
+	$(OPERATOR_SDK) bundle validate bundle/$(PKG_NAME)
+	@$(MAKE) --no-print-directory checkout-bundle-timestamp BUNDLE_DIR=$(PKG_NAME)
+	@mv bundle.Dockerfile $(DOCKERFILE_NAME)
 
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
-	# Dependencies bundle
-	@echo "$$DEPENDENCIES_YAML" > bundle/odf-dependencies/metadata/dependencies.yaml
-	cd config/bundle && $(KUSTOMIZE) edit add annotation --force \
-		'olm.skipRange':"$(SKIP_RANGE)" \
-		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
-		$(KUSTOMIZE) edit add patch --name odf-dependencies.v0.0.0 --kind ClusterServiceVersion \
-		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
-	$(KUSTOMIZE) build config/bundle | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
-		--output-dir bundle/odf-dependencies --package odf-dependencies
-	$(OPERATOR_SDK) bundle validate bundle/odf-dependencies
-	@mv bundle.Dockerfile bundle.deps.Dockerfile
+	# cnsa dependencies bundle
+	$(MAKE) bundle-dependencies \
+		DEPS_YAML="$$CNSA_DEPENDENCIES_YAML" \
+		PKG_NAME="cnsa-dependencies" \
+		DOCKERFILE_NAME="bundle.cnsa.deps.Dockerfile"
+
+	# odf dependencies bundle
+	$(MAKE) bundle-dependencies \
+		DEPS_YAML="$$ODF_DEPENDENCIES_YAML" \
+		PKG_NAME="odf-dependencies" \
+		DOCKERFILE_NAME="bundle.odf.deps.Dockerfile"
 
 	# Main odf-operator bundle
 	$(OPERATOR_SDK) generate kustomize manifests -q
@@ -153,17 +168,19 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
 		--output-dir bundle/odf-operator
 	$(OPERATOR_SDK) bundle validate bundle/odf-operator
-	@$(MAKE) --no-print-directory checkout-bundle-timestamp
+	@$(MAKE) --no-print-directory checkout-bundle-timestamp BUNDLE_DIR=odf-operator
 
 .PHONY: bundle-build
 bundle-build: bundle ## Build the bundle image.
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
-	docker build -f bundle.deps.Dockerfile -t $(ODF_DEPS_BUNDLE_IMG) .
+	docker build -f bundle.odf.deps.Dockerfile -t $(ODF_DEPS_BUNDLE_IMG) .
+	docker build -f bundle.cnsa.deps.Dockerfile -t $(CNSA_DEPS_BUNDLE_IMG) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
 	$(MAKE) docker-push IMG=$(BUNDLE_IMG)
 	$(MAKE) docker-push IMG=$(ODF_DEPS_BUNDLE_IMG)
+	$(MAKE) docker-push IMG=$(CNSA_DEPS_BUNDLE_IMG)
 
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
