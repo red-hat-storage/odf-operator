@@ -48,6 +48,12 @@ data:
     pkg: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
+  IBM_CSI: |
+    channel: $(IBM_CSI_SUBSCRIPTION_CHANNEL)
+    csv: $(IBM_CSI_SUBSCRIPTION_CSVNAME)
+    pkg: $(IBM_CSI_SUBSCRIPTION_PACKAGE)
+    scaleUpOnInstanceOf:
+      - flashsystemclusters.odf.ibm.com
   NOOBAA: |
     channel: $(NOOBAA_SUBSCRIPTION_CHANNEL)
     csv: $(NOOBAA_SUBSCRIPTION_CSVNAME)
@@ -129,6 +135,10 @@ dependencies:
   value:
     packageName: $(RECIPE_SUBSCRIPTION_PACKAGE)
     version: "$(subst v,,$(RECIPE_BUNDLE_VERSION))"
+- type: olm.package
+  value:
+    packageName: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(IBM_ODF_BUNDLE_VERSION))"
 endef
 export DEPENDENCIES_YAML
 
@@ -265,5 +275,16 @@ package: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
 name: $(IBM_ODF_SUBSCRIPTION_CHANNEL)
 entries:
   - name: $(IBM_ODF_SUBSCRIPTION_CSVNAME)
+
+---
+defaultChannel: $(IBM_CSI_SUBSCRIPTION_CHANNEL)
+name: $(IBM_CSI_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(IBM_CSI_SUBSCRIPTION_PACKAGE)
+name: $(IBM_CSI_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(IBM_CSI_SUBSCRIPTION_CSVNAME)
 endef
 export INDEX_YAML
