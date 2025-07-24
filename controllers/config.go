@@ -48,7 +48,7 @@ type OdfOperatorConfigMapRecord struct {
 	Channel             string   `yaml:"channel"`
 	Csv                 string   `yaml:"csv"`
 	Pkg                 string   `yaml:"pkg"`
-	ScaleUpOnInstanceOf []string `yaml:"ScaleUpOnInstanceOf"`
+	ScaleUpOnInstanceOf []string `yaml:"scaleUpOnInstanceOf"`
 }
 
 func GetOdfConfigMap(ctx context.Context, cli client.Client, logger logr.Logger) (corev1.ConfigMap, error) {
