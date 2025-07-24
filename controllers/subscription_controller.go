@@ -47,9 +47,9 @@ type OlmPkgRecord struct {
 	   pkg: ocs-operator
 	*/
 
-	Channel string `yaml:"channel"`
-	Csv     string `yaml:"csv"`
-	Pkg     string `yaml:"pkg"`
+	Channel string
+	Csv     string
+	Pkg     string
 }
 
 type SubscriptionReconciler struct {
