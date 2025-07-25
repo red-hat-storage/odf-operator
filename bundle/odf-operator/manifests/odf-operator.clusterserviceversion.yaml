@@ -104,6 +104,15 @@ spec:
         - apiGroups:
           - ""
           resources:
+          - namespaces
+          verbs:
+          - create
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
           - services
           verbs:
           - create
@@ -285,6 +294,15 @@ spec:
           resources:
           - operatorconditions
           verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - operators.coreos.com
+          resources:
+          - operatorgroups
+          verbs:
+          - create
           - get
           - list
           - watch
