@@ -173,6 +173,17 @@ entries:
   - name: $(ODF_DEPS_SUBSCRIPTION_CSVNAME)
 
 ---
+defaultChannel: $(CNSA_DEPS_SUBSCRIPTION_CHANNEL)
+name: $(CNSA_DEPS_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(CNSA_DEPS_SUBSCRIPTION_PACKAGE)
+name: $(CNSA_DEPS_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(CNSA_DEPS_SUBSCRIPTION_CSVNAME)
+
+---
 defaultChannel: $(OCS_SUBSCRIPTION_CHANNEL)
 name: $(OCS_SUBSCRIPTION_PACKAGE)
 schema: olm.package

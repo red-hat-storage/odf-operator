@@ -22,6 +22,17 @@ entries:
 
 ---
 defaultChannel: alpha
+name: cnsa-dependencies
+schema: olm.package
+---
+schema: olm.channel
+package: cnsa-dependencies
+name: alpha
+entries:
+  - name: cnsa-dependencies.v4.19.0
+
+---
+defaultChannel: alpha
 name: ocs-operator
 schema: olm.package
 ---
