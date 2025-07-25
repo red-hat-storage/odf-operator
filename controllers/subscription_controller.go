@@ -45,6 +45,9 @@ import (
 
 const (
 	managedByLabel = "odf.openshift.io/managed-by-odf-operator"
+
+	providerNameRedHat = "Red Hat"
+	providerNameIBM    = "IBM"
 )
 
 type OlmPkgRecord struct {
@@ -69,6 +72,9 @@ type SubscriptionReconciler struct {
 
 	operatorConditionName string
 	operatorCondition     conditions.Condition
+
+	// providerName will hold the csv.spec.provider.name of odf-operator csv
+	providerName string
 }
 
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch;create;update;patch;delete
@@ -160,6 +166,10 @@ func (r *SubscriptionReconciler) getTargetNamespaces(olmPkgRecords []*OlmPkgReco
 
 func (r *SubscriptionReconciler) reconcileNamespaces(ctx context.Context, logger logr.Logger, namespaces []string) error {
 
+	if r.providerName == providerNameRedHat {
+		return nil
+	}
+
 	for _, namespace := range namespaces {
 
 		ns := &corev1.Namespace{
@@ -187,6 +197,10 @@ func (r *SubscriptionReconciler) reconcileNamespaces(ctx context.Context, logger
 }
 
 func (r *SubscriptionReconciler) reconcileOperatorGroups(ctx context.Context, logger logr.Logger, namespaces []string) error {
+
+	if r.providerName == providerNameRedHat {
+		return nil
+	}
 
 	for _, namespace := range namespaces {
 
@@ -228,7 +242,7 @@ func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger
 	var combinedErr error
 
 	for _, olmPkgRecord := range olmPkgRecords {
-		if err := EnsureDesiredSubscription(ctx, r.Client, olmPkgRecord); err != nil {
+		if err := EnsureDesiredSubscription(ctx, r.Client, olmPkgRecord, r.providerName); err != nil {
 			logger.Error(err, "failed to ensure subscription", "package", olmPkgRecord.Pkg)
 			multierr.AppendInto(&combinedErr, err)
 		}
@@ -293,6 +307,11 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 	r.operatorCondition, err = util.NewUpgradeableCondition(mgr.GetClient())
+	if err != nil {
+		return err
+	}
+
+	r.providerName, err = getProviderName(context.Background(), r.Client, r.operatorConditionName)
 	if err != nil {
 		return err
 	}
@@ -398,4 +417,24 @@ func getNotUpgradeableCond(ocd *opv2.OperatorCondition) *metav1.Condition {
 	return util.Find(ocd.Status.Conditions, func(cd *metav1.Condition) bool {
 		return cd.Type == opv2.Upgradeable && cd.Status != "True"
 	})
+}
+
+func getProviderName(ctx context.Context, cli client.Client, csvName string) (string, error) {
+
+	// Get odf-operator CSV to determine provider
+	csv := &opv1a1.ClusterServiceVersion{}
+	csv.Name = csvName
+	csv.Namespace = OperatorNamespace
+
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(csv), csv); err != nil {
+		return "", err
+	}
+
+	if csv.Spec.Provider.Name == providerNameRedHat {
+		return providerNameRedHat, nil
+	} else if csv.Spec.Provider.Name == providerNameIBM {
+		return providerNameIBM, nil
+	}
+
+	return "", fmt.Errorf("provider name in the csv is not known")
 }
