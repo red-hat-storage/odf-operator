@@ -23,7 +23,7 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
-    - uses: golangci/golangci-lint-action@v6
+    - uses: golangci/golangci-lint-action@v8
       with:
-        version: v1.64.5
-        args: -E gosec --timeout=6m
+        version: v2.1.0
+        args: --config=./.github/workflows/conf/golangci-lint.yaml --timeout=6m

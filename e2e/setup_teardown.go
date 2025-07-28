@@ -48,5 +48,5 @@ func TearDown() {
 }
 
 func debug(msg string, args ...interface{}) {
-	ginkgo.GinkgoWriter.Write([]byte(fmt.Sprintf(msg, args...))) //nolint:errcheck
+	_, _ = fmt.Fprintf(ginkgo.GinkgoWriter, msg, args...)
 }
