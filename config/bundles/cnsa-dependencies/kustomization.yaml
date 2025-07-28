@@ -3,7 +3,7 @@ resources:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 commonAnnotations:
-  olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.20"}]'
+  olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.21"}]'
   olm.skipRange: ""
 patches:
 - patch: '[{"op": "replace", "path": "/spec/replaces", "value": ""}]'
