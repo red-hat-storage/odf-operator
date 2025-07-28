@@ -10,4 +10,4 @@ spec:
       - name: manager
         env:
         - name: PKGS_CONFIG_MAP_NAME
-          value: odf-operator-pkgs-config-4.19.0
+          value: odf-operator-pkgs-config-4.20.0

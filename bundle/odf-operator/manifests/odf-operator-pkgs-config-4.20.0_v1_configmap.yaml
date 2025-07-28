@@ -44,7 +44,7 @@ data:
       - cephclusters.ceph.rook.io
   ODF_DEPS: |
     channel: alpha
-    csv: odf-dependencies.v4.19.0
+    csv: odf-dependencies.v4.20.0
     pkg: odf-dependencies
   PROMETHEUS: |
     channel: beta
@@ -71,4 +71,4 @@ data:
       - cephclusters.ceph.rook.io
 kind: ConfigMap
 metadata:
-  name: odf-operator-pkgs-config-4.19.0
+  name: odf-operator-pkgs-config-4.20.0

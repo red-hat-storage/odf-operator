@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pkgs-config-4.19.0
+  name: pkgs-config-4.20.0
 data:
   CEPHCSI: |
     channel: alpha
@@ -53,7 +53,7 @@ data:
       - storageclusters.ocs.openshift.io
   ODF_DEPS: |
     channel: alpha
-    csv: odf-dependencies.v4.19.0
+    csv: odf-dependencies.v4.20.0
     pkg: odf-dependencies
   PROMETHEUS: |
     channel: beta
