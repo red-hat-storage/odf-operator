@@ -48,5 +48,5 @@ func TearDown() {
 }
 
 func debug(msg string, args ...interface{}) {
-	_, _ = ginkgo.GinkgoWriter.Write([]byte(fmt.Sprintf(msg, args...)))
+	_, _ = fmt.Fprintf(ginkgo.GinkgoWriter, msg, args...)
 }
