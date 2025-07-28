@@ -328,7 +328,7 @@ func ApproveInstallPlanForCsv(ctx context.Context, cli client.Client, csvName st
 				err = cli.Update(ctx, &installPlans.Items[i])
 				if err != nil {
 					multierr.AppendInto(&finalError, fmt.Errorf(
-						"Failed to approve installplan %s", installPlan.Name))
+						"failed to approve installplan %s", installPlan.Name))
 					multierr.AppendInto(&finalError, err)
 				}
 			}
