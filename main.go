@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -35,6 +36,8 @@ import (
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
@@ -89,9 +92,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultNamespaces := map[string]cache.Config{
-		operatorNamespace:            {},
-		"openshift-storage-extended": {},
+	cacheOptions, err := getCacheOptions(operatorNamespace)
+	if err != nil {
+		setupLog.Error(err, "unable to get cache options")
+		os.Exit(1)
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -105,7 +109,7 @@ func main() {
 		LeaderElection:          enableLeaderElection,
 		LeaderElectionID:        "4fd470de.openshift.io",
 		LeaderElectionNamespace: operatorNamespace,
-		Cache:                   cache.Options{DefaultNamespaces: defaultNamespaces},
+		Cache:                   cacheOptions,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -173,4 +177,60 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func getCacheOptions(operatorNamespace string) (cache.Options, error) {
+
+	// Obtain config (works in-cluster and with KUBECONFIG outside)
+	cfg, err := config.GetConfig()
+	if err != nil {
+		setupLog.Error(err, "error getting kubeconfig")
+		return cache.Options{}, err
+	}
+
+	// Create the client
+	cli, err := client.New(cfg, client.Options{Scheme: scheme})
+	if err != nil {
+		setupLog.Error(err, "error creating client")
+		return cache.Options{}, err
+	}
+
+	configmap, err := controllers.GetOdfConfigMap(context.Background(), cli, setupLog)
+	if err != nil {
+		setupLog.Error(err, "error getting configmap")
+		return cache.Options{}, err
+	}
+
+	defaultNamespaces := map[string]cache.Config{
+		operatorNamespace:            {},
+		"openshift-storage-extended": {},
+	}
+
+	relevantCRDNames := map[string]bool{}
+
+	controllers.ParseOdfConfigMapRecords(setupLog, configmap, func(record *controllers.OdfOperatorConfigMapRecord, key, rawValue string) {
+
+		for _, crdName := range record.ScaleUpOnInstanceOf {
+			relevantCRDNames[crdName] = true
+		}
+	})
+
+	cacheOptions := cache.Options{
+		DefaultNamespaces: defaultNamespaces,
+		// Set cache for relevant CRDs only
+		ByObject: map[client.Object]cache.ByObject{
+			&extv1.CustomResourceDefinition{}: {
+				Transform: func(obj any) (any, error) {
+					if crd, ok := obj.(*extv1.CustomResourceDefinition); ok {
+						if ok := relevantCRDNames[crd.Name]; ok {
+							return crd, nil // keep in cache
+						}
+					}
+					return nil, nil // drop from cache
+				},
+			},
+		},
+	}
+
+	return cacheOptions, nil
 }
