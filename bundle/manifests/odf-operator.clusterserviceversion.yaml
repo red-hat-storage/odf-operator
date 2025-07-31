@@ -40,6 +40,8 @@ metadata:
       solutions on OpenShift Container Platform.
     olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.15"}]'
     olm.skipRange: ""
+    operator.openshift.io/uninstall-message: 'Warning: deleting the operand (StorageSystem)
+      will result in data loss'
     operatorframework.io/initialization-resource: |-
       {
         "apiVersion": "odf.openshift.io/v1alpha1",
