@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.23", "1.24"]
+        go: ["1.24"]
     steps:
     - uses: actions/setup-go@v5
       with:
@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.23", "1.24"]
+        go: ["1.24"]
     steps:
     - uses: actions/setup-go@v5
       with:
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.23", "1.24"]
+        go: ["1.24"]
     steps:
     - uses: actions/setup-go@v5
       with:
@@ -72,6 +72,6 @@ jobs:
       run: |
         docker run -d -p 5000:5000 --name registry registry:2
         make bundle-build bundle-push catalog-build catalog-deps-build
-        sed -i 's|localhost:5000|quay.io|g' catalog/odf-dependencies.yaml
+        sed -i 's|localhost:5000|quay.io|g' catalog/*-dependencies.yaml
         msg='Uncommitted catalog changes. run `make catalog` and commit results.'
         git diff --exit-code catalog || (echo -e '\e[31m'"$msg"; exit 1)

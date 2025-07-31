@@ -1,0 +1,12 @@
+version: "2"
+
+linters:
+  enable:
+  - staticcheck
+  - gosec
+  exclusions:
+    rules:
+    - linters:
+      - staticcheck
+      text: "QF1008:"
+      # QF1008: could remove embedded field

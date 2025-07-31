@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 4.19.0
+VERSION ?= 4.20.0
 
 # MAX_OCP_VERSION variable specifies the maximum supported version of OCP.
 # Its purpose is to add an annotation to the CSV file, blocking OCP upgrades beyond the X+1 version.
@@ -48,6 +48,8 @@ IMAGE_NAME ?= odf-operator
 BUNDLE_IMAGE_NAME ?= $(IMAGE_NAME)-bundle
 ODF_DEPS_BUNDLE_NAME ?= odf-dependencies
 ODF_DEPS_BUNDLE_IMAGE_NAME ?= $(ODF_DEPS_BUNDLE_NAME)-bundle
+CNSA_DEPS_BUNDLE_NAME ?= cnsa-dependencies
+CNSA_DEPS_BUNDLE_IMAGE_NAME ?= $(CNSA_DEPS_BUNDLE_NAME)-bundle
 CATALOG_IMAGE_NAME ?= $(IMAGE_NAME)-catalog
 ODF_DEPS_CATALOG_IMAGE_NAME ?= $(ODF_DEPS_BUNDLE_NAME)-catalog
 
@@ -59,6 +61,9 @@ BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(BUNDLE_IMAGE_NAME):$(IMA
 
 # ODF_DEPS_BUNDLE_IMG defines the image used for the odf-dependencies bundle.
 ODF_DEPS_BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(ODF_DEPS_BUNDLE_IMAGE_NAME):$(IMAGE_TAG)
+
+# CNSA_DEPS_BUNDLE_IMG defines the image used for the cnsa-dependencies bundle.
+CNSA_DEPS_BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CNSA_DEPS_BUNDLE_IMAGE_NAME):$(IMAGE_TAG)
 
 # CATALOG_IMG defines the image used for the catalog.
 CATALOG_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(CATALOG_IMAGE_NAME):$(IMAGE_TAG)
@@ -82,6 +87,10 @@ ODF_CONSOLE_IMG ?= quay.io/ocs-dev/odf-console:latest
 ODF_DEPS_SUBSCRIPTION_PACKAGE ?= $(ODF_DEPS_BUNDLE_NAME)
 ODF_DEPS_SUBSCRIPTION_CHANNEL ?= $(DEFAULT_CHANNEL)
 ODF_DEPS_SUBSCRIPTION_CSVNAME ?= $(ODF_DEPS_SUBSCRIPTION_PACKAGE).v$(VERSION)
+
+CNSA_DEPS_SUBSCRIPTION_PACKAGE ?= $(CNSA_DEPS_BUNDLE_NAME)
+CNSA_DEPS_SUBSCRIPTION_CHANNEL ?= $(DEFAULT_CHANNEL)
+CNSA_DEPS_SUBSCRIPTION_CSVNAME ?= $(CNSA_DEPS_SUBSCRIPTION_PACKAGE).v$(VERSION)
 
 OCS_BUNDLE_IMG ?= quay.io/ocs-dev/ocs-operator-bundle:main-552d231
 OCS_BUNDLE_VERSION ?= v4.19.0

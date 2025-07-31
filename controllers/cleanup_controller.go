@@ -93,7 +93,7 @@ func (r *CleanupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 func (r *CleanupReconciler) isOcsOperatorSubAndCSVAt419(ctx context.Context, logger logr.Logger) error {
 	subscriptionList := &opv1a1.SubscriptionList{}
-	if err := r.List(ctx, subscriptionList, client.InNamespace(r.OperatorNamespace)); err != nil {
+	if err := r.Client.List(ctx, subscriptionList, client.InNamespace(r.OperatorNamespace)); err != nil {
 		return fmt.Errorf("failed to list subscriptions: %v", err)
 	}
 	ocsOperatorSubscription := util.Find(subscriptionList.Items, func(sub *opv1a1.Subscription) bool {

@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -26,6 +27,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	consolev1 "github.com/openshift/api/console/v1"
+	opv1 "github.com/operator-framework/api/pkg/operators/v1"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	opv2 "github.com/operator-framework/api/pkg/operators/v2"
 	admrv1 "k8s.io/api/admissionregistration/v1"
@@ -35,6 +37,8 @@ import (
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
@@ -57,6 +61,7 @@ func init() {
 	utilruntime.Must(k8sscheme.AddToScheme(scheme))
 	utilruntime.Must(odfv1a1.AddToScheme(scheme))
 	utilruntime.Must(opv1a1.AddToScheme(scheme))
+	utilruntime.Must(opv1.AddToScheme(scheme))
 	utilruntime.Must(opv2.AddToScheme(scheme))
 	utilruntime.Must(consolev1.AddToScheme(scheme))
 	utilruntime.Must(admrv1.AddToScheme(scheme))
@@ -89,9 +94,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultNamespaces := map[string]cache.Config{
-		operatorNamespace:            {},
-		"openshift-storage-extended": {},
+	defaultNamespaces, err := getCacheNamespaces()
+	if err != nil {
+		setupLog.Error(err, "unable to get default target namespaces")
+		os.Exit(1)
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -173,4 +179,37 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func getCacheNamespaces() (map[string]cache.Config, error) {
+
+	// Obtain config (works in-cluster and with KUBECONFIG outside)
+	cfg, err := config.GetConfig()
+	if err != nil {
+		setupLog.Error(err, "error getting kubeconfig")
+		return nil, err
+	}
+
+	// Create the client
+	cli, err := client.New(cfg, client.Options{Scheme: scheme})
+	if err != nil {
+		setupLog.Error(err, "error creating client")
+		return nil, err
+	}
+
+	configmap, err := controllers.GetOdfConfigMap(context.Background(), cli, setupLog)
+	if err != nil {
+		setupLog.Error(err, "error getting configmap")
+		return nil, err
+	}
+
+	defaultNamespaces := map[string]cache.Config{
+		"openshift-storage-extended": {},
+	}
+
+	controllers.ParseOdfConfigMapRecords(setupLog, configmap, func(record *controllers.OdfOperatorConfigMapRecord, key, rawValue string) {
+		defaultNamespaces[record.Namespace] = cache.Config{}
+	})
+
+	return defaultNamespaces, nil
 }
