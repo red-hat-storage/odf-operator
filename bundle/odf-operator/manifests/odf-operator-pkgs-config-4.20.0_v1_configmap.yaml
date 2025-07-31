@@ -6,6 +6,11 @@ data:
     pkg: cephcsi-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
+  CNSA_DEPS: |
+    channel: alpha
+    csv: cnsa-dependencies.v4.20.0
+    pkg: cnsa-dependencies
+    namespace: ibm-spectrum-scale
   CSIADDONS: |
     channel: alpha
     csv: csi-addons.v0.12.0

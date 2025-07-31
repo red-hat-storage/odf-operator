@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/multierr"
@@ -179,7 +180,7 @@ func getMergedEnvVars(envList1, envList2 []corev1.EnvVar) []corev1.EnvVar {
 	return updatedEnvVars
 }
 
-func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord) error {
+func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord, providerName providerType) error {
 
 	var err error
 
@@ -188,9 +189,18 @@ func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRec
 		return err
 	}
 
-	// Skip creating (only update) subscriptions other than odf-dependencies
+	isDependenciesPkg := strings.HasSuffix(desiredSubscription.Spec.Package, "-dependencies")
+
+	// Do not reconcile any other "*-dependencies" subscriptions under Red Hat,
+	if providerName == providerNameRedHat &&
+		isDependenciesPkg &&
+		desiredSubscription.Spec.Package != OdfDepsSubscriptionPackage {
+		return nil
+	}
+
+	// Skip creating (only update) subscriptions other than *-dependencies
 	// It will allow OLM to manage their creation via dependency resolution
-	if desiredSubscription.Spec.Package != OdfDepsSubscriptionPackage && desiredSubscription.CreationTimestamp.IsZero() {
+	if !isDependenciesPkg && desiredSubscription.CreationTimestamp.IsZero() {
 		return nil
 	}
 
