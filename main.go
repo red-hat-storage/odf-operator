@@ -94,9 +94,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultNamespaces, err := getCacheNamespaces()
+	cacheOptions, err := getCacheOptions()
 	if err != nil {
-		setupLog.Error(err, "unable to get default target namespaces")
+		setupLog.Error(err, "unable to get cache options")
 		os.Exit(1)
 	}
 
@@ -111,7 +111,7 @@ func main() {
 		LeaderElection:          enableLeaderElection,
 		LeaderElectionID:        "4fd470de.openshift.io",
 		LeaderElectionNamespace: operatorNamespace,
-		Cache:                   cache.Options{DefaultNamespaces: defaultNamespaces},
+		Cache:                   cacheOptions,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -181,35 +181,59 @@ func main() {
 	}
 }
 
-func getCacheNamespaces() (map[string]cache.Config, error) {
+func getCacheOptions() (cache.Options, error) {
 
 	// Obtain config (works in-cluster and with KUBECONFIG outside)
 	cfg, err := config.GetConfig()
 	if err != nil {
 		setupLog.Error(err, "error getting kubeconfig")
-		return nil, err
+		return cache.Options{}, err
 	}
 
 	// Create the client
 	cli, err := client.New(cfg, client.Options{Scheme: scheme})
 	if err != nil {
 		setupLog.Error(err, "error creating client")
-		return nil, err
+		return cache.Options{}, err
 	}
 
 	configmap, err := controllers.GetOdfConfigMap(context.Background(), cli, setupLog)
 	if err != nil {
 		setupLog.Error(err, "error getting configmap")
-		return nil, err
+		return cache.Options{}, err
 	}
 
 	defaultNamespaces := map[string]cache.Config{
 		"openshift-storage-extended": {},
 	}
 
+	relevantCRDNames := map[string]bool{}
+
 	controllers.ParseOdfConfigMapRecords(setupLog, configmap, func(record *controllers.OdfOperatorConfigMapRecord, key, rawValue string) {
+
 		defaultNamespaces[record.Namespace] = cache.Config{}
+
+		for _, crdName := range record.ScaleUpOnInstanceOf {
+			relevantCRDNames[crdName] = true
+		}
 	})
 
-	return defaultNamespaces, nil
+	cacheOptions := cache.Options{
+		DefaultNamespaces: defaultNamespaces,
+		// Set cache for relevant CRDs only
+		ByObject: map[client.Object]cache.ByObject{
+			&extv1.CustomResourceDefinition{}: {
+				Transform: func(obj any) (any, error) {
+					if crd, ok := obj.(*extv1.CustomResourceDefinition); ok {
+						if ok := relevantCRDNames[crd.Name]; ok {
+							return crd, nil // keep in cache
+						}
+					}
+					return nil, nil // drop from cache
+				},
+			},
+		},
+	}
+
+	return cacheOptions, nil
 }
