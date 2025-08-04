@@ -43,6 +43,13 @@ import (
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
+type providerType string
+
+const (
+	providerNameRedHat providerType = "Red Hat"
+	providerNameIBM    providerType = "IBM"
+)
+
 const (
 	managedByLabel = "odf.openshift.io/managed-by-odf-operator"
 )
@@ -102,15 +109,22 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileNamespaces(ctx, logger, targetNamespaces); err != nil {
+	providerName, err := r.getProviderName(ctx, logger)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if err := r.reconcileOperatorGroups(ctx, logger, targetNamespaces); err != nil {
-		return ctrl.Result{}, err
+	if providerName == providerNameIBM {
+		if err := r.reconcileNamespaces(ctx, logger, targetNamespaces); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		if err := r.reconcileOperatorGroups(ctx, logger, targetNamespaces); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
-	if err := r.ensureSubscriptions(ctx, logger, olmPkgRecords); err != nil {
+	if err := r.ensureSubscriptions(ctx, logger, olmPkgRecords, providerName); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -156,6 +170,26 @@ func (r *SubscriptionReconciler) getTargetNamespaces(olmPkgRecords []*OlmPkgReco
 	namespaces := slices.Collect(maps.Keys(namespacesMap))
 
 	return namespaces
+}
+
+func (r *SubscriptionReconciler) getProviderName(ctx context.Context, logger logr.Logger) (providerType, error) {
+
+	// Get odf-operator CSV to determine provider
+	csv := &opv1a1.ClusterServiceVersion{}
+	csv.Name = r.operatorConditionName
+	csv.Namespace = OperatorNamespace
+
+	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(csv), csv); err != nil {
+		logger.Error(err, "failed to get csv", "name", csv.Name)
+		return "", err
+	}
+
+	switch providerType(csv.Spec.Provider.Name) {
+	case providerNameRedHat, providerNameIBM:
+		return providerType(csv.Spec.Provider.Name), nil
+	default:
+		return "", fmt.Errorf("provider name in the csv is not known")
+	}
 }
 
 func (r *SubscriptionReconciler) reconcileNamespaces(ctx context.Context, logger logr.Logger, namespaces []string) error {
@@ -223,12 +257,12 @@ func (r *SubscriptionReconciler) reconcileOperatorGroups(ctx context.Context, lo
 	return nil
 }
 
-func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger logr.Logger, olmPkgRecords []*OlmPkgRecord) error {
+func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger logr.Logger, olmPkgRecords []*OlmPkgRecord, providerName providerType) error {
 
 	var combinedErr error
 
 	for _, olmPkgRecord := range olmPkgRecords {
-		if err := EnsureDesiredSubscription(ctx, r.Client, olmPkgRecord); err != nil {
+		if err := EnsureDesiredSubscription(ctx, r.Client, olmPkgRecord, providerName); err != nil {
 			logger.Error(err, "failed to ensure subscription", "package", olmPkgRecord.Pkg)
 			multierr.AppendInto(&combinedErr, err)
 		}

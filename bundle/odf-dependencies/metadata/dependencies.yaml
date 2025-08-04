@@ -2,19 +2,19 @@ dependencies:
 - type: olm.package
   value:
     packageName: ocs-operator
-    version: "4.19.0"
+    version: "4.20.0"
 - type: olm.package
   value:
     packageName: rook-ceph-operator
-    version: "4.19.0"
+    version: "4.20.0"
 - type: olm.package
   value:
     packageName: ocs-client-operator
-    version: "4.19.0"
+    version: "4.20.0"
 - type: olm.package
   value:
     packageName: noobaa-operator
-    version: "5.19.0"
+    version: "5.20.0"
 - type: olm.package
   value:
     packageName: csi-addons
@@ -26,7 +26,7 @@ dependencies:
 - type: olm.package
   value:
     packageName: cephcsi-operator
-    version: "4.19.0"
+    version: "4.20.0"
 - type: olm.package
   value:
     packageName: odf-prometheus-operator
@@ -35,7 +35,3 @@ dependencies:
   value:
     packageName: recipe
     version: "0.0.1"
-- type: olm.package
-  value:
-    packageName: ibm-storage-odf-operator
-    version: "1.8.0"
