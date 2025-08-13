@@ -11,7 +11,7 @@ data:
       - cephclusters.ceph.rook.io
   CSIADDONS: |
     channel: alpha
-    csv: csi-addons.v0.12.0
+    csv: csi-addons.v0.13.0
     pkg: csi-addons
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
@@ -62,7 +62,7 @@ data:
     namespace: ibm-spectrum-scale
   PROMETHEUS: |
     channel: beta
-    csv: odf-prometheus-operator.v4.19.0
+    csv: odf-prometheus-operator.v4.20.0
     pkg: odf-prometheus-operator
     scaleUpOnInstanceOf:
       - alertmanagers.monitoring.coreos.com
