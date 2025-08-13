@@ -16,7 +16,7 @@ properties:
 - type: olm.package.required
   value:
     packageName: csi-addons
-    versionRange: 0.12.0
+    versionRange: 0.13.0
 - type: olm.package.required
   value:
     packageName: ibm-storage-odf-operator
@@ -40,7 +40,7 @@ properties:
 - type: olm.package.required
   value:
     packageName: odf-prometheus-operator
-    versionRange: 4.19.0
+    versionRange: 4.20.0
 - type: olm.package.required
   value:
     packageName: recipe
