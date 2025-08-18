@@ -104,7 +104,7 @@ func GetConsolePluginProxy(serviceNamespace string) []consolev1.ConsolePluginPro
 					Port:      9339,
 				},
 			},
-			Authorization: consolev1.None,
+			Authorization: consolev1.UserToken,
 		},
 		{
 			Alias: "s3",
