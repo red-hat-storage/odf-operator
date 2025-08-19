@@ -7,7 +7,7 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2025-07-28T02:50:41Z"
+    createdAt: "2025-10-09T10:25:19Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
@@ -303,6 +303,14 @@ spec:
           - operatorgroups
           verbs:
           - create
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - scale.spectrum.ibm.com
+          resources:
+          - clusters
+          verbs:
           - get
           - list
           - watch
