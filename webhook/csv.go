@@ -77,12 +77,14 @@ func (r *ClusterServiceVersionDeploymentScaler) Handle(ctx context.Context, req 
 		return admission.Errored(http.StatusInternalServerError, fmt.Errorf("failed getting replicas from csv: %v", err))
 	}
 
-	if running {
-		logger.Info("ignoring csv as the previous csv deployments are running")
-		return admission.Allowed("previous csv deployments are running")
+	if !running {
+		r.scaleDownCsvDeployments(logger, csv)
 	}
 
-	r.scaleDownCsvDeployments(logger, csv)
+	if err := r.syncHostNetworkFromReplacedCSV(ctx, logger, csv); err != nil {
+		logger.Error(err, "failed syncing HostNetwork in csv")
+		return admission.Errored(http.StatusInternalServerError, fmt.Errorf("failed syncing HostNetwork in csv: %v", err))
+	}
 
 	marshaledCsv, err := json.Marshal(csv)
 	if err != nil {
@@ -156,11 +158,57 @@ func (r *ClusterServiceVersionDeploymentScaler) isPreviousCsvHasRunningDeploymen
 
 func (r *ClusterServiceVersionDeploymentScaler) scaleDownCsvDeployments(logger logr.Logger, csv *opv1a1.ClusterServiceVersion) {
 
-	logger.Info("mutating requested csv")
+	logger.Info("mutating requested csv replicas")
 
 	for i := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
 		csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec.Replicas = ptr.To(int32(0))
 	}
+}
+
+func (r *ClusterServiceVersionDeploymentScaler) syncHostNetworkFromReplacedCSV(ctx context.Context, logger logr.Logger, csv *opv1a1.ClusterServiceVersion) error {
+
+	if csv.Spec.Replaces == "" {
+		logger.Info("csv.Spec.Replaces is not populated")
+		return nil
+	}
+
+	prevCsv := &opv1a1.ClusterServiceVersion{}
+	key := client.ObjectKey{Name: csv.Spec.Replaces, Namespace: csv.Namespace}
+
+	if err := r.Client.Get(ctx, key, prevCsv); errors.IsNotFound(err) {
+		// new install where an previous csv does not exists
+		return nil
+	} else if err != nil {
+		logger.Error(err, "failed getting previous csv")
+		return err
+	}
+
+	deploymentsWithHostNetwork := map[string]bool{}
+
+	// get deployments with HostNetwork enabled from previous csv
+	deployments := prevCsv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
+	for i := range deployments {
+		deployment := &deployments[i]
+		if deployment.Spec.Template.Spec.HostNetwork {
+			deploymentsWithHostNetwork[deployment.Name] = true
+		}
+	}
+
+	if len(deploymentsWithHostNetwork) == 0 {
+		return nil
+	}
+
+	logger.Info("mutating requested csv HostNetwork")
+	// set HostNetwork on deployments under upgraded csv
+	deployments = csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
+	for i := range deployments {
+		deployment := &deployments[i]
+		if deploymentsWithHostNetwork[deployment.Name] {
+			deployment.Spec.Template.Spec.HostNetwork = true
+		}
+	}
+
+	return nil
 }
 
 func (r *ClusterServiceVersionDeploymentScaler) isCsvManagedByOdf(csv *opv1a1.ClusterServiceVersion) bool {
