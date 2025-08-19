@@ -6,6 +6,13 @@ data:
     pkg: cephcsi-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
+  CNSA: |
+    channel: beta
+    csv: ibm-spectrum-scale-operator.v6.0.0
+    pkg: ibm-spectrum-scale-operator
+    namespace: ibm-spectrum-scale
+    scaleUpOnInstanceOf:
+      - clusters.scale.spectrum.ibm.com
   CNSA_DEPS: |
     channel: alpha
     csv: cnsa-dependencies.v4.20.0

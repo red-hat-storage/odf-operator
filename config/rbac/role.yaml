@@ -217,3 +217,11 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - scale.spectrum.ibm.com
+  resources:
+  - clusters
+  verbs:
+  - get
+  - list
+  - watch
