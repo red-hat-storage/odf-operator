@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - rook-ceph-operator-networkpolicy.yaml
+  - rook-ceph-mon-networkpolicy.yaml
+  - rook-ceph-mgr-networkpolicy.yaml
+  - rook-ceph-osd-networkpolicy.yaml
+  - rook-ceph-mds-networkpolicy.yaml
+  - rook-ceph-tools-networkpolicy.yaml
+  - rook-ceph-exporter-networkpolicy.yaml
+  - rook-ceph-crashcollector-networkpolicy.yaml
+  - rook-ceph-osd-prepare-networkpolicy.yaml
+
