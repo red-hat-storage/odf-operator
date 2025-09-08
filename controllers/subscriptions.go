@@ -102,10 +102,12 @@ func GetDesiredSubscription(ctx context.Context, cli client.Client, record *OlmP
 	}
 
 	if !subExsist {
-		// Set the catalog source for the odf-dependencies subscription to match that of the odf-operator subscription
-		// This ensures that the odf-dependencies subscription uses the same catalog source across all environments,
+		// Set the catalog source for the dependencies subscription to match that of the odf-operator subscription
+		// This ensures that the dependencies subscription uses the same catalog source across all environments,
 		// including offline and test environments where the catalog name may vary.
-		if desiredSubscription.Spec.Package == OdfDepsSubscriptionPackage {
+		if desiredSubscription.Spec.Package == OdfDepsSubscriptionPackage ||
+			desiredSubscription.Spec.Package == CnsaDepsSubscriptionPackage {
+
 			desiredSubscription.Spec.CatalogSource = odfSub.Spec.CatalogSource
 			desiredSubscription.Spec.CatalogSourceNamespace = odfSub.Spec.CatalogSourceNamespace
 		}
