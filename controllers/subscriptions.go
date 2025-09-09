@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"strings"
 
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"go.uber.org/multierr"
@@ -191,16 +190,17 @@ func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRec
 		return err
 	}
 
-	isDependenciesPkg := strings.HasSuffix(desiredSubscription.Spec.Package, "-dependencies")
+	isDependenciesPkg := desiredSubscription.Spec.Package == OdfDepsSubscriptionPackage ||
+		desiredSubscription.Spec.Package == CnsaDepsSubscriptionPackage
 
-	// Do not reconcile any other "*-dependencies" subscriptions under Red Hat,
+	// Do not reconcile any other "dependencies" subscriptions under Red Hat, other than odf-dependencies
 	if providerName == providerNameRedHat &&
 		isDependenciesPkg &&
 		desiredSubscription.Spec.Package != OdfDepsSubscriptionPackage {
 		return nil
 	}
 
-	// Skip creating (only update) subscriptions other than *-dependencies
+	// Skip creating (only update) subscriptions other than "dependencies"
 	// It will allow OLM to manage their creation via dependency resolution
 	if !isDependenciesPkg && desiredSubscription.CreationTimestamp.IsZero() {
 		return nil
