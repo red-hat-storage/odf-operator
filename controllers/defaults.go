@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	OdfSubscriptionPackage     = "odf-operator"
-	OdfDepsSubscriptionPackage = "odf-dependencies"
+	OdfSubscriptionPackage      = "odf-operator"
+	OdfDepsSubscriptionPackage  = "odf-dependencies"
+	CnsaDepsSubscriptionPackage = "cnsa-dependencies"
 )
 
 var (
