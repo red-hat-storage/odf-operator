@@ -104,9 +104,7 @@ func GetDesiredSubscription(ctx context.Context, cli client.Client, record *OlmP
 		// Set the catalog source for the dependencies subscription to match that of the odf-operator subscription
 		// This ensures that the dependencies subscription uses the same catalog source across all environments,
 		// including offline and test environments where the catalog name may vary.
-		if desiredSubscription.Spec.Package == OdfDepsSubscriptionPackage ||
-			desiredSubscription.Spec.Package == CnsaDepsSubscriptionPackage {
-
+		if slices.Contains(DepsSubscriptionPackageNames, desiredSubscription.Spec.Package) {
 			desiredSubscription.Spec.CatalogSource = odfSub.Spec.CatalogSource
 			desiredSubscription.Spec.CatalogSourceNamespace = odfSub.Spec.CatalogSourceNamespace
 		}
@@ -190,8 +188,7 @@ func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRec
 		return err
 	}
 
-	isDependenciesPkg := desiredSubscription.Spec.Package == OdfDepsSubscriptionPackage ||
-		desiredSubscription.Spec.Package == CnsaDepsSubscriptionPackage
+	isDependenciesPkg := slices.Contains(DepsSubscriptionPackageNames, desiredSubscription.Spec.Package)
 
 	// Do not reconcile any other "dependencies" subscriptions under Red Hat, other than odf-dependencies
 	if providerName == providerNameRedHat &&
