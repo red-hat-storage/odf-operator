@@ -28,6 +28,13 @@ const (
 )
 
 var (
+	DepsSubscriptionPackageNames = []string{
+		OdfDepsSubscriptionPackage,
+		CnsaDepsSubscriptionPackage,
+	}
+)
+
+var (
 	OperatorNamespace        string
 	odfOperatorConfigMapName string
 )
