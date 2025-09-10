@@ -158,6 +158,12 @@ IBM_CSI_SUBSCRIPTION_PACKAGE ?= ibm-block-csi-operator
 IBM_CSI_SUBSCRIPTION_CHANNEL ?= stable-v1.12.4
 IBM_CSI_SUBSCRIPTION_CSVNAME ?= $(IBM_CSI_SUBSCRIPTION_PACKAGE).$(IBM_CSI_BUNDLE_VERSION)
 
+CNSA_BUNDLE_IMG ?= quay.io/abhilasha18/ibm-spectrum-scale-operator-bundle:6.0.0-28-08-2025
+CNSA_BUNDLE_VERSION ?= v6.0.0
+CNSA_SUBSCRIPTION_PACKAGE ?= ibm-spectrum-scale-operator
+CNSA_SUBSCRIPTION_CHANNEL ?= beta
+CNSA_SUBSCRIPTION_CSVNAME ?= $(CNSA_SUBSCRIPTION_PACKAGE).$(CNSA_BUNDLE_VERSION)
+
 
 # A space-separated list of bundle images (e.g. make catalog-build BUNDLE_IMGS=example.com/operator-bundle:v0.1.0 example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.

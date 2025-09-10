@@ -151,3 +151,14 @@ package: ibm-block-csi-operator
 name: stable-v1.12.4
 entries:
   - name: ibm-block-csi-operator.v1.12.4
+
+---
+defaultChannel: beta
+name: ibm-spectrum-scale-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ibm-spectrum-scale-operator
+name: beta
+entries:
+  - name: ibm-spectrum-scale-operator.v6.0.0
