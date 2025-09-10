@@ -25,7 +25,6 @@ import (
 
 	"github.com/go-logr/logr"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,6 +45,10 @@ type ClusterServiceVersionDeploymentScaler struct {
 	odfOperatorConfigMapResourceVersion string
 	odfOwnedCsvNames                    map[string]bool
 }
+
+const (
+	keyReplicas = "replicas"
+)
 
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;patch
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get
@@ -71,18 +74,32 @@ func (r *ClusterServiceVersionDeploymentScaler) Handle(ctx context.Context, req 
 		return admission.Allowed("csv is not managed by ODF")
 	}
 
-	running, err := r.isPreviousCsvHasRunningDeployments(ctx, logger, csv)
-	if err != nil {
-		logger.Error(err, "failed getting replicas from csv")
-		return admission.Errored(http.StatusInternalServerError, fmt.Errorf("failed getting replicas from csv: %v", err))
+	var noPrevCsvFound bool
+	if csv.Spec.Replaces != "" {
+		prevCsv := &opv1a1.ClusterServiceVersion{}
+		key := client.ObjectKey{Name: csv.Spec.Replaces, Namespace: csv.Namespace}
+		if err := r.Client.Get(ctx, key, prevCsv); err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				logger.Error(err, "failed to get previous CSV", "csv", csv.Spec.Replaces)
+				return admission.Errored(http.StatusInternalServerError, fmt.Errorf("failed getting previous csv %q: %w", csv.Spec.Replaces, err))
+			}
+			noPrevCsvFound = true
+		} else {
+			logger.Info("previous CSV found", "csv", csv.Spec.Replaces)
+			defaultsMap := map[string]int32{}
+			if r.isCsvHasRunningDeployments(csv) {
+				defaultsMap[keyReplicas] = 1
+			} else {
+				defaultsMap[keyReplicas] = 0
+			}
+			r.syncNewCsvWithPrevCsv(prevCsv, csv, defaultsMap)
+		}
 	}
 
-	if running {
-		logger.Info("ignoring csv as the previous csv deployments are running")
-		return admission.Allowed("previous csv deployments are running")
+	if noPrevCsvFound {
+		logger.Info("scaling down deployments")
+		r.scaleDownCsvDeployments(logger, csv)
 	}
-
-	r.scaleDownCsvDeployments(logger, csv)
 
 	marshaledCsv, err := json.Marshal(csv)
 	if err != nil {
@@ -123,35 +140,41 @@ func (r *ClusterServiceVersionDeploymentScaler) loadOdfConfigMapData(ctx context
 	return nil
 }
 
-func (r *ClusterServiceVersionDeploymentScaler) isPreviousCsvHasRunningDeployments(ctx context.Context, logger logr.Logger, csv *opv1a1.ClusterServiceVersion) (bool, error) {
+func (r *ClusterServiceVersionDeploymentScaler) syncNewCsvWithPrevCsv(
+	prevCsv *opv1a1.ClusterServiceVersion,
+	newCsv *opv1a1.ClusterServiceVersion,
+	defaultsMap map[string]int32) {
 
-	if csv.Spec.Replaces == "" {
-		logger.Info("csv.Spec.Replaces is not populated")
-		return false, nil
+	prevDeployments := prevCsv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
+	newDeployments := newCsv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
+
+	for i := range newDeployments {
+		newDeployment := &newDeployments[i]
+
+		for j := range prevDeployments {
+			prevDeployment := &prevDeployments[j]
+
+			if newDeployment.Name == prevDeployment.Name {
+				newDeployment.Spec.Template.Spec.HostNetwork = prevDeployment.Spec.Template.Spec.HostNetwork
+				newDeployment.Spec.Replicas = prevDeployment.Spec.Replicas
+			} else {
+				newDeployment.Spec.Replicas = ptr.To(defaultsMap[keyReplicas])
+			}
+		}
 	}
+}
 
-	prevCsv := &opv1a1.ClusterServiceVersion{}
-	key := client.ObjectKey{Name: csv.Spec.Replaces, Namespace: csv.Namespace}
+func (r *ClusterServiceVersionDeploymentScaler) isCsvHasRunningDeployments(csv *opv1a1.ClusterServiceVersion) bool {
 
-	if err := r.Client.Get(ctx, key, prevCsv); errors.IsNotFound(err) {
-		// new install where an previous csv does not exists
-		return false, nil
-	} else if err != nil {
-		logger.Error(err, "failed getting previous csv")
-		return false, err
-	}
-
-	deployments := prevCsv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
+	deployments := csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs
 	for i := range deployments {
 		deployment := &deployments[i]
 		if deployment.Spec.Replicas == nil || *deployment.Spec.Replicas > 0 {
-			// upgrade case where an older csv is found with replica 1
-			return true, nil
+			return true
 		}
 	}
 
-	// upgrade case where an older csv is found with replica 0
-	return false, nil
+	return false
 }
 
 func (r *ClusterServiceVersionDeploymentScaler) scaleDownCsvDeployments(logger logr.Logger, csv *opv1a1.ClusterServiceVersion) {
