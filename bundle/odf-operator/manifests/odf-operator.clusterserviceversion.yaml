@@ -307,6 +307,14 @@ spec:
           - list
           - watch
         - apiGroups:
+          - scale.spectrum.ibm.com
+          resources:
+          - clusters
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
