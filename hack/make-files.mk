@@ -129,6 +129,16 @@ endef
 export DEPENDENCIES_YAML
 
 
+# This will be used to add these dependencies in the fdf DS build
+define ADDITIONAL_FDF_DEPENDENCIES_YAML
+- type: olm.package
+  value:
+    packageName: $(IBM_ODF_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(IBM_ODF_BUNDLE_VERSION))"
+endef
+export ADDITIONAL_FDF_DEPENDENCIES_YAML
+
+
 define INDEX_YAML
 ---
 defaultChannel: $(DEFAULT_CHANNEL)
