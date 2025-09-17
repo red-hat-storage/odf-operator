@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: odf-egress-to-ceph-mon
+  namespace: openshift-storage
+spec:
+  podSelector:
+    matchLabels:
+      odf.openshift.io/ceph-client: "true"
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ceph-mon
+    ports:
+    - protocol: TCP
+      port: 3300
+    - protocol: TCP
+      port: 6789
