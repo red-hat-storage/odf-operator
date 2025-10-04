@@ -55,11 +55,6 @@ data:
     channel: alpha
     csv: odf-dependencies.v4.20.0
     pkg: odf-dependencies
-  CNSA_DEPS: |
-    channel: alpha
-    csv: cnsa-dependencies.v4.20.0
-    pkg: cnsa-dependencies
-    namespace: ibm-spectrum-scale
   PROMETHEUS: |
     channel: beta
     csv: odf-prometheus-operator.v4.20.0
