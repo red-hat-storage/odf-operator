@@ -81,6 +81,13 @@ data:
     csv: $(CNSA_DEPS_SUBSCRIPTION_CSVNAME)
     pkg: $(CNSA_DEPS_SUBSCRIPTION_PACKAGE)
     namespace: ibm-spectrum-scale
+  CNSA: |
+    channel: $(CNSA_SUBSCRIPTION_CHANNEL)
+    csv: $(CNSA_SUBSCRIPTION_CSVNAME)
+    pkg: $(CNSA_SUBSCRIPTION_PACKAGE)
+    namespace: ibm-spectrum-scale
+    scaleUpOnInstanceOf:
+      - clusters.scale.spectrum.ibm.com
   PROMETHEUS: |
     channel: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
     csv: $(PROMETHEUS_SUBSCRIPTION_CSVNAME)
@@ -146,6 +153,10 @@ export ODF_DEPENDENCIES_YAML
 
 define CNSA_DEPENDENCIES_YAML
 dependencies:
+- type: olm.package
+  value:
+    packageName: $(CNSA_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(CNSA_BUNDLE_VERSION))"
 endef
 export CNSA_DEPENDENCIES_YAML
 
@@ -304,5 +315,16 @@ package: $(IBM_CSI_SUBSCRIPTION_PACKAGE)
 name: $(IBM_CSI_SUBSCRIPTION_CHANNEL)
 entries:
   - name: $(IBM_CSI_SUBSCRIPTION_CSVNAME)
+
+---
+defaultChannel: $(CNSA_SUBSCRIPTION_CHANNEL)
+name: $(CNSA_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(CNSA_SUBSCRIPTION_PACKAGE)
+name: $(CNSA_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(CNSA_SUBSCRIPTION_CSVNAME)
 endef
 export INDEX_YAML
