@@ -40,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	"github.com/blang/semver/v4"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
@@ -286,6 +287,16 @@ func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger
 }
 
 func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logger logr.Logger, condMap map[string]struct{}) error {
+	// Make operator not upgradeable if ODF minor version is ahead of OCP minor version(e.g. ODF 4.21.z, OCP 4.20.z)
+	if isODFAhead, err := r.isODFAheadOfOCP(ctx); err != nil {
+		return err
+	} else if isODFAhead {
+		logger.Info("ODF minor version ahead of OCP. Further upgrade would reach an unsupported config, marking the operator as not upgradeable")
+		return r.operatorCondition.Set(ctx, metav1.ConditionFalse,
+			conditions.WithReason("ODFVersionAheadOfOCP"),
+			conditions.WithMessage("ODF version is already ahead of OCP. Further ODF upgrade would make it incompatible with the current OCP version"))
+	}
+
 	ocdList := &opv2.OperatorConditionList{}
 	err := r.Client.List(ctx, ocdList, client.InNamespace(r.OperatorNamespace))
 	if err != nil {
@@ -432,4 +443,28 @@ func getNotUpgradeableCond(ocd *opv2.OperatorCondition) *metav1.Condition {
 	return util.Find(ocd.Status.Conditions, func(cd *metav1.Condition) bool {
 		return cd.Type == opv2.Upgradeable && cd.Status != "True"
 	})
+}
+
+// Check if ODF minor version is ahead of OCP minor version (e.g ODF 4.21.Z, OCP 4.20.Z)
+func (r *SubscriptionReconciler) isODFAheadOfOCP(ctx context.Context) (bool, error) {
+	// Get OCP version
+	ocpVersionString, err := util.GetOpenShiftVersion(ctx, r.Client)
+	if err != nil {
+		return false, fmt.Errorf("failed to determine OCP version: %v", err)
+	}
+	ocpVersion, err := semver.Make(ocpVersionString)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse OCP version %s: %v", ocpVersionString, err)
+	}
+
+	// Get ODF version from CSV
+	csv := &opv1a1.ClusterServiceVersion{}
+	csv.Name = r.operatorConditionName
+	csv.Namespace = r.OperatorNamespace
+	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(csv), csv); err != nil {
+		return false, fmt.Errorf("failed to get CSV %s/%s: %v", r.OperatorNamespace, r.operatorConditionName, err)
+	}
+	odfVersion := csv.Spec.Version.Version
+
+	return odfVersion.Major != ocpVersion.Major || odfVersion.Minor > ocpVersion.Minor, nil
 }
