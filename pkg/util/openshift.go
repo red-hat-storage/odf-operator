@@ -18,6 +18,7 @@ package util
 
 import (
 	"context"
+	"fmt"
 
 	configv1 "github.com/openshift/api/config/v1"
 	opv2 "github.com/operator-framework/api/pkg/operators/v2"
@@ -25,17 +26,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func DetermineOpenShiftVersion(ctx context.Context, client client.Client) (string, error) {
-	// Determine ocp version
-	clusterVersionList := configv1.ClusterVersionList{}
-	if err := client.List(ctx, &clusterVersionList); err != nil {
+func GetOpenShiftVersion(ctx context.Context, cl client.Client) (string, error) {
+	clusterVersion := &configv1.ClusterVersion{}
+	clusterVersion.Name = "version"
+	if err := cl.Get(ctx, client.ObjectKeyFromObject(clusterVersion), clusterVersion); err != nil {
 		return "", err
 	}
-	clusterVersion := ""
-	for _, version := range clusterVersionList.Items {
-		clusterVersion = version.Status.Desired.Version
+
+	// Look for the latest completed version in history
+	for _, historyEntry := range clusterVersion.Status.History {
+		if historyEntry.State == configv1.CompletedUpdate {
+			return historyEntry.Version, nil
+		}
 	}
-	return clusterVersion, nil
+
+	return "", fmt.Errorf("no completed version found in clusterVersion status history")
 }
 
 func getConditionFactory(client client.Client) conditions.Factory {
