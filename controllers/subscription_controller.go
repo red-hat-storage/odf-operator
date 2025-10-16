@@ -297,6 +297,16 @@ func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logge
 			conditions.WithMessage("ODF version is already ahead of OCP. Further ODF upgrade would make it incompatible with the current OCP version"))
 	}
 
+	// Make operator not upgradeable if OCP upgrade is incomplete
+	if isOCPUpgradeIncomplete, err := util.IsOCPUpgradeIncomplete(ctx, r.Client); err != nil {
+		return err
+	} else if isOCPUpgradeIncomplete {
+		logger.Info("OCP upgrade is incomplete. ODF upgrade not safe, marking the operator as not upgradeable")
+		return r.operatorCondition.Set(ctx, metav1.ConditionFalse,
+			conditions.WithReason("OCPUpgradeIncomplete"),
+			conditions.WithMessage("OCP upgrade is incomplete. ODF is not upgradeable to ensure cluster stability"))
+	}
+
 	ocdList := &opv2.OperatorConditionList{}
 	err := r.Client.List(ctx, ocdList, client.InNamespace(r.OperatorNamespace))
 	if err != nil {
