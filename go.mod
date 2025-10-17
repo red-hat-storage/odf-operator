@@ -3,6 +3,7 @@ module github.com/red-hat-storage/odf-operator
 go 1.24.3
 
 require (
+	github.com/blang/semver/v4 v4.0.0
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
@@ -25,7 +26,6 @@ require (
 	cel.dev/expr v0.24.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
