@@ -83,7 +83,7 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=clusterserviceversions/finalizers,verbs=update
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
+//+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorgroups,verbs=get;list;watch;create
 //+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create
@@ -293,6 +293,15 @@ func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logge
 		return err
 	}
 
+	// Find ODF operator's own OperatorCondition CR from the list
+	var odfOcd *opv2.OperatorCondition
+	for ocdIdx := range ocdList.Items {
+		if ocdList.Items[ocdIdx].GetName() == r.operatorConditionName {
+			odfOcd = &ocdList.Items[ocdIdx]
+			break
+		}
+	}
+
 	for ocdIdx := range ocdList.Items {
 		// skip operatorconditions of not dependent operators
 		if _, exist := condMap[ocdList.Items[ocdIdx].GetName()]; !exist {
@@ -303,6 +312,18 @@ func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logge
 		cond := getNotUpgradeableCond(ocd)
 		if cond != nil {
 			// operator is not upgradeable
+			// Propagate overrides from ODF operator's OperatorCondition CR to the dependent operator
+			if odfOcd != nil && len(odfOcd.Spec.Overrides) > 0 {
+				logger.Info("dependent operator not upgradeable, appending ODF overrides", "operator", ocd.GetName(), "odfOverrides", odfOcd.Spec.Overrides)
+				ocd.Spec.Overrides = append(ocd.Spec.Overrides, odfOcd.Spec.Overrides...)
+				err := r.Client.Update(ctx, ocd)
+				if err != nil {
+					logger.Error(err, "failed to update OperatorCondition overrides", "operator", ocd.GetName())
+					return err
+				}
+				logger.Info("successfully updated overrides for dependent operator", "operator", ocd.GetName())
+			}
+
 			msg := fmt.Sprintf("%s:%s", ocd.GetName(), cond.Message)
 			logger.Info("setting operator upgradeable status", "status", cond.Status)
 			return r.operatorCondition.Set(ctx, cond.Status,
