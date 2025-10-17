@@ -55,11 +55,11 @@ type ClusterVersionReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	instance := configv1.ClusterVersion{}
-	if err := r.Client.Get(ctx, req.NamespacedName, &instance); err != nil {
+	ocpVersion, err := util.GetOpenShiftVersion(ctx, r.Client)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
-	if err := r.ensureConsolePlugin(ctx, instance.Status.Desired.Version); err != nil {
+	if err := r.ensureConsolePlugin(ctx, ocpVersion); err != nil {
 		logger.Error(err, "Could not ensure compatibility for ODF consolePlugin")
 		return ctrl.Result{}, err
 	}
@@ -75,7 +75,7 @@ func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	err := mgr.Add(manager.RunnableFunc(func(ctx context.Context) error {
-		clusterVersion, err := util.DetermineOpenShiftVersion(ctx, r.Client)
+		clusterVersion, err := util.GetOpenShiftVersion(ctx, r.Client)
 		if err != nil {
 			return err
 		}
