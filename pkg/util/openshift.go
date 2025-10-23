@@ -58,3 +58,27 @@ func GetConditionName(client client.Client) (string, error) {
 func NewUpgradeableCondition(client client.Client) (conditions.Condition, error) {
 	return getConditionFactory(client).NewCondition(opv2.ConditionType(opv2.Upgradeable))
 }
+
+func IsOCPUpgradeIncomplete(ctx context.Context, cl client.Client) (bool, error) {
+	clusterVersion := &configv1.ClusterVersion{}
+	clusterVersion.Name = "version"
+	if err := cl.Get(ctx, client.ObjectKeyFromObject(clusterVersion), clusterVersion); err != nil {
+		return false, err
+	}
+
+	// Latest update history entry is not Completed or the completed version does not match the desired version
+	if len(clusterVersion.Status.History) > 0 &&
+		(clusterVersion.Status.History[0].State != configv1.CompletedUpdate ||
+			clusterVersion.Status.History[0].Version != clusterVersion.Status.Desired.Version) {
+		return true, nil
+	}
+
+	// If progressing condition is true an upgrade is under process
+	for _, condition := range clusterVersion.Status.Conditions {
+		if condition.Type == configv1.OperatorProgressing && condition.Status == configv1.ConditionTrue {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
