@@ -78,6 +78,20 @@ update-mgr-config: ## Feed env variables to the manager configmap
 	@echo "$$DEPLOYMENT_ENV_PATCH" > config/manager/deployment-env-patch.yaml
 	@echo "$$CONFIGMAP_YAML" > config/manager/configmap.yaml
 
+# ------------------------------------------------------------------------------
+# This target prints additional FDF dependencies. This will be used in the DS build process.
+#
+# IMPORTANT:
+# - Printing should only be enabled once the Fusion is available for the target OCP/ODF release.
+#
+# HOW TO CONTROL PRINTING:
+# - To enable printing, set the IS_FUSION_PRESENT=true.
+# - To disable printing, set the IS_FUSION_PRESENT=false.
+# ------------------------------------------------------------------------------
+IS_FUSION_PRESENT=true
+gen-additional-fdf-dependencies:
+	@[ "$(IS_FUSION_PRESENT)" = "true" ] && echo "$$ADDITIONAL_FDF_DEPENDENCIES_YAML" || true
+
 ##@ Build
 
 build: generate fmt vet go-build ## Build manager binary.
