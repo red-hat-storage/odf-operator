@@ -76,18 +76,6 @@ data:
     channel: $(ODF_DEPS_SUBSCRIPTION_CHANNEL)
     csv: $(ODF_DEPS_SUBSCRIPTION_CSVNAME)
     pkg: $(ODF_DEPS_SUBSCRIPTION_PACKAGE)
-  CNSA_DEPS: |
-    channel: $(CNSA_DEPS_SUBSCRIPTION_CHANNEL)
-    csv: $(CNSA_DEPS_SUBSCRIPTION_CSVNAME)
-    pkg: $(CNSA_DEPS_SUBSCRIPTION_PACKAGE)
-    namespace: ibm-spectrum-scale
-  CNSA: |
-    channel: $(CNSA_SUBSCRIPTION_CHANNEL)
-    csv: $(CNSA_SUBSCRIPTION_CSVNAME)
-    pkg: $(CNSA_SUBSCRIPTION_PACKAGE)
-    namespace: ibm-spectrum-scale
-    scaleUpOnInstanceOf:
-      - clusters.scale.spectrum.ibm.com
   PROMETHEUS: |
     channel: $(PROMETHEUS_SUBSCRIPTION_CHANNEL)
     csv: $(PROMETHEUS_SUBSCRIPTION_CSVNAME)
