@@ -23,6 +23,7 @@ import (
 	"slices"
 
 	"github.com/go-logr/logr"
+	configv1 "github.com/openshift/api/config/v1"
 	opv1 "github.com/operator-framework/api/pkg/operators/v1"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	opv2 "github.com/operator-framework/api/pkg/operators/v2"
@@ -408,6 +409,53 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		},
 	}
 
+	clusterVersionPredicate := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			if e.ObjectOld == nil || e.ObjectNew == nil {
+				return false
+			}
+			oldObj, oldOk := e.ObjectOld.(*configv1.ClusterVersion)
+			newObj, newOk := e.ObjectNew.(*configv1.ClusterVersion)
+			if !oldOk || !newOk {
+				return false
+			}
+
+			// Trigger reconciliation if the desired version changes
+			if oldObj.Status.Desired.Version != newObj.Status.Desired.Version {
+				return true
+			}
+
+			// Trigger reconciliation if the version history changes
+			if len(oldObj.Status.History) != len(newObj.Status.History) {
+				return true
+			}
+			if len(newObj.Status.History) > 0 && len(oldObj.Status.History) > 0 {
+				if oldObj.Status.History[0].State != newObj.Status.History[0].State ||
+					oldObj.Status.History[0].Version != newObj.Status.History[0].Version {
+					return true
+				}
+			}
+
+			// Trigger reconciliation if Progressing condition changes
+			oldProgressing := configv1.ConditionUnknown
+			newProgressing := configv1.ConditionUnknown
+			for _, condition := range oldObj.Status.Conditions {
+				if condition.Type == configv1.OperatorProgressing {
+					oldProgressing = condition.Status
+					break
+				}
+			}
+			for _, condition := range newObj.Status.Conditions {
+				if condition.Type == configv1.OperatorProgressing {
+					newProgressing = condition.Status
+					break
+				}
+			}
+
+			return oldProgressing != newProgressing
+		},
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("subscription").
 		Watches(
@@ -419,6 +467,11 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&opv2.OperatorCondition{},
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(conditionPredicate),
+		).
+		Watches(
+			&configv1.ClusterVersion{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(clusterVersionPredicate),
 		).
 		Watches(
 			&admrv1.MutatingWebhookConfiguration{},
