@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ux-backend-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: ux-backend-server
+        env:
+        - name: DEVICEFINDER_IMAGE
+          value: quay.io/ocs-dev/ocs-devicefinder:latest

@@ -84,6 +84,10 @@ OPERATOR_NAMESPACE ?= openshift-storage
 
 ODF_CONSOLE_IMG ?= quay.io/ocs-dev/odf-console:latest
 
+UX_BACKEND_IMG ?= quay.io/ocs-dev/ocs-operator:latest
+UX_BACKEND_OAUTH_IMG ?= quay.io/openshift/origin-oauth-proxy:4.20.0
+DEVICEFINDER_IMG ?= quay.io/ocs-dev/ocs-devicefinder:latest
+
 ODF_DEPS_SUBSCRIPTION_PACKAGE ?= $(ODF_DEPS_BUNDLE_NAME)
 ODF_DEPS_SUBSCRIPTION_CHANNEL ?= $(DEFAULT_CHANNEL)
 ODF_DEPS_SUBSCRIPTION_CSVNAME ?= $(ODF_DEPS_SUBSCRIPTION_PACKAGE).v$(VERSION)

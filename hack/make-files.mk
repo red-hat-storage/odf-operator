@@ -15,6 +15,21 @@ spec:
 endef
 export DEPLOYMENT_ENV_PATCH
 
+define UX_BACKEND_DEVICEFINDER_PATCH
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ux-backend-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: ux-backend-server
+        env:
+        - name: DEVICEFINDER_IMAGE
+          value: $(DEVICEFINDER_IMG)
+endef
+export UX_BACKEND_DEVICEFINDER_PATCH
 
 # In external storageCluster there won't be any storageClient but CSI is managed by client op hence we need to
 # scale up client op based on cephCluster instead of storageClient CR
