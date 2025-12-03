@@ -2,4 +2,4 @@ dependencies:
 - type: olm.package
   value:
     packageName: ibm-spectrum-scale-operator
-    version: "60.0.0"
+    version: "60.1.0"
