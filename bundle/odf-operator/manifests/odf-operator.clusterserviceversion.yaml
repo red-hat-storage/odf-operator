@@ -7,7 +7,7 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2025-10-09T10:25:19Z"
+    createdAt: "2025-12-04T12:44:41Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
@@ -328,6 +328,54 @@ spec:
           verbs:
           - create
         serviceAccountName: odf-operator-controller-manager
+      - rules:
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          - selfsubjectaccessreviews
+          verbs:
+          - create
+        - apiGroups:
+          - storage.k8s.io
+          resources:
+          - storageclasses
+          verbs:
+          - create
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - objectbucket.io
+          resources:
+          - objectbuckets
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ceph.rook.io
+          resources:
+          - cephobjectstores
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ocs.openshift.io
+          resources:
+          - storageclusters
+          verbs:
+          - get
+          - list
+          - watch
+        serviceAccountName: ux-backend-server
       deployments:
       - label:
           app.kubernetes.io/name: odf-operator
@@ -490,6 +538,119 @@ spec:
                 name: odf-console-nginx-log
               - emptyDir: {}
                 name: odf-console-nginx-tmp
+      - label:
+          app: ux-backend-server
+          app.kubernetes.io/component: ux-backend-server
+          app.kubernetes.io/name: ux-backend-server
+        name: ux-backend-server
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: ux-backend-server
+              app.kubernetes.io/component: ux-backend-server
+              app.kubernetes.io/name: ux-backend-server
+          strategy:
+            type: Recreate
+          template:
+            metadata:
+              labels:
+                app: ux-backend-server
+                app.kubernetes.io/component: ux-backend-server
+                app.kubernetes.io/name: ux-backend-server
+            spec:
+              containers:
+              - command:
+                - /usr/local/bin/ux-backend-server
+                env:
+                - name: DEVICEFINDER_IMAGE
+                  value: quay.io/ocs-dev/ocs-devicefinder:latest
+                - name: ONBOARDING_TOKEN_LIFETIME
+                  value: "48"
+                - name: UX_BACKEND_PORT
+                  value: "8080"
+                - name: TLS_ENABLED
+                  value: "true"
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                image: quay.io/ocs-dev/ocs-operator:latest
+                imagePullPolicy: IfNotPresent
+                name: ux-backend-server
+                ports:
+                - containerPort: 8080
+                  protocol: TCP
+                resources:
+                  limits:
+                    cpu: 250m
+                    memory: 512Mi
+                  requests:
+                    cpu: 50m
+                    memory: 128Mi
+                securityContext:
+                  readOnlyRootFilesystem: true
+                  runAsNonRoot: true
+                volumeMounts:
+                - mountPath: /etc/private-key
+                  name: onboarding-private-key
+                  readOnly: true
+                - mountPath: /etc/tls/private
+                  name: ux-cert-secret
+                  readOnly: true
+              - args:
+                - -provider=openshift
+                - -https-address=:8888
+                - -http-address=
+                - -email-domain=*
+                - -upstream=http://localhost:8080/
+                - -tls-cert=/etc/tls/private/tls.crt
+                - -tls-key=/etc/tls/private/tls.key
+                - -cookie-secret-file=/etc/proxy/secrets/session_secret
+                - -openshift-service-account=ux-backend-server
+                - -openshift-delegate-urls={"/":{"group":"ocs.openshift.io","resource":"storageclusters","namespace":"openshift-storage","verb":"create"},"/info/":{"group":"authorization.k8s.io","resource":"selfsubjectaccessreviews","verb":"create"}}
+                - -openshift-ca=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                image: quay.io/openshift/origin-oauth-proxy:4.20.0
+                imagePullPolicy: IfNotPresent
+                name: oauth-proxy
+                ports:
+                - containerPort: 8888
+                  protocol: TCP
+                resources:
+                  limits:
+                    cpu: 25m
+                    memory: 256Mi
+                  requests:
+                    cpu: 5m
+                    memory: 50Mi
+                securityContext:
+                  readOnlyRootFilesystem: true
+                  runAsNonRoot: true
+                volumeMounts:
+                - mountPath: /etc/proxy/secrets
+                  name: ux-proxy-secret
+                  readOnly: true
+                - mountPath: /etc/tls/private
+                  name: ux-cert-secret
+                  readOnly: true
+              priorityClassName: system-cluster-critical
+              serviceAccountName: ux-backend-server
+              tolerations:
+              - effect: NoSchedule
+                key: node.ocs.openshift.io/storage
+                operator: Equal
+                value: "true"
+              volumes:
+              - name: onboarding-private-key
+                secret:
+                  optional: true
+                  secretName: onboarding-private-key
+              - name: ux-proxy-secret
+                secret:
+                  secretName: ux-backend-proxy
+              - name: ux-cert-secret
+                secret:
+                  secretName: ux-cert-secret
       permissions:
       - rules:
         - apiGroups:
@@ -524,6 +685,59 @@ spec:
           - create
           - patch
         serviceAccountName: odf-operator-controller-manager
+      - rules:
+        - apiGroups:
+          - ""
+          resourceNames:
+          - onboarding-private-key
+          - ux-cert-secret
+          - ux-backend-proxy
+          resources:
+          - secrets
+          verbs:
+          - get
+          - list
+        - apiGroups:
+          - ""
+          resources:
+          - configmaps
+          - pods
+          verbs:
+          - list
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - daemonsets
+          verbs:
+          - get
+          - create
+          - update
+          - list
+          - watch
+        - apiGroups:
+          - ocs.openshift.io
+          resources:
+          - storageclusters
+          verbs:
+          - get
+          - list
+          - update
+        - apiGroups:
+          - ceph.rook.io
+          resources:
+          - cephblockpools
+          verbs:
+          - create
+        - apiGroups:
+          - noobaa.io
+          resources:
+          - noobaas
+          verbs:
+          - get
+          - list
+          - watch
+        serviceAccountName: ux-backend-server
     strategy: deployment
   installModes:
   - supported: true
