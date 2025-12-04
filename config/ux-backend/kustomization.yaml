@@ -1,0 +1,24 @@
+commonLabels:
+  app: ux-backend-server
+
+resources:
+- ux_backend_sa.yaml
+- ux_backend_role.yaml
+- ux_backend_role_binding.yaml
+- oauth_proxy_role.yaml
+- oauth_proxy_role_binding.yaml
+- secret.yaml
+- service.yaml
+- deployment.yaml
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: oauth-proxy
+  newName: quay.io/openshift/origin-oauth-proxy
+  newTag: 4.20.0
+- name: ux-backend-server
+  newName: quay.io/ocs-dev/ocs-operator
+  newTag: latest
+patchesStrategicMerge:
+- ux-backend-devicefinder-patch.yaml

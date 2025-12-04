@@ -173,6 +173,9 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	cd config/console && $(KUSTOMIZE) edit set image odf-console=$(ODF_CONSOLE_IMG)
+	cd config/ux-backend && $(KUSTOMIZE) edit set image ux-backend-server=$(UX_BACKEND_IMG)
+	cd config/ux-backend && $(KUSTOMIZE) edit set image oauth-proxy=$(UX_BACKEND_OAUTH_IMG)
+	@echo "$$UX_BACKEND_DEVICEFINDER_PATCH" > config/ux-backend/ux-backend-devicefinder-patch.yaml
 	cd config/manifests/bases && $(KUSTOMIZE) edit add annotation --force \
 		'olm.skipRange':"$(SKIP_RANGE)" \
 		'olm.properties':'[{"type": "olm.maxOpenShiftVersion", "value": "$(MAX_OCP_VERSION)"}]' && \
