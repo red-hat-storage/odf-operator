@@ -62,7 +62,7 @@ data:
     namespace: ibm-spectrum-scale
   CNSA: |
     channel: beta
-    csv: ibm-spectrum-scale-operator.v60.0.0
+    csv: ibm-spectrum-scale-operator.v60.1.0
     pkg: ibm-spectrum-scale-operator
     namespace: ibm-spectrum-scale
     scaleUpOnInstanceOf:
