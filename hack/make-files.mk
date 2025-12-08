@@ -12,6 +12,15 @@ spec:
         env:
         - name: PKGS_CONFIG_MAP_NAME
           value: odf-operator-pkgs-config-$(VERSION)
+        - name: UX_BACKEND_SERVER_IMAGE
+          value: $(UX_BACKEND_SERVER_IMAGE)
+        - name: UX_BACKEND_OAUTH_IMAGE
+          value: $(UX_BACKEND_OAUTH_IMAGE)
+        - name: DEVICEFINDER_IMAGE
+          value: $(DEVICEFINDER_IMAGE)
+        - name: ONBOARDING_TOKEN_LIFETIME
+        - name: UX_BACKEND_PORT
+        - name: TLS_ENABLED
 endef
 export DEPLOYMENT_ENV_PATCH
 
