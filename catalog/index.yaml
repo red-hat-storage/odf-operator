@@ -161,4 +161,4 @@ schema: olm.channel
 package: ibm-spectrum-scale-operator
 name: beta
 entries:
-  - name: ibm-spectrum-scale-operator.v60.0.0
+  - name: ibm-spectrum-scale-operator.v60.1.0
