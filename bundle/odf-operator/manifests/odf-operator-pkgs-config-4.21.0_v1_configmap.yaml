@@ -15,7 +15,7 @@ data:
       - clusters.scale.spectrum.ibm.com
   CNSA_DEPS: |
     channel: alpha
-    csv: cnsa-dependencies.v4.20.0
+    csv: cnsa-dependencies.v4.21.0
     pkg: cnsa-dependencies
     namespace: ibm-spectrum-scale
   CSIADDONS: |
@@ -44,7 +44,7 @@ data:
       - noobaas.noobaa.io
   OCS: |
     channel: alpha
-    csv: ocs-operator.v4.20.0
+    csv: ocs-operator.v4.21.0
     pkg: ocs-operator
     scaleUpOnInstanceOf:
       - storageclusters.ocs.openshift.io
@@ -56,7 +56,7 @@ data:
       - cephclusters.ceph.rook.io
   ODF_DEPS: |
     channel: alpha
-    csv: odf-dependencies.v4.20.0
+    csv: odf-dependencies.v4.21.0
     pkg: odf-dependencies
   PROMETHEUS: |
     channel: beta
@@ -83,4 +83,4 @@ data:
       - cephclusters.ceph.rook.io
 kind: ConfigMap
 metadata:
-  name: odf-operator-pkgs-config-4.20.0
+  name: odf-operator-pkgs-config-4.21.0

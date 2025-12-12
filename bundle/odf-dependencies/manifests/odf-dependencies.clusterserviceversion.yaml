@@ -3,8 +3,8 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: '[]'
-    createdAt: "2025-07-28T02:50:41Z"
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.21"}]'
+    createdAt: "2025-12-12T10:53:21Z"
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.22"}]'
     olm.skipRange: ""
     operatorframework.io/suggested-namespace: openshift-storage
     operators.operatorframework.io/builder: operator-sdk-v1.31.0
@@ -14,7 +14,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: odf-dependencies.v4.20.0
+  name: odf-dependencies.v4.21.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -48,4 +48,4 @@ spec:
   minKubeVersion: 1.16.0
   provider:
     name: Red Hat
-  version: 4.20.0
+  version: 4.21.0
