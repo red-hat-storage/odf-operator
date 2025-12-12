@@ -222,10 +222,11 @@ func (r *ClusterVersionReconciler) ensureUXBackendServer(ctx context.Context) er
 	ocsCSV.Name = ocsCsvName
 	ocsCSV.Namespace = OperatorNamespace
 	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(ocsCSV), ocsCSV); err != nil {
-		// Return nil to exit early. The OCS operator CSV must match the ODF operator CSV version,
+		// The OCS operator CSV must match the ODF operator CSV version,
 		// this is because the ux-backend-server deployment is moved from ocs-operator to odf-operator
 		// during upgrade there may be a collision of ownership between the two operators
-		return nil
+		logger.Error(err, "Skipping UX backend server setup")
+		return fmt.Errorf("OCS operator CSV must match the ODF operator CSV version: %w", err)
 	}
 
 	logger.Info("Ensuring UX backend server secret")

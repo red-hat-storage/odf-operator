@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 4.20.0
+VERSION ?= 4.21.0
 
 # MAX_OCP_VERSION variable specifies the maximum supported version of OCP.
 # Its purpose is to add an annotation to the CSV file, blocking OCP upgrades beyond the X+1 version.
@@ -95,8 +95,8 @@ CNSA_DEPS_SUBSCRIPTION_PACKAGE ?= $(CNSA_DEPS_BUNDLE_NAME)
 CNSA_DEPS_SUBSCRIPTION_CHANNEL ?= $(DEFAULT_CHANNEL)
 CNSA_DEPS_SUBSCRIPTION_CSVNAME ?= $(CNSA_DEPS_SUBSCRIPTION_PACKAGE).v$(VERSION)
 
-OCS_BUNDLE_IMG ?= quay.io/ocs-dev/ocs-operator-bundle:main-dec2187
-OCS_BUNDLE_VERSION ?= v4.20.0
+OCS_BUNDLE_IMG ?= quay.io/ocs-dev/ocs-operator-bundle:main-ec83cba
+OCS_BUNDLE_VERSION ?= v4.21.0
 OCS_SUBSCRIPTION_PACKAGE ?= ocs-operator
 OCS_SUBSCRIPTION_CHANNEL ?= alpha
 OCS_SUBSCRIPTION_CSVNAME ?= $(OCS_SUBSCRIPTION_PACKAGE).$(OCS_BUNDLE_VERSION)
