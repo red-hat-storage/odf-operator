@@ -19,16 +19,23 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	configv1 "github.com/openshift/api/config/v1"
+	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/red-hat-storage/odf-operator/console"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
@@ -47,6 +54,7 @@ type ClusterVersionReconciler struct {
 //+kubebuilder:rbac:groups="apps",resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups="apps",resources=deployments/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleclidownloads,verbs=get;create;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
@@ -61,6 +69,11 @@ func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 	if err := r.ensureConsolePlugin(ctx, ocpVersion); err != nil {
 		logger.Error(err, "Could not ensure compatibility for ODF consolePlugin")
+		return ctrl.Result{}, err
+	}
+
+	if err := r.ensureUXBackendServer(ctx); err != nil {
+		logger.Error(err, "Could not ensure UX backend server")
 		return ctrl.Result{}, err
 	}
 
@@ -86,8 +99,29 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
+	uxBackendResourcePredicate := func(name string) predicate.Predicate {
+		return predicate.NewPredicateFuncs(func(obj client.Object) bool {
+			return obj.GetName() == name && obj.GetNamespace() == OperatorNamespace
+		})
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&configv1.ClusterVersion{}).
+		Watches(
+			&appsv1.Deployment{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(uxBackendResourcePredicate("ux-backend-server")),
+		).
+		Watches(
+			&corev1.Secret{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(uxBackendResourcePredicate("ux-backend-proxy")),
+		).
+		Watches(
+			&corev1.Service{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(uxBackendResourcePredicate("ux-backend-proxy")),
+		).
 		Complete(r)
 }
 
@@ -162,6 +196,73 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(ctx context.Context, clus
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	}
+
+	return nil
+}
+
+func (r *ClusterVersionReconciler) ensureUXBackendServer(ctx context.Context) error {
+	logger := log.FromContext(ctx)
+	odfCsvName, err := util.GetConditionName(r.Client)
+	if err != nil {
+		return fmt.Errorf("failed to get ODF CSV name: %w", err)
+	}
+
+	odfCsv := &opv1a1.ClusterServiceVersion{}
+	odfCsv.Name = odfCsvName
+	odfCsv.Namespace = OperatorNamespace
+	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(odfCsv), odfCsv); err != nil {
+		return fmt.Errorf("failed to get ODF CSV %s/%s: %w", odfCsv.Namespace, odfCsv.Name, err)
+	}
+
+	// TODO: remove the following check in future version
+	// the following is to check if ocs-operator and odf-operator csvs are at same version
+	ocsCsvName := strings.ReplaceAll(odfCsvName, "odf", "ocs")
+	ocsCSV := &opv1a1.ClusterServiceVersion{}
+	ocsCSV.Name = ocsCsvName
+	ocsCSV.Namespace = OperatorNamespace
+	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(ocsCSV), ocsCSV); err != nil {
+		// The OCS operator CSV must match the ODF operator CSV version,
+		// this is because the ux-backend-server deployment is moved from ocs-operator to odf-operator
+		// during upgrade there may be a collision of ownership between the two operators
+		logger.Error(err, "Skipping UX backend server setup")
+		return fmt.Errorf("OCS operator CSV must match the ODF operator CSV version: %w", err)
+	}
+
+	logger.Info("Ensuring UX backend server secret")
+	uxBackendServerSecret := getUXBackendServerSecret()
+	secretData := uxBackendServerSecret.StringData
+	if _, err = controllerutil.CreateOrUpdate(ctx, r.Client, uxBackendServerSecret, func() error {
+		uxBackendServerSecret.SetOwnerReferences(nil)
+		uxBackendServerSecret.StringData = secretData
+		return controllerutil.SetControllerReference(odfCsv, uxBackendServerSecret, r.Scheme)
+	}); err != nil {
+		return fmt.Errorf("failed to create or update UX backend server secret: %w", err)
+	}
+
+	logger.Info("Ensuring UX backend server service")
+	uxBackendServerService := getUXBackendServerService()
+	desiredService := uxBackendServerService.Spec.DeepCopy()
+	annotations := uxBackendServerService.Annotations
+	if _, err = controllerutil.CreateOrUpdate(ctx, r.Client, uxBackendServerService, func() error {
+		uxBackendServerService.SetOwnerReferences(nil)
+		uxBackendServerService.Spec = *desiredService
+		uxBackendServerService.Annotations = annotations
+		return controllerutil.SetControllerReference(odfCsv, uxBackendServerService, r.Scheme)
+	}); err != nil {
+		return fmt.Errorf("failed to create or update UX backend server service: %w", err)
+	}
+
+	// Create/Update UX backend server deployment
+	logger.Info("Ensuring UX backend server deployment")
+	uxBackendServerDeployment := getUXBackendServerDeployment()
+	desiredSpec := uxBackendServerDeployment.Spec.DeepCopy()
+	if _, err = controllerutil.CreateOrUpdate(ctx, r.Client, uxBackendServerDeployment, func() error {
+		uxBackendServerDeployment.SetOwnerReferences(nil)
+		uxBackendServerDeployment.Spec = *desiredSpec
+		return controllerutil.SetControllerReference(odfCsv, uxBackendServerDeployment, r.Scheme)
+	}); err != nil {
+		return fmt.Errorf("failed to create or update UX backend server deployment: %w", err)
 	}
 
 	return nil

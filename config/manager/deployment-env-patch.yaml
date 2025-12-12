@@ -10,4 +10,13 @@ spec:
       - name: manager
         env:
         - name: PKGS_CONFIG_MAP_NAME
-          value: odf-operator-pkgs-config-4.20.0
+          value: odf-operator-pkgs-config-4.21.0
+        - name: UX_BACKEND_SERVER_IMAGE
+          value: quay.io/ocs-dev/ocs-operator:latest
+        - name: UX_BACKEND_OAUTH_IMAGE
+          value: quay.io/openshift/origin-oauth-proxy:4.20.0
+        - name: DEVICEFINDER_IMAGE
+          value: quay.io/ocs-dev/ocs-devicefinder:latest
+        - name: ONBOARDING_TOKEN_LIFETIME
+        - name: UX_BACKEND_PORT
+        - name: TLS_ENABLED

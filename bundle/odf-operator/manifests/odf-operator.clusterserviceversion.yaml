@@ -7,11 +7,11 @@ metadata:
     categories: Storage
     console.openshift.io/plugins: '["odf-console"]'
     containerImage: quay.io/ocs-dev/odf-operator:latest
-    createdAt: "2025-10-09T10:25:19Z"
+    createdAt: "2025-12-12T10:53:22Z"
     description: OpenShift Data Foundation provides a common control plane for storage
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.21"}]'
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.22"}]'
     olm.skipRange: ""
     operatorframework.io/initialization-link: /odf/resource/odf.openshift.io~v1alpha1~StorageSystem/create/~new
     operatorframework.io/suggested-namespace: openshift-storage
@@ -30,7 +30,7 @@ metadata:
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: odf-operator.v4.20.0
+  name: odf-operator.v4.21.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -114,6 +114,7 @@ spec:
         - apiGroups:
           - ""
           resources:
+          - secrets
           - services
           verbs:
           - create
@@ -357,7 +358,16 @@ spec:
                 - /manager
                 env:
                 - name: PKGS_CONFIG_MAP_NAME
-                  value: odf-operator-pkgs-config-4.20.0
+                  value: odf-operator-pkgs-config-4.21.0
+                - name: UX_BACKEND_SERVER_IMAGE
+                  value: quay.io/ocs-dev/ocs-operator:latest
+                - name: UX_BACKEND_OAUTH_IMAGE
+                  value: quay.io/openshift/origin-oauth-proxy:4.20.0
+                - name: DEVICEFINDER_IMAGE
+                  value: quay.io/ocs-dev/ocs-devicefinder:latest
+                - name: ONBOARDING_TOKEN_LIFETIME
+                - name: UX_BACKEND_PORT
+                - name: TLS_ENABLED
                 - name: OPERATOR_NAMESPACE
                   valueFrom:
                     fieldRef:
@@ -391,10 +401,10 @@ spec:
                 resources:
                   limits:
                     cpu: 200m
-                    memory: 300Mi
+                    memory: 400Mi
                   requests:
                     cpu: 200m
-                    memory: 200Mi
+                    memory: 400Mi
                 securityContext:
                   allowPrivilegeEscalation: false
                   capabilities:
@@ -547,4 +557,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat
-  version: 4.20.0
+  version: 4.21.0
