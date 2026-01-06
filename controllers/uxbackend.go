@@ -5,6 +5,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
@@ -87,6 +88,16 @@ func getUXBackendServerDeployment() *appsv1.Deployment {
 								},
 							},
 						},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("50m"),
+								corev1.ResourceMemory: resource.MustParse("128Mi"),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("250m"),
+								corev1.ResourceMemory: resource.MustParse("512Mi"),
+							},
+						},
 						SecurityContext: &corev1.SecurityContext{
 							RunAsNonRoot:           ptr.To(true),
 							ReadOnlyRootFilesystem: ptr.To(true),
@@ -119,6 +130,16 @@ func getUXBackendServerDeployment() *appsv1.Deployment {
 						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: 8888,
+							},
+						},
+						Resources: corev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("5m"),
+								corev1.ResourceMemory: resource.MustParse("50Mi"),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse("25m"),
+								corev1.ResourceMemory: resource.MustParse("256Mi"),
 							},
 						},
 						SecurityContext: &corev1.SecurityContext{
