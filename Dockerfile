@@ -18,6 +18,7 @@ COPY config/ config/
 COPY metrics/ metrics/
 COPY console/ console/
 COPY hack/ hack/
+COPY services/ services/
 COPY main.go Makefile ./
 
 # Build
@@ -28,6 +29,7 @@ RUN make go-build
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/bin/manager .
+COPY --from=builder /workspace/bin/ux-backend-server .
 USER 65532:65532
 
 ENTRYPOINT ["/manager"]
