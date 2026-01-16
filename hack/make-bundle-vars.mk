@@ -45,6 +45,7 @@ IMAGE_REGISTRY ?= quay.io
 REGISTRY_NAMESPACE ?= ocs-dev
 IMAGE_TAG ?= latest
 IMAGE_NAME ?= odf-operator
+DEVICEFINDER_IMAGE_NAME ?= odf-devicefinder
 BUNDLE_IMAGE_NAME ?= $(IMAGE_NAME)-bundle
 ODF_DEPS_BUNDLE_NAME ?= odf-dependencies
 ODF_DEPS_BUNDLE_IMAGE_NAME ?= $(ODF_DEPS_BUNDLE_NAME)-bundle
@@ -55,6 +56,9 @@ ODF_DEPS_CATALOG_IMAGE_NAME ?= $(ODF_DEPS_BUNDLE_NAME)-catalog
 
 # IMG defines the image used for the operator.
 IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+# DEVICEFINDER_IMAGE defines the image used for the devicefinder.
+DEVICEFINDER_IMAGE ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(DEVICEFINDER_IMAGE_NAME):$(IMAGE_TAG)
 
 # BUNDLE_IMG defines the image used for the bundle.
 BUNDLE_IMG ?= $(IMAGE_REGISTRY)/$(REGISTRY_NAMESPACE)/$(BUNDLE_IMAGE_NAME):$(IMAGE_TAG)
@@ -83,9 +87,8 @@ endif
 OPERATOR_NAMESPACE ?= openshift-storage
 
 ODF_CONSOLE_IMG ?= quay.io/ocs-dev/odf-console:latest
-UX_BACKEND_SERVER_IMAGE ?= quay.io/ocs-dev/ocs-operator:latest
+UX_BACKEND_SERVER_IMAGE ?= $(IMG)
 UX_BACKEND_OAUTH_IMAGE ?= quay.io/openshift/origin-oauth-proxy:4.20.0
-DEVICEFINDER_IMAGE ?= quay.io/ocs-dev/ocs-devicefinder:latest
 
 ODF_DEPS_SUBSCRIPTION_PACKAGE ?= $(ODF_DEPS_BUNDLE_NAME)
 ODF_DEPS_SUBSCRIPTION_CHANNEL ?= $(DEFAULT_CHANNEL)
