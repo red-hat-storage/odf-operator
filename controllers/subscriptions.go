@@ -331,6 +331,7 @@ func ApproveInstallPlanForCsv(ctx context.Context, cli client.Client, csvName st
 		if slices.Contains(installPlan.Spec.ClusterServiceVersionNames, csvName) {
 			foundInstallPlan = true
 			if installPlan.Spec.Approval == opv1a1.ApprovalManual &&
+				installPlan.Status.Phase == opv1a1.InstallPlanPhaseRequiresApproval &&
 				!installPlan.Spec.Approved {
 
 				installPlans.Items[i].Spec.Approved = true
