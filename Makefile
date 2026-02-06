@@ -209,7 +209,6 @@ catalog: opm ## Generate catalog manifests and then validate generated files.
 	$(OPM) render --output=yaml $(OCS_CLIENT_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs-client.yaml
 	$(OPM) render --output=yaml $(IBM_ODF_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm.yaml
 	$(OPM) render --output=yaml $(IBM_CSI_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm-csi.yaml
-	$(OPM) render --output=yaml $(CNSA_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/cnsa.yaml
 	$(OPM) render --output=yaml $(NOOBAA_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/noobaa.yaml
 	$(OPM) render --output=yaml $(CSIADDONS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/csiaddons.yaml
 	$(OPM) render --output=yaml $(ODF_SNAPSHOT_CONTROLLER_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/snapshotter.yaml
@@ -217,6 +216,8 @@ catalog: opm ## Generate catalog manifests and then validate generated files.
 	$(OPM) render --output=yaml $(ROOK_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/rook.yaml
 	$(OPM) render --output=yaml $(PROMETHEUS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/prometheus.yaml
 	$(OPM) render --output=yaml $(RECIPE_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/recipe.yaml
+	# This is a private image and cannot be pulled in GitHub Actions, as secrets are not available to pull requests.
+	[ -z "$$GITHUB_ACTIONS" ] && $(OPM) render --output=yaml $(CNSA_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/cnsa.yaml || true
 	$(OPM) validate catalog
 
 .PHONY: catalog-build
