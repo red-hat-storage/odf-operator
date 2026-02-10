@@ -56,7 +56,7 @@ func getUXBackendServerDeployment() *appsv1.Deployment {
 						},
 						Image:           os.Getenv("UX_BACKEND_SERVER_IMAGE"),
 						ImagePullPolicy: "IfNotPresent",
-						Command:         []string{"/usr/local/bin/ux-backend-server"},
+						Command:         []string{"/ux-backend-server"},
 						Ports: []corev1.ContainerPort{
 							{
 								ContainerPort: 8080,
