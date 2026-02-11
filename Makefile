@@ -108,6 +108,12 @@ docker-build: godeps-update test-setup go-test ## Build docker image with the ma
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
+devicefinder-build: ## Build devicefinder binary.
+	docker build -f services/devicefinder/Dockerfile -t ${DEVICEFINDER_IMAGE} . --build-arg="LDFLAGS=${LDFLAGS}"
+
+devicefinder-push: ## Push devicefinder image.
+	docker push ${DEVICEFINDER_IMAGE}
+
 ##@ Deployment
 
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
