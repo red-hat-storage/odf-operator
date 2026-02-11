@@ -53,8 +53,8 @@ godeps-update: ## Run go mod tidy and go mod vendor.
 
 test-setup: generate fmt vet godeps-update ## Run setup targets for tests
 
-go-test: ## Run go test against code.
-	./hack/go-test.sh
+go-test: envtest ## Run go test against code.
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(BIN_DIR) -p path)" go test -coverprofile cover.out `go list ./... | grep -v "e2e"`
 
 test: test-setup go-test ## Run go unit tests.
 
