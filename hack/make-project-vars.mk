@@ -1,6 +1,6 @@
 PROJECT_DIR := $(PWD)
 BIN_DIR := $(PROJECT_DIR)/bin
-ENVTEST_ASSETS_DIR := $(PROJECT_DIR)/testbin
+ENVTEST_K8S_VERSION := 1.27.1
 
 GOBIN ?= $(BIN_DIR)
 GOOS ?= $(shell go env GOOS)
