@@ -13,7 +13,7 @@ metadata:
     features.operators.openshift.io/token-auth-aws: "true"
     olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.22"}]'
     olm.skipRange: ""
-    operatorframework.io/initialization-link: /odf/resource/odf.openshift.io~v1alpha1~StorageSystem/create/~new
+    operatorframework.io/initialization-link: /odf/overview?show-welcome-modal=true
     operatorframework.io/suggested-namespace: openshift-storage
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.openshift.io/valid-subscription: '["OpenShift Platform Plus","OpenShift
