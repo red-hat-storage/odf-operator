@@ -1,124 +1,135 @@
-# OpenShift Data Foundation Operator
+# odf-operator
+// TODO(user): Add simple overview of use/purpose
 
-This is the primary operator for Red Hat OpenShift Data Foundation (ODF). It
-is a "meta" operator, meaning it serves to facilitate the other operators in
-ODF by providing dependencies and performing administrative tasks outside
-their scope.
+## Description
+// TODO(user): An in-depth paragraph about your project and overview of use
 
-## Deploying pre-built images
+## Getting Started
 
-### Installation
-The ODF operator can be installed into an OpenShift cluster using Operator
-Lifecycle Manager (OLM).
+### Prerequisites
+- go version v1.24.6+
+- docker version 17.03+.
+- kubectl version v1.11.3+.
+- Access to a Kubernetes v1.11.3+ cluster.
 
-For quick install using pre-built container images.
+### To Deploy on the cluster
+**Build and push your image to the location specified by `IMG`:**
 
-```
-make deploy-with-olm
-```
-
-This creates:
-
-* a custom CatalogSource
-* a new openshift-storage Namespace
-* an OperatorGroup
-* a Subscription to the ODF catalog in the openshift-storage namespace
-
-You can check the status of the CSV using the following command:
-
-```
-oc get csv -n openshift-storage
+```sh
+make docker-build docker-push IMG=<some-registry>/odf-operator:tag
 ```
 
-This can take a few minutes. Once PHASE says Succeeded you can create a
-StorageSystem.
+**NOTE:** This image ought to be published in the personal registry you specified.
+And it is required to have access to pull the image from the working environment.
+Make sure you have the proper permission to the registry if the above commands don’t work.
 
-StorageSystem can be created from the console, using the StorageSystem creation
-wizard. From the CLI, a StorageSystem resource can be created using the example
-CR as follows,
+**Install the CRDs into the cluster:**
 
-```
-oc create -f config/samples/ocs-storagecluster-storagesystem.yaml
-```
-
-## Development
-
-### Build
-
-#### ODF Operator
-
-The operator image can be built via
-
-```
-make docker-build
+```sh
+make install
 ```
 
-#### ODF Operator Bundle
+**Deploy the Manager to the cluster with the image specified by `IMG`:**
 
-To create an operator bundle image with the bundle run
-
-```
-make bundle-build
+```sh
+make deploy IMG=<some-registry>/odf-operator:tag
 ```
 
-#### ODF Operator Catalog
+> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
+privileges or be logged in as admin.
 
-An operator catalog image can then be built using
+**Create instances of your solution**
+You can apply the samples (examples) from the config/sample:
 
-```
-make catalog-build
-```
-
-### Deploying development builds
-
-To install own development builds of ODF, first build and push the odf-operator
-image to your own image repository.
-
-```
-export REGISTRY_NAMESPACE=<quay-username>
-export IMAGE_TAG=<some-tag>
-make docker-build docker-push
+```sh
+kubectl apply -k config/samples/
 ```
 
-Then build and push the operator bundle image.
+>**NOTE**: Ensure that the samples has default values to test it out.
 
-```
-export REGISTRY_NAMESPACE=<quay-username>
-export IMAGE_TAG=<some-tag>
-make bundle-build bundle-push
-```
+### To Uninstall
+**Delete the instances (CRs) from the cluster:**
 
-Next build and push the operator catalog image.
-
-```
-export REGISTRY_NAMESPACE=<quay-username>
-export IMAGE_TAG=<some-tag>
-make catalog-build catalog-push
+```sh
+kubectl delete -k config/samples/
 ```
 
-Now create a ODF operator and follow the [Installation](#installation)
+**Delete the APIs(CRDs) from the cluster:**
 
-```
-export REGISTRY_NAMESPACE=<quay-username>
-export IMAGE_TAG=<some-tag>
-make deploy-with-olm
+```sh
+make uninstall
 ```
 
-## Running Unit test
+**UnDeploy the controller from the cluster:**
 
-Unit tests can be run via
-
-```
-make test
+```sh
+make undeploy
 ```
 
-To run a single test
+## Project Distribution
 
+Following the options to release and provide this solution to the users.
+
+### By providing a bundle with all YAML files
+
+1. Build the installer for the image built and published in the registry:
+
+```sh
+make build-installer IMG=<some-registry>/odf-operator:tag
 ```
-go test -v github.com/red-hat-storage/odf-operator/controllers \
-    -run TestIsVendorSystemPresent
+
+**NOTE:** The makefile target mentioned above generates an 'install.yaml'
+file in the dist directory. This file contains all the resources built
+with Kustomize, which are necessary to install this project without its
+dependencies.
+
+2. Using the installer
+
+Users can just run 'kubectl apply -f <URL for YAML BUNDLE>' to install
+the project, i.e.:
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/<org>/odf-operator/<tag or branch>/dist/install.yaml
 ```
 
-## Contribution
+### By providing a Helm Chart
 
-To contribute to the project follow the [contribution](CONTRIBUTING.md) guide.
+1. Build the chart using the optional helm plugin
+
+```sh
+kubebuilder edit --plugins=helm/v2-alpha
+```
+
+2. See that a chart was generated under 'dist/chart', and users
+can obtain this solution from there.
+
+**NOTE:** If you change the project, you need to update the Helm Chart
+using the same command above to sync the latest changes. Furthermore,
+if you create webhooks, you need to use the above command with
+the '--force' flag and manually ensure that any custom configuration
+previously added to 'dist/chart/values.yaml' or 'dist/chart/manager/manager.yaml'
+is manually re-applied afterwards.
+
+## Contributing
+// TODO(user): Add detailed information on how you would like others to contribute to this project
+
+**NOTE:** Run `make help` for more information on all potential `make` targets
+
+More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+
+## License
+
+Copyright 2026 Data Foundation.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
