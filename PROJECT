@@ -8,4 +8,13 @@ layout:
 - go.kubebuilder.io/v4
 projectName: odf-operator
 repo: github.com/red-hat-storage/odf-operator
+resources:
+- controller: true
+  domain: operatorframework.io
+  external: true
+  group: olm
+  kind: ClusterExtension
+  module: github.com/operator-framework/operator-controller
+  path: github.com/operator-framework/operator-controller/api/v1
+  version: v1
 version: "3"
