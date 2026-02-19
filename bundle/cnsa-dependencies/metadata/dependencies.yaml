@@ -1,5 +1,0 @@
-dependencies:
-- type: olm.package
-  value:
-    packageName: ibm-spectrum-scale-operator
-    version: "60.1.0"

@@ -1,5 +1,0 @@
-varReference:
-# substitute NAMESPACE from vars inside operatorgroup
-- kind: OperatorGroup
-  group: operators.coreos.com
-  path: spec/targetNamespaces

@@ -1,9 +1,0 @@
-apiVersion: odf.openshift.io/v1alpha1
-kind: StorageSystem
-metadata:
-  name: my-flashsystemcluster-storagesystem
-  namespace: openshift-storage
-spec:
-  kind: flashsystemcluster.odf.ibm.com/v1alpha1
-  name: my-flashsystemcluster
-  namespace: openshift-storage
