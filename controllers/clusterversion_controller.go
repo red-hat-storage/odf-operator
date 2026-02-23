@@ -217,7 +217,7 @@ func (r *ClusterVersionReconciler) ensureUXBackendServer(ctx context.Context) er
 
 	// TODO: remove the following check in future version
 	// the following is to check if ocs-operator and odf-operator csvs are at same version
-	ocsCsvName := strings.ReplaceAll(odfCsvName, "odf", "ocs")
+	ocsCsvName := strings.Replace(odfCsvName, "odf", "ocs", 1)
 	ocsCSV := &opv1a1.ClusterServiceVersion{}
 	ocsCSV.Name = ocsCsvName
 	ocsCSV.Namespace = OperatorNamespace
