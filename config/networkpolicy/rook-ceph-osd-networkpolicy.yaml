@@ -1,0 +1,133 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rook-ceph-osd
+  namespace: openshift-storage
+spec:
+  podSelector:
+    matchLabels:
+      app: rook-ceph-osd
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          app: rook-ceph-osd
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          app: rook-ceph-mgr
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          app: rook-ceph-operator
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          odf.openshift.io/ceph-client: "true"
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  - from:
+    - ipBlock:
+        cidr: 10.241.0.0/16
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  - from:
+    - ipBlock:
+        cidr: 10.128.0.0/14
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  - from:
+    - ipBlock:
+        cidr: 100.64.0.0/16
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  - from:
+    - ipBlock:
+        cidr: 10.0.0.0/8
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-kube-apiserver
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 6443
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          app: rook-ceph-mon
+    ports:
+    - protocol: TCP
+      port: 3300
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          app: rook-ceph-osd
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
