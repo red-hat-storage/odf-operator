@@ -256,6 +256,22 @@ func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logge
 
 	for _, resourceMapping := range kindMapping {
 
+		// Skip scaling for CNSA operators if a Fusion-managed Cluster CR exists.
+		// When a Cluster CR created by Fusion is detected, we avoid scaling the
+		// operator in the ibm-spectrum-scale namespace to prevent multiple CNSA
+		// operators from running simultaneously.
+		//
+		// This is a temporary workaround until all Fusion-based clusters finish
+		// their migration.
+
+		// TODO: remove this check once migration work is complete
+
+		if resourceMapping.Kind == "Clusters" {
+			if r.isFusionManagedClusterCrExists(ctx, logger, resourceMapping) {
+				continue
+			}
+		}
+
 		crList := &metav1.PartialObjectMetadataList{}
 		crList.TypeMeta.APIVersion = resourceMapping.ApiVersion
 		crList.TypeMeta.Kind = resourceMapping.Kind
@@ -293,6 +309,22 @@ func (r *OperatorScalerReconciler) reconcileOperators(ctx context.Context, logge
 	}
 
 	return returnErr
+}
+
+func (r *OperatorScalerReconciler) isFusionManagedClusterCrExists(ctx context.Context, logger logr.Logger, resourceMapping *KindCsvsRecord) bool {
+
+	const fusionNamespace = "ibm-scale"
+
+	crList := &metav1.PartialObjectMetadataList{}
+	crList.TypeMeta.APIVersion = resourceMapping.ApiVersion
+	crList.TypeMeta.Kind = resourceMapping.Kind
+
+	if err := r.Client.List(ctx, crList, client.InNamespace(fusionNamespace)); err == nil && len(crList.Items) > 0 {
+		logger.Info("Fusion managed cluster CR exists")
+		return true
+	}
+
+	return false
 }
 
 func (r *OperatorScalerReconciler) updateCsvDeplymentsReplicas(ctx context.Context, logger logr.Logger, csv *opv1a1.ClusterServiceVersion) error {
