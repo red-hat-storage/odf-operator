@@ -253,9 +253,17 @@ func (r *ClusterVersionReconciler) ensureUXBackendServer(ctx context.Context) er
 		return fmt.Errorf("failed to create or update UX backend server service: %w", err)
 	}
 
+	// Get tolerations from ODF subscription for deployment
+	var tolerations []corev1.Toleration
+	if odfSub, err := GetOdfSubscription(ctx, r.Client); err != nil {
+		return fmt.Errorf("failed to get ODF subscription: %w", err)
+	} else if odfSub.Spec.Config != nil {
+		tolerations = odfSub.Spec.Config.Tolerations
+	}
+
 	// Create/Update UX backend server deployment
 	logger.Info("Ensuring UX backend server deployment")
-	uxBackendServerDeployment := getUXBackendServerDeployment()
+	uxBackendServerDeployment := getUXBackendServerDeployment(tolerations)
 	desiredSpec := uxBackendServerDeployment.Spec.DeepCopy()
 	if _, err = controllerutil.CreateOrUpdate(ctx, r.Client, uxBackendServerDeployment, func() error {
 		uxBackendServerDeployment.SetOwnerReferences(nil)
