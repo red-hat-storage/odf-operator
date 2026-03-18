@@ -370,16 +370,14 @@ func AdjustSpecialCasesSubscriptionConfig(subscription *opv1a1.Subscription) {
 		}
 
 	case "noobaa-operator", "mcg-operator":
-		roleARN := os.Getenv("ROLEARN")
-		if roleARN != "" {
-			subscription.Spec.Config = &opv1a1.SubscriptionConfig{
-				Env: []corev1.EnvVar{
-					{
-						Name:  "ROLEARN",
-						Value: roleARN,
-					},
-				},
+		var envVars []corev1.EnvVar
+		for _, name := range []string{"ROLEARN", "CLIENTID", "TENANTID", "SUBSCRIPTIONID", "RESOURCEGROUP"} {
+			if value := os.Getenv(name); value != "" {
+				envVars = append(envVars, corev1.EnvVar{Name: name, Value: value})
 			}
+		}
+		if len(envVars) > 0 {
+			subscription.Spec.Config = &opv1a1.SubscriptionConfig{Env: envVars}
 		}
 	}
 }
