@@ -2,6 +2,7 @@ package peertokens
 
 import (
 	"fmt"
+	"html"
 	"net/http"
 
 	"github.com/red-hat-storage/odf-operator/services/ux-backend/handlers"
@@ -57,7 +58,7 @@ func handleUnsupportedMethod(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", handlers.ContentTypeTextPlain)
 	w.Header().Set("Allow", "POST")
 
-	if _, err := fmt.Fprintf(w, "Unsupported method: %s", r.Method); err != nil {
+	if _, err := fmt.Fprintf(w, "Unsupported method: %s", html.EscapeString(r.Method)); err != nil {
 		klog.Errorf("failed write data to response writer: %v", err)
 	}
 }

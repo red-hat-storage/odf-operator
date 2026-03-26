@@ -3,6 +3,7 @@ package expandstorage
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"strconv"
 
@@ -293,7 +294,8 @@ func handleUnsupportedMethod(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", handlers.ContentTypeTextPlain)
 	w.Header().Set("Allow", "POST")
 
-	if _, err := fmt.Fprintf(w, "Unsupported method : %s", r.Method); err != nil {
+	if _, err := fmt.Fprintf(w, "Unsupported method : %s", html.EscapeString(r.Method)); err != nil {
 		klog.Errorf("failed write data to response writer: %v", err)
 	}
+
 }
