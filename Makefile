@@ -186,7 +186,8 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 		--patch '[{"op": "replace", "path": "/spec/replaces", "value": "$(REPLACES)"}]'
 	rm -rf bundle/odf-operator/manifests
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS) \
-		--output-dir bundle/odf-operator
+		--output-dir bundle/odf-operator \
+		--extra-service-accounts=ux-backend-server,ocs-devicefinder-sa
 	$(OPERATOR_SDK) bundle validate bundle/odf-operator
 	@$(MAKE) --no-print-directory checkout-bundle-timestamp BUNDLE_DIR=odf-operator
 

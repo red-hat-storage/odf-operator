@@ -15,7 +15,7 @@ const (
 	random30CharacterString = "KP7TThmSTZegSGmHuPKLnSaaAHSG3RSgqw6akBj0oVk"
 )
 
-func getUXBackendServerDeployment() *appsv1.Deployment {
+func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deployment {
 
 	labels := map[string]string{
 		"app.kubernetes.io/component": "ux-backend-server",
@@ -175,6 +175,7 @@ func getUXBackendServerDeployment() *appsv1.Deployment {
 						},
 					},
 				},
+				Tolerations:        tolerations,
 				PriorityClassName:  "system-cluster-critical",
 				ServiceAccountName: "ux-backend-server",
 			},
