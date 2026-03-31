@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pkgs-config-4.21.0
+  name: pkgs-config-4.22.0
 data:
   CEPHCSI: |
     channel: alpha
@@ -53,11 +53,11 @@ data:
       - storageclusters.ocs.openshift.io
   ODF_DEPS: |
     channel: alpha
-    csv: odf-dependencies.v4.21.0
+    csv: odf-dependencies.v4.22.0
     pkg: odf-dependencies
   CNSA_DEPS: |
     channel: alpha
-    csv: cnsa-dependencies.v4.21.0
+    csv: cnsa-dependencies.v4.22.0
     pkg: cnsa-dependencies
     namespace: ibm-spectrum-scale
   CNSA: |
