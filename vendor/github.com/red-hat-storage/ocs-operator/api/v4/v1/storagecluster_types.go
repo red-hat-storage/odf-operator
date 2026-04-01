@@ -236,6 +236,12 @@ type ManageCephBlockPools struct {
 	DefaultVirtualizationStorageClass bool `json:"defaultVirtualizationStorageClass,omitempty"`
 	// PoolSpec specifies the pool specification for the default cephBlockPool
 	PoolSpec *rookCephv1.PoolSpec `json:"poolSpec,omitempty"`
+	// ErasureCodedMetadataPool specifies the  metadata pool for erasure coded pools if the pool is erasure coded
+	// it has to be unique pool name and the operator will create the pool with replica 3.
+	// This is required as rbd needs a separate metadata pool when using erasure coding for data pool.
+	// +kubebuilder:validation:XValidation:message="erasureCodedMetadataPool is immutable once set",rule="oldSelf == '' || self == oldSelf"
+	// +optional
+	ErasureCodedMetadataPool string `json:"erasureCodedMetadataPool,omitempty"`
 }
 
 // ManageCephNonResilientPools defines how to reconcile ceph non-resilient pools
@@ -273,6 +279,13 @@ type ManageCephFilesystems struct {
 	DataPoolSpec *rookCephv1.PoolSpec `json:"dataPoolSpec,omitempty"`
 	// AdditionalDataPools specifies list of additional named cephfs data pools
 	AdditionalDataPools []rookCephv1.NamedPoolSpec `json:"additionalDataPools,omitempty"`
+	// DefaultStorageClassDataPoolName specifies the name of the data pool which will be used in the storage class if multiple data pools are defined
+	// It is used to distinguish between the ec and replicated data pools when both are defined in the same filesystem
+	// if not specified, the operator will use the replicated pool as the default data pool for the storage class
+	// can't be changed after creation, if not specified, the operator will use the first data pool in the list of additional data pools as the default data pool for the storage class
+	// +kubebuilder:validation:XValidation:message="defaultStorageClassDataPoolName is immutable",rule="self == oldSelf"
+	// +optional
+	DefaultStorageClassDataPoolName string `json:"defaultStorageClassDataPoolName,omitempty"`
 }
 
 // ManageCephObjectStores defines how to reconcile CephObjectStores
@@ -280,9 +293,12 @@ type ManageCephObjectStores struct {
 	ReconcileStrategy string `json:"reconcileStrategy,omitempty"`
 	GatewayInstances  int    `json:"gatewayInstances,omitempty"`
 	DisableRoute      bool   `json:"disableRoute,omitempty"`
-	HostNetwork       *bool  `json:"hostNetwork,omitempty"`
-	GatewayPort       int    `json:"gatewayPort,omitempty"`
-	GatewaySecurePort int    `json:"gatewaySecurePort,omitempty"`
+	// DisableHttp, if true, will prevent creation of insecure ceph RGW http route. It will also delete any
+	// existing insecure ceph RGW http route.
+	DisableHttp       bool  `json:"disableHttp,omitempty"`
+	HostNetwork       *bool `json:"hostNetwork,omitempty"`
+	GatewayPort       int   `json:"gatewayPort,omitempty"`
+	GatewaySecurePort int   `json:"gatewaySecurePort,omitempty"`
 	// StorageClassName specifies the name of the storage class created for ceph obc's
 	// +kubebuilder:validation:MaxLength=253
 	// +kubebuilder:validation:Pattern=^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
