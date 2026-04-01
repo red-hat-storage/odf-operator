@@ -106,6 +106,7 @@ godeps
 hack
 makefile
 metrics
+services
 test
 ```
 

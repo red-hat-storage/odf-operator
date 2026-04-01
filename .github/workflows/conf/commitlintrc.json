@@ -74,12 +74,13 @@
                 "ci",
                 "console",
                 "controllers",
-                "docs",
                 "dockerfile",
+                "docs",
                 "godeps",
                 "hack",
                 "makefile",
                 "metrics",
+                "services",
                 "test"
             ]
         ]
