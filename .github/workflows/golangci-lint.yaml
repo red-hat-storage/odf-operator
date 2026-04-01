@@ -25,5 +25,5 @@ jobs:
 
     - uses: golangci/golangci-lint-action@v8
       with:
-        version: v2.1.0
+        version: v2.11.4
         args: --config=./.github/workflows/conf/golangci-lint.yaml --timeout=6m

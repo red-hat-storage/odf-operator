@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 
@@ -164,7 +165,7 @@ func handleUnsupportedMethod(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Allow", "GET")
 	w.WriteHeader(http.StatusMethodNotAllowed)
 
-	if _, err := fmt.Fprintf(w, "Unsupported method : %s", r.Method); err != nil {
+	if _, err := fmt.Fprintf(w, "Unsupported method : %s", html.EscapeString(r.Method)); err != nil {
 		klog.Errorf("failed to write data to response writer: %v", err)
 	}
 }

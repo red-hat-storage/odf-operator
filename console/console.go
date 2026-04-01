@@ -30,6 +30,7 @@ const MAIN_BASE_PATH = "/"
 const COMPATIBILITY_BASE_PATH = "/compatibility/"
 const ODF_CONSOLE = "odf-console"
 const CUSTOMER_PORTAL_LINK = "https://access.redhat.com/downloads/content/547"
+const odfConsoleServingCertName = "odf-console-serving-cert"
 
 func GetDeployment(namespace string) *appsv1.Deployment {
 	return &appsv1.Deployment{
@@ -58,7 +59,7 @@ func GetService(port int32, namespace string) *apiv1.Service {
 			Name:      "odf-console-service",
 			Namespace: namespace,
 			Annotations: map[string]string{
-				"service.alpha.openshift.io/serving-cert-secret-name": "odf-console-serving-cert",
+				"service.alpha.openshift.io/serving-cert-secret-name": odfConsoleServingCertName,
 			},
 			Labels: map[string]string{
 				"app": ODF_CONSOLE,
