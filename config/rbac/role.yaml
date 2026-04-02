@@ -145,41 +145,17 @@ rules:
   resources:
   - storageclusters
   verbs:
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - odf.ibm.com
   resources:
   - flashsystemclusters
   verbs:
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
-- apiGroups:
-  - odf.openshift.io
-  resources:
-  - storagesystems
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - odf.openshift.io
-  resources:
-  - storagesystems/finalizers
-  verbs:
-  - update
 - apiGroups:
   - operators.coreos.com
   resources:
