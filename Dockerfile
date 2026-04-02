@@ -10,7 +10,6 @@ COPY go.mod go.sum ./
 COPY vendor/ vendor/
 
 # Copy the project source
-COPY api/ api/
 COPY controllers/ controllers/
 COPY webhook/ webhook/
 COPY pkg/ pkg/
