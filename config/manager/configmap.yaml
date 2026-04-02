@@ -69,7 +69,7 @@ data:
       - clusters.scale.spectrum.ibm.com
   PROMETHEUS: |
     channel: beta
-    csv: odf-prometheus-operator.v4.20.0
+    csv: odf-prometheus-operator.v4.22.0
     pkg: odf-prometheus-operator
     scaleUpOnInstanceOf:
       - alertmanagers.monitoring.coreos.com

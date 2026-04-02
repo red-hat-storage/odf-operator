@@ -36,7 +36,7 @@ properties:
 - type: olm.package.required
   value:
     packageName: odf-prometheus-operator
-    versionRange: 4.20.0
+    versionRange: 4.22.0
 - type: olm.package.required
   value:
     packageName: recipe
