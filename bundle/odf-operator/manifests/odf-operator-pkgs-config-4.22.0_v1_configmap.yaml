@@ -2,7 +2,7 @@ apiVersion: v1
 data:
   CEPHCSI: |
     channel: alpha
-    csv: cephcsi-operator.v4.20.0
+    csv: cephcsi-operator.v4.22.0
     pkg: cephcsi-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
@@ -20,7 +20,7 @@ data:
     namespace: ibm-spectrum-scale
   CSIADDONS: |
     channel: alpha
-    csv: csi-addons.v0.13.0
+    csv: csi-addons.v0.14.0
     pkg: csi-addons
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
@@ -38,7 +38,7 @@ data:
       - flashsystemclusters.odf.ibm.com
   NOOBAA: |
     channel: alpha
-    csv: noobaa-operator.v5.20.0
+    csv: noobaa-operator.v5.22.0
     pkg: noobaa-operator
     scaleUpOnInstanceOf:
       - noobaas.noobaa.io
@@ -50,7 +50,7 @@ data:
       - storageclusters.ocs.openshift.io
   OCS_CLIENT: |
     channel: alpha
-    csv: ocs-client-operator.v4.20.0
+    csv: ocs-client-operator.v4.22.0
     pkg: ocs-client-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io

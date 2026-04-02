@@ -12,19 +12,19 @@ properties:
 - type: olm.package.required
   value:
     packageName: cephcsi-operator
-    versionRange: 4.20.0
+    versionRange: 4.22.0
 - type: olm.package.required
   value:
     packageName: csi-addons
-    versionRange: 0.13.0
+    versionRange: 0.14.0
 - type: olm.package.required
   value:
     packageName: noobaa-operator
-    versionRange: 5.20.0
+    versionRange: 5.22.0
 - type: olm.package.required
   value:
     packageName: ocs-client-operator
-    versionRange: 4.20.0
+    versionRange: 4.22.0
 - type: olm.package.required
   value:
     packageName: ocs-operator

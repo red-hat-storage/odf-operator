@@ -51,7 +51,7 @@ schema: olm.channel
 package: ocs-client-operator
 name: alpha
 entries:
-  - name: ocs-client-operator.v4.20.0
+  - name: ocs-client-operator.v4.22.0
 
 ---
 defaultChannel: alpha
@@ -62,7 +62,7 @@ schema: olm.channel
 package: noobaa-operator
 name: alpha
 entries:
-  - name: noobaa-operator.v5.20.0
+  - name: noobaa-operator.v5.22.0
 
 ---
 defaultChannel: alpha
@@ -73,7 +73,7 @@ schema: olm.channel
 package: csi-addons
 name: alpha
 entries:
-  - name: csi-addons.v0.13.0
+  - name: csi-addons.v0.14.0
 
 ---
 defaultChannel: alpha
@@ -95,7 +95,7 @@ schema: olm.channel
 package: cephcsi-operator
 name: alpha
 entries:
-  - name: cephcsi-operator.v4.20.0
+  - name: cephcsi-operator.v4.22.0
 
 ---
 defaultChannel: alpha
