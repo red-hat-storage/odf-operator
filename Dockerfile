@@ -27,8 +27,8 @@ RUN make go-build
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/bin/manager .
+COPY --from=builder /workspace/bin/odf-operator .
 COPY --from=builder /workspace/bin/ux-backend-server .
 USER 65532:65532
 
-ENTRYPOINT ["/manager"]
+ENTRYPOINT ["/odf-operator"]
