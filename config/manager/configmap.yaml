@@ -17,7 +17,7 @@ data:
       - cephclusters.ceph.rook.io
   SNAPSHOT_CONTROLLER: |
     channel: alpha
-    csv: odf-external-snapshotter-operator.v4.20.0
+    csv: odf-external-snapshotter-operator.v4.22.0
     pkg: odf-external-snapshotter-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
@@ -80,7 +80,7 @@ data:
     pkg: recipe
   ROOK: |
     channel: alpha
-    csv: rook-ceph-operator.v4.20.0
+    csv: rook-ceph-operator.v4.22.0
     pkg: rook-ceph-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
