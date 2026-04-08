@@ -84,7 +84,7 @@ schema: olm.channel
 package: odf-external-snapshotter-operator
 name: alpha
 entries:
-  - name: odf-external-snapshotter-operator.v4.20.0
+  - name: odf-external-snapshotter-operator.v4.22.0
 
 ---
 defaultChannel: alpha
@@ -106,7 +106,7 @@ schema: olm.channel
 package: rook-ceph-operator
 name: alpha
 entries:
-  - name: rook-ceph-operator.v4.20.0
+  - name: rook-ceph-operator.v4.22.0
 
 ---
 defaultChannel: beta
