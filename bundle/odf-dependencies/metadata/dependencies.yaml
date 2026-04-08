@@ -6,7 +6,7 @@ dependencies:
 - type: olm.package
   value:
     packageName: rook-ceph-operator
-    version: "4.20.0"
+    version: "4.22.0"
 - type: olm.package
   value:
     packageName: ocs-client-operator
@@ -22,7 +22,7 @@ dependencies:
 - type: olm.package
   value:
     packageName: odf-external-snapshotter-operator
-    version: "4.20.0"
+    version: "4.22.0"
 - type: olm.package
   value:
     packageName: cephcsi-operator
