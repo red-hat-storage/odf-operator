@@ -508,6 +508,12 @@ type CephExporterSpec struct {
 	// +kubebuilder:default=5
 	StatsPeriodSeconds int64 `json:"statsPeriodSeconds,omitempty"`
 
+	// Port is the listening port of the ceph-exporter process. Defaults to 9926.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	Port int32 `json:"port,omitempty"`
+
 	// Whether host networking is enabled for CephExporter. If not set, the network settings from CephCluster.spec.networking will be applied.
 	// +nullable
 	// +optional
@@ -797,6 +803,29 @@ type MonSpec struct {
 	// leading
 	// +optional
 	ExternalMonIDs []string `json:"externalMonIDs,omitempty"`
+
+	// FloatingMon is the specification of the floating monitor for two-node clusters.
+	// The floating mon is backed by a synchronously replicated store (e.g. DRBD)
+	// and can be scheduled on either node. Template variables are supplied via a ConfigMap.
+	// +optional
+	FloatingMon FloatingMonSpec `json:"floatingMon,omitempty,omitzero"`
+}
+
+// +kubebuilder:validation:MinProperties=2
+type FloatingMonSpec struct {
+	// Name is the identifier for the floating monitor (recommended "c")
+	// +kubebuilder:validation:Pattern=`^[a-z]$`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1
+	// +required
+	Name string `json:"name,omitempty"`
+
+	// ConfigMapName is the name of the ConfigMap containing key-value pairs
+	// of template variables for the floating mon deployment.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +required
+	ConfigMapName string `json:"configmapName,omitempty"`
 }
 
 // VolumeClaimTemplate is a simplified version of K8s corev1's PVC. It has no type meta or status.
@@ -1809,23 +1838,27 @@ type PoolPlacementSpec struct {
 	Default bool `json:"default"`
 
 	// The metadata pool used to store ObjectStore bucket index.
+	// WARNING: Do not change this field after creation. Pool names are used in RADOS namespaces and renaming leads to data loss.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	MetadataPoolName string `json:"metadataPoolName"`
 
 	// The data pool used to store ObjectStore objects data.
+	// WARNING: Do not change this field after creation. Pool names are used in RADOS namespaces and renaming leads to data loss.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	DataPoolName string `json:"dataPoolName"`
 
 	// The data pool used to store ObjectStore data that cannot use erasure coding (ex: multi-part uploads).
 	// If dataPoolName is not erasure coded, then there is no need for dataNonECPoolName.
+	// WARNING: Do not change this field after creation. Pool names are used in RADOS namespaces and renaming leads to data loss.
 	// +optional
 	DataNonECPoolName string `json:"dataNonECPoolName,omitempty"`
 
 	// StorageClasses can be selected by user to override dataPoolName during object creation.
 	// Each placement has default STANDARD StorageClass pointing to dataPoolName.
 	// This list allows defining additional StorageClasses on top of default STANDARD storage class.
+	// +kubebuilder:validation:MaxItems=10
 	// +optional
 	StorageClasses []PlacementStorageClassSpec `json:"storageClasses,omitempty"`
 }
@@ -1842,6 +1875,7 @@ type PlacementStorageClassSpec struct {
 	Name string `json:"name"`
 
 	// DataPoolName is the data pool used to store ObjectStore objects data.
+	// WARNING: Do not change this field after creation. Pool names are used in RADOS namespaces and renaming leads to data loss.
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	DataPoolName string `json:"dataPoolName"`
@@ -2268,7 +2302,18 @@ type ObjectStoreUserSpec struct {
 	// The namespace where the parent CephCluster and CephObjectStore are found
 	// +optional
 	ClusterNamespace string `json:"clusterNamespace,omitempty"`
+	// The op-mask of the user.
+	// +optional
+	// +kubebuilder:validation:MinItems=0
+	// +kubebuilder:validation:MaxItems=3
+	// +listType=set
+	OpMask *[]ObjectUserOpMask `json:"opMask,omitempty"`
 }
+
+// Internally, RGW labels "operations" on persistent state as `RGW_OP_TYPE_READ` (`read`), `RGW_OP_TYPE_WRITE` (`write`), or `RGW_OP_TYPE_DELETE` (`delete`). All RGW users have an "operation mask", which does not function as mask or filter as is typically implied by the word "mask", but as a set of allowed or permissible "operation" types the user is able to perform. The "operation mask" is applied regardless of the bucket or IAM policy. For example, in order for an RGW user to be able to read an object from a bucket, that user must have **both** the `read` "op mask" bit and an IAM/bucket policy that allows `s3:GetObject`. The default operations allowed are `read`, `write`, and `delete`. Setting the value to `[]` (an empty YAML sequence) causes all "operations" in the mask to be removed, meaning that the user will not be able to perform any operations. These operation masks are supported: `read`, `write`, `delete`
+// +enum
+// +kubebuilder:validation:Enum=read;write;delete
+type ObjectUserOpMask string
 
 // Additional admin-level capabilities for the Ceph object store user
 type ObjectUserCapSpec struct {
@@ -2664,7 +2709,8 @@ type CephBucketNotificationList struct {
 }
 
 // BucketNotificationSpec represent the event type of the bucket notification
-// +kubebuilder:validation:Enum="s3:ObjectCreated:*";"s3:ObjectCreated:Put";"s3:ObjectCreated:Post";"s3:ObjectCreated:Copy";"s3:ObjectCreated:CompleteMultipartUpload";"s3:ObjectRemoved:*";"s3:ObjectRemoved:Delete";"s3:ObjectRemoved:DeleteMarkerCreated"
+// See: https://docs.ceph.com/en/latest/radosgw/s3-notification-compatibility/#event-types
+// +kubebuilder:validation:Enum="s3:ObjectCreated:*";"s3:ObjectCreated:Put";"s3:ObjectCreated:Post";"s3:ObjectCreated:Copy";"s3:ObjectCreated:CompleteMultipartUpload";"s3:ObjectRemoved:*";"s3:ObjectRemoved:Delete";"s3:ObjectRemoved:DeleteMarkerCreated";"s3:ObjectLifecycle:Expiration:Current";"s3:ObjectLifecycle:Expiration:NonCurrent";"s3:ObjectLifecycle:Expiration:DeleteMarker";"s3:ObjectLifecycle:Expiration:AbortMultipartUpload";"s3:ObjectLifecycle:Transition:Current";"s3:ObjectLifecycle:Transition:NonCurrent";"s3:LifecycleExpiration:*";"s3:LifecycleExpiration:Delete";"s3:LifecycleExpiration:DeleteMarkerCreated";"s3:LifecycleTransition";"s3:ObjectSynced:*";"s3:ObjectSynced:Create";"s3:ObjectSynced:Delete";"s3:ObjectSynced:DeletionMarkerCreated";"s3:Replication:*";"s3:Replication:Create";"s3:Replication:Delete";"s3:Replication:DeletionMarkerCreated";"s3:ObjectRestore:*";"s3:ObjectRestore:Post";"s3:ObjectRestore:Completed";"s3:ObjectRestore:Delete"
 type BucketNotificationEvent string
 
 // BucketNotificationSpec represent the spec of a Bucket Notification
@@ -2717,6 +2763,95 @@ type RGWServiceSpec struct {
 	// nullable
 	// optional
 	Annotations Annotations `json:"annotations,omitempty"`
+	// The labels-related configuration to add/set on each rgw service.
+	// +optional
+	Labels Labels `json:"labels,omitempty"`
+}
+
+// +genclient
+// +genclient:noStatus
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:subresource:status
+// CephObjectStoreAccount represent the RGW user account
+type CephObjectStoreAccount struct {
+	metav1.TypeMeta `json:",inline"`
+	// +required
+	metav1.ObjectMeta `json:"metadata"`
+	// +required
+	Spec ObjectStoreAccountSpec `json:"spec,omitzero"`
+	// +optional
+	Status *ObjectStoreAccountStatus `json:"status,omitzero"` //nolint:kubeapilinter // MinProperties cannot be applied to a struct pointer field
+}
+
+// ObjectStoreAccountSpec represent the spec of a RGW Account
+type ObjectStoreAccountSpec struct {
+	// Store is the CephObjectStore the account will be associated with
+	// +required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:XValidation:message="store is immutable",rule="self == oldSelf"
+	Store string `json:"store,omitempty"`
+	// Name is the desired display name of the RGW account if different from the CephObjectStoreAccount CR name.
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=2048
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z0-9 ._-]+$`
+	Name string `json:"name,omitempty"`
+	// AccountID uniquely identifies an account and resource ownership. Format should be RGW followed by 17 digits
+	// (e.g., RGW00889737169837717). If not specified, the ID will be automatically generated.
+	// +optional
+	// +kubebuilder:validation:MinLength=20
+	// +kubebuilder:validation:MaxLength=20
+	// +kubebuilder:validation:Pattern=`^RGW\d{17}$`
+	// +kubebuilder:validation:XValidation:message="accountID is immutable",rule="self == oldSelf"
+	AccountID string `json:"accountID,omitempty"`
+	// RootUser configures the root user for the account. The root user is created by default
+	// and has default permissions across all account resources.
+	// +optional
+	RootUser *AccountRootUserSpec `json:"rootUser,omitempty"` //nolint:kubeapilinter // MinProperties cannot be applied to a struct pointer field
+}
+
+// AccountRootUserSpec defines the configuration for the account root user
+type AccountRootUserSpec struct {
+	// SkipCreate when set to true, the root user will not be created for this account.
+	// This can be useful if the user wants to manually manage the root user outside of Rook.
+	// +optional
+	SkipCreate *bool `json:"skipCreate,omitempty"`
+	// DisplayName for the root user
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=64
+	// +kubebuilder:validation:Pattern=`^[\w+=,.@-]+$`
+	DisplayName string `json:"displayName,omitempty"`
+}
+
+// ObjectStoreAccountStatus represents the status of a CephObjectStoreAccount resource
+type ObjectStoreAccountStatus struct {
+	// +optional
+	Phase string `json:"phase,omitempty"` //nolint:kubeapilinter // Conditions are preferred over Phase
+	// +optional
+	// AccountID associated with the RGW user account
+	// +kubebuilder:validation:MinLength=20
+	// +kubebuilder:validation:MaxLength=20
+	AccountID string `json:"accountID,omitempty"`
+	// RootAccountSecretName is the name of the Kubernetes secret containing the root user's access credentials
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
+	RootAccountSecretName string `json:"rootAccountSecretName,omitempty"`
+	// ObservedGeneration is the latest generation observed by the controller.
+	// +optional
+	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
+}
+
+// CephObjectStoreAccountList represents the Ceph object store accounts
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type CephObjectStoreAccountList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+	Items           []CephObjectStoreAccount `json:"items"`
 }
 
 // +genclient
@@ -2826,6 +2961,24 @@ type GaneshaServerSpec struct {
 	// If LivenessProbe.Disabled is false and LivenessProbe.Probe is nil uses default probe.
 	// +optional
 	LivenessProbe *ProbeSpec `json:"livenessProbe,omitempty"`
+
+	// Image is the container image used to launch the Ceph NFS (Ganesha) daemon(s).
+	// The image must include the NFS Ganesha binaries, such as are included with the official Ceph releases. E.g.: quay.io/ceph/ceph:<tag>
+	// If not specified, the Ceph image defined in the CephCluster is used.
+	// Overriding the CephCluster defined image is not normally necessary when using the official Ceph images.
+	// The image must contain the NFS Ganesha and dbus packages.
+	// If the SSSD sidecar is enabled, the image must also contain the sssd-client package.
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=1572864
+	Image string `json:"image,omitempty"`
+
+	// ImagePullPolicy describes a policy for if/when to pull a container image
+	// One of Always, Never, IfNotPresent.
+	// This field only has effect if an image is specified.
+	// +optional
+	// +kubebuilder:validation:Enum=IfNotPresent;Always;Never;""
+	ImagePullPolicy v1.PullPolicy `json:"imagePullPolicy,omitempty"`
 }
 
 // NFSSecuritySpec represents security configurations for an NFS server pod
@@ -3928,3 +4081,125 @@ const (
 	// Always means the Ceph COSI driver will be deployed even if the object store is not present
 	COSIDeploymentStrategyAlways COSIDeploymentStrategy = "Always"
 )
+
+// +genclient
+// +genclient:noStatus
+// +kubebuilder:resource:shortName=nvmeof,path=cephnvmeofgateways
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
+// +kubebuilder:subresource:status
+//
+// CephNVMeOFGateway represents a Ceph NVMe-oF Gateway
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type CephNVMeOFGateway struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata"`
+	Spec              NVMeOFGatewaySpec `json:"spec"`
+	// +optional
+	Status *NVMeOFGatewayStatus `json:"status,omitempty"`
+}
+
+// NVMeOFGatewayStatus represents the status of Ceph NVMe-oF Gateway
+type NVMeOFGatewayStatus struct {
+	Status `json:",inline"`
+	Cephx  LocalCephxStatus `json:"cephx,omitempty"`
+}
+
+// CephNVMeOFGatewayList represents a list of Ceph NVMe-oF Gateways
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type CephNVMeOFGatewayList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+	Items           []CephNVMeOFGateway `json:"items"`
+}
+
+// NVMeOFGatewaySpec represents the spec of an NVMe-oF gateway
+type NVMeOFGatewaySpec struct {
+	// Image is the container image to use for the NVMe-oF gateway daemon.
+	// For example, quay.io/ceph/nvmeof:1.5
+	// +kubebuilder:validation:MinLength=1
+	Image string `json:"image"`
+
+	// The number of active gateway instances
+	// +kubebuilder:validation:Minimum=1
+	Instances int `json:"instances"`
+
+	// Pool is the RADOS pool where NVMe-oF configuration is stored
+	// +kubebuilder:validation:MinLength=1
+	Pool string `json:"pool"`
+
+	// Group is the gateway group name for high availability (ANA group)
+	// +kubebuilder:validation:MinLength=1
+	Group string `json:"group"`
+
+	// ConfigMapRef is the name of the ConfigMap containing nvmeof.conf configuration
+	// If not specified, a default configuration will be generated
+	// +optional
+	// +kubebuilder:validation:MinLength=1
+	ConfigMapRef string `json:"configMapRef,omitempty"`
+
+	// NVMeOFConfig is a map of section names to key-value pairs for nvmeof.conf configuration
+	// This allows users to override or add configuration options without needing to manage a ConfigMap
+	// +optional
+	NVMeOFConfig map[string]map[string]string `json:"nvmeofConfig,omitempty"`
+
+	// The affinity to place the gateway pods
+	// +optional
+	Placement Placement `json:"placement,omitempty"`
+
+	// The annotations-related configuration to add/set on each Pod related object.
+	// +optional
+	Annotations Annotations `json:"annotations,omitempty"`
+
+	// The labels-related configuration to add/set on each Pod related object.
+	// +optional
+	Labels Labels `json:"labels,omitempty"`
+
+	// Resources set resource requests and limits
+	// +optional
+	Resources v1.ResourceRequirements `json:"resources,omitempty"`
+
+	// PriorityClassName sets the priority class on the pods
+	// +optional
+	PriorityClassName string `json:"priorityClassName,omitempty"`
+
+	// Whether host networking is enabled for the gateway. If not set, the network settings from the cluster CR will be applied.
+	// +optional
+	HostNetwork *bool `json:"hostNetwork,omitempty"`
+
+	// Ports configuration for the NVMe-oF gateway
+	// +optional
+	Ports *NVMeOFGatewayPorts `json:"ports,omitempty"`
+
+	// A liveness-probe to verify that gateway has valid run-time state.
+	// If LivenessProbe.Disabled is false and LivenessProbe.Probe is nil uses default probe.
+	// +optional
+	LivenessProbe *ProbeSpec `json:"livenessProbe,omitempty"`
+}
+
+// NVMeOFGatewayPorts represents the port configuration for NVMe-oF gateway
+type NVMeOFGatewayPorts struct {
+	// IOPort is the port for NVMe-oF IO traffic (default: 4420)
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	IOPort int32 `json:"ioPort,omitempty"`
+
+	// GatewayPort is the port for the gateway service (default: 5500)
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	GatewayPort int32 `json:"gatewayPort,omitempty"`
+
+	// MonitorPort is the port for the monitor service (default: 5499)
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	MonitorPort int32 `json:"monitorPort,omitempty"`
+
+	// DiscoveryPort is the port for discovery service (default: 8009)
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +optional
+	DiscoveryPort int32 `json:"discoveryPort,omitempty"`
+}

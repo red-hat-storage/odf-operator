@@ -17,8 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	odfv1a1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 )
 
 var (
@@ -27,7 +25,6 @@ var (
 
 func init() {
 	utilruntime.Must(k8sscheme.AddToScheme(scheme))
-	utilruntime.Must(odfv1a1.AddToScheme(scheme))
 	utilruntime.Must(opv1.AddToScheme(scheme))
 	utilruntime.Must(opv1a1.AddToScheme(scheme))
 	utilruntime.Must(extv1.AddToScheme(scheme))

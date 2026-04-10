@@ -13,6 +13,8 @@ import (
 
 const (
 	random30CharacterString = "KP7TThmSTZegSGmHuPKLnSaaAHSG3RSgqw6akBj0oVk"
+	uxBackendProxyName      = "ux-backend-proxy"
+	uxCertName              = "ux-cert-secret"
 )
 
 func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deployment {
@@ -50,7 +52,7 @@ func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deplo
 								MountPath: "/etc/private-key",
 							},
 							{
-								Name:      "ux-cert-secret",
+								Name:      uxCertName,
 								MountPath: "/etc/tls/private",
 							},
 						},
@@ -111,7 +113,7 @@ func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deplo
 								MountPath: "/etc/proxy/secrets",
 							},
 							{
-								Name:      "ux-cert-secret",
+								Name:      uxCertName,
 								MountPath: "/etc/tls/private",
 							},
 						},
@@ -162,15 +164,15 @@ func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deplo
 						Name: "ux-proxy-secret",
 						VolumeSource: corev1.VolumeSource{
 							Secret: &corev1.SecretVolumeSource{
-								SecretName: "ux-backend-proxy",
+								SecretName: uxBackendProxyName,
 							},
 						},
 					},
 					{
-						Name: "ux-cert-secret",
+						Name: uxCertName,
 						VolumeSource: corev1.VolumeSource{
 							Secret: &corev1.SecretVolumeSource{
-								SecretName: "ux-cert-secret",
+								SecretName: uxCertName,
 							},
 						},
 					},
@@ -189,7 +191,7 @@ func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deplo
 func getUXBackendServerSecret() *corev1.Secret {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "ux-backend-proxy",
+			Name:      uxBackendProxyName,
 			Namespace: OperatorNamespace,
 		},
 	}
@@ -201,10 +203,10 @@ func getUXBackendServerSecret() *corev1.Secret {
 
 func getUXBackendServerService() *corev1.Service {
 	service := &corev1.Service{}
-	service.Name = "ux-backend-proxy"
+	service.Name = uxBackendProxyName
 	service.Namespace = OperatorNamespace
 	service.Annotations = map[string]string{
-		"service.beta.openshift.io/serving-cert-secret-name": "ux-cert-secret",
+		"service.beta.openshift.io/serving-cert-secret-name": uxCertName,
 	}
 	service.Spec = corev1.ServiceSpec{
 		Ports: []corev1.ServicePort{

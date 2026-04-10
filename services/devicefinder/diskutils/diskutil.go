@@ -29,6 +29,9 @@ type CmdExec struct {
 }
 
 func (c CmdExec) Execute(name string, args ...string) Command {
+	//nolint:gosec
+	// G204: false positive - Execute is only called with hardcoded
+	// "lsblk" command, name is never derived from user input
 	return exec.Command(name, args...)
 }
 

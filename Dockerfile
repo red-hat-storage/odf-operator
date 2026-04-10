@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.24 AS builder
+FROM golang:1.25 AS builder
 
 WORKDIR /workspace
 
@@ -10,7 +10,6 @@ COPY go.mod go.sum ./
 COPY vendor/ vendor/
 
 # Copy the project source
-COPY api/ api/
 COPY controllers/ controllers/
 COPY webhook/ webhook/
 COPY pkg/ pkg/
@@ -28,8 +27,8 @@ RUN make go-build
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/bin/manager .
+COPY --from=builder /workspace/bin/odf-operator .
 COPY --from=builder /workspace/bin/ux-backend-server .
 USER 65532:65532
 
-ENTRYPOINT ["/manager"]
+ENTRYPOINT ["/odf-operator"]

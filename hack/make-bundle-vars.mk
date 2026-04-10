@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 4.21.0
+VERSION ?= 4.22.0
 
 # MAX_OCP_VERSION variable specifies the maximum supported version of OCP.
 # Its purpose is to add an annotation to the CSV file, blocking OCP upgrades beyond the X+1 version.
@@ -98,50 +98,50 @@ CNSA_DEPS_SUBSCRIPTION_PACKAGE ?= $(CNSA_DEPS_BUNDLE_NAME)
 CNSA_DEPS_SUBSCRIPTION_CHANNEL ?= $(DEFAULT_CHANNEL)
 CNSA_DEPS_SUBSCRIPTION_CSVNAME ?= $(CNSA_DEPS_SUBSCRIPTION_PACKAGE).v$(VERSION)
 
-OCS_BUNDLE_IMG ?= quay.io/ocs-dev/ocs-operator-bundle:main-ec83cba
-OCS_BUNDLE_VERSION ?= v4.21.0
+OCS_BUNDLE_IMG ?= quay.io/ocs-dev/ocs-operator-bundle:main-9a87de4
+OCS_BUNDLE_VERSION ?= v4.22.0
 OCS_SUBSCRIPTION_PACKAGE ?= ocs-operator
 OCS_SUBSCRIPTION_CHANNEL ?= alpha
 OCS_SUBSCRIPTION_CSVNAME ?= $(OCS_SUBSCRIPTION_PACKAGE).$(OCS_BUNDLE_VERSION)
 
-OCS_CLIENT_BUNDLE_IMG ?= quay.io/ocs-dev/ocs-client-operator-bundle:main-6f2fc63
-OCS_CLIENT_BUNDLE_VERSION ?= v4.20.0
+OCS_CLIENT_BUNDLE_IMG ?= quay.io/ocs-dev/ocs-client-operator-bundle:main-408b4fb
+OCS_CLIENT_BUNDLE_VERSION ?= v4.22.0
 OCS_CLIENT_SUBSCRIPTION_PACKAGE ?= ocs-client-operator
 OCS_CLIENT_SUBSCRIPTION_CHANNEL ?= alpha
 OCS_CLIENT_SUBSCRIPTION_CSVNAME ?= $(OCS_CLIENT_SUBSCRIPTION_PACKAGE).$(OCS_CLIENT_BUNDLE_VERSION)
 
-ROOK_BUNDLE_IMG ?= quay.io/ocs-dev/rook-ceph-operator-bundle:master-b0d17ebba
-ROOK_BUNDLE_VERSION ?= v4.20.0
+ROOK_BUNDLE_IMG ?= quay.io/ocs-dev/rook-ceph-operator-bundle:master-89eb70f42
+ROOK_BUNDLE_VERSION ?= v4.22.0
 ROOK_SUBSCRIPTION_PACKAGE ?= rook-ceph-operator
 ROOK_SUBSCRIPTION_CHANNEL ?= alpha
 ROOK_SUBSCRIPTION_CSVNAME ?= $(ROOK_SUBSCRIPTION_PACKAGE).$(ROOK_BUNDLE_VERSION)
 
-NOOBAA_BUNDLE_IMG ?= quay.io/noobaa/noobaa-operator-bundle:master-20250731
-NOOBAA_BUNDLE_VERSION ?= v5.20.0
+NOOBAA_BUNDLE_IMG ?= quay.io/noobaa/noobaa-operator-bundle:master-20260401
+NOOBAA_BUNDLE_VERSION ?= v5.22.0
 NOOBAA_SUBSCRIPTION_PACKAGE ?= noobaa-operator
 NOOBAA_SUBSCRIPTION_CHANNEL ?= alpha
 NOOBAA_SUBSCRIPTION_CSVNAME ?= $(NOOBAA_SUBSCRIPTION_PACKAGE).$(NOOBAA_BUNDLE_VERSION)
 
-CEPHCSI_BUNDLE_IMG ?= quay.io/ocs-dev/cephcsi-operator-bundle:main-f73fca8
-CEPHCSI_BUNDLE_VERSION ?= v4.20.0
+CEPHCSI_BUNDLE_IMG ?= quay.io/ocs-dev/cephcsi-operator-bundle:main-9bd2093
+CEPHCSI_BUNDLE_VERSION ?= v4.22.0
 CEPHCSI_SUBSCRIPTION_PACKAGE ?= cephcsi-operator
 CEPHCSI_SUBSCRIPTION_CHANNEL ?= alpha
 CEPHCSI_SUBSCRIPTION_CSVNAME ?= $(CEPHCSI_SUBSCRIPTION_PACKAGE).$(CEPHCSI_BUNDLE_VERSION)
 
-CSIADDONS_BUNDLE_IMG ?= quay.io/csiaddons/k8s-bundle:v0.13.0
-CSIADDONS_BUNDLE_VERSION ?= v0.13.0
+CSIADDONS_BUNDLE_IMG ?= quay.io/csiaddons/k8s-bundle:v0.14.0
+CSIADDONS_BUNDLE_VERSION ?= v0.14.0
 CSIADDONS_SUBSCRIPTION_PACKAGE ?= csi-addons
 CSIADDONS_SUBSCRIPTION_CHANNEL ?= alpha
 CSIADDONS_SUBSCRIPTION_CSVNAME ?= $(CSIADDONS_SUBSCRIPTION_PACKAGE).$(CSIADDONS_BUNDLE_VERSION)
 
-ODF_SNAPSHOT_CONTROLLER_BUNDLE_IMG ?= quay.io/ocs-dev/snapshot-controller-bundle:main-4bd0abb
-ODF_SNAPSHOT_CONTROLLER_BUNDLE_VERSION ?= v4.20.0
+ODF_SNAPSHOT_CONTROLLER_BUNDLE_IMG ?= quay.io/ocs-dev/snapshot-controller-bundle:main-66bfe3a
+ODF_SNAPSHOT_CONTROLLER_BUNDLE_VERSION ?= v4.22.0
 ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE ?= odf-external-snapshotter-operator
 ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL ?= alpha
 ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CSVNAME ?= $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE).$(ODF_SNAPSHOT_CONTROLLER_BUNDLE_VERSION)
 
-PROMETHEUS_BUNDLE_IMG ?= quay.io/ocs-dev/odf-prometheus-operator-bundle:main-c21091f
-PROMETHEUS_BUNDLE_VERSION ?= v4.20.0
+PROMETHEUS_BUNDLE_IMG ?= quay.io/ocs-dev/odf-prometheus-operator-bundle:main-2a77acf
+PROMETHEUS_BUNDLE_VERSION ?= v4.22.0
 PROMETHEUS_SUBSCRIPTION_PACKAGE ?= odf-prometheus-operator
 PROMETHEUS_SUBSCRIPTION_CHANNEL ?= beta
 PROMETHEUS_SUBSCRIPTION_CSVNAME ?= $(PROMETHEUS_SUBSCRIPTION_PACKAGE).$(PROMETHEUS_BUNDLE_VERSION)

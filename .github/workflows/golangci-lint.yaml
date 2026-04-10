@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.24"]
+        go: ["1.25", "1.26"]
     steps:
     - uses: actions/checkout@v4
       with:
@@ -25,5 +25,5 @@ jobs:
 
     - uses: golangci/golangci-lint-action@v8
       with:
-        version: v2.1.0
+        version: v2.11.4
         args: --config=./.github/workflows/conf/golangci-lint.yaml --timeout=6m

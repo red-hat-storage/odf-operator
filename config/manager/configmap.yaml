@@ -1,23 +1,23 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pkgs-config-4.21.0
+  name: pkgs-config-4.22.0
 data:
   CEPHCSI: |
     channel: alpha
-    csv: cephcsi-operator.v4.20.0
+    csv: cephcsi-operator.v4.22.0
     pkg: cephcsi-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   CSIADDONS: |
     channel: alpha
-    csv: csi-addons.v0.13.0
+    csv: csi-addons.v0.14.0
     pkg: csi-addons
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   SNAPSHOT_CONTROLLER: |
     channel: alpha
-    csv: odf-external-snapshotter-operator.v4.20.0
+    csv: odf-external-snapshotter-operator.v4.22.0
     pkg: odf-external-snapshotter-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
@@ -35,29 +35,29 @@ data:
       - flashsystemclusters.odf.ibm.com
   NOOBAA: |
     channel: alpha
-    csv: noobaa-operator.v5.20.0
+    csv: noobaa-operator.v5.22.0
     pkg: noobaa-operator
     scaleUpOnInstanceOf:
       - noobaas.noobaa.io
   OCS_CLIENT: |
     channel: alpha
-    csv: ocs-client-operator.v4.20.0
+    csv: ocs-client-operator.v4.22.0
     pkg: ocs-client-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   OCS: |
     channel: alpha
-    csv: ocs-operator.v4.21.0
+    csv: ocs-operator.v4.22.0
     pkg: ocs-operator
     scaleUpOnInstanceOf:
       - storageclusters.ocs.openshift.io
   ODF_DEPS: |
     channel: alpha
-    csv: odf-dependencies.v4.21.0
+    csv: odf-dependencies.v4.22.0
     pkg: odf-dependencies
   CNSA_DEPS: |
     channel: alpha
-    csv: cnsa-dependencies.v4.21.0
+    csv: cnsa-dependencies.v4.22.0
     pkg: cnsa-dependencies
     namespace: ibm-spectrum-scale
   CNSA: |
@@ -69,7 +69,7 @@ data:
       - clusters.scale.spectrum.ibm.com
   PROMETHEUS: |
     channel: beta
-    csv: odf-prometheus-operator.v4.20.0
+    csv: odf-prometheus-operator.v4.22.0
     pkg: odf-prometheus-operator
     scaleUpOnInstanceOf:
       - alertmanagers.monitoring.coreos.com
@@ -80,7 +80,7 @@ data:
     pkg: recipe
   ROOK: |
     channel: alpha
-    csv: rook-ceph-operator.v4.20.0
+    csv: rook-ceph-operator.v4.22.0
     pkg: rook-ceph-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io

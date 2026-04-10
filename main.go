@@ -45,7 +45,6 @@ import (
 	metrics "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	odfv1a1 "github.com/red-hat-storage/odf-operator/api/v1alpha1"
 	"github.com/red-hat-storage/odf-operator/controllers"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 	"github.com/red-hat-storage/odf-operator/webhook"
@@ -59,7 +58,6 @@ var (
 
 func init() {
 	utilruntime.Must(k8sscheme.AddToScheme(scheme))
-	utilruntime.Must(odfv1a1.AddToScheme(scheme))
 	utilruntime.Must(opv1a1.AddToScheme(scheme))
 	utilruntime.Must(opv1.AddToScheme(scheme))
 	utilruntime.Must(opv2.AddToScheme(scheme))
@@ -142,15 +140,6 @@ func main() {
 		OperatorNamespace: operatorNamespace,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OperatorScaler")
-		os.Exit(1)
-	}
-
-	if err = (&controllers.CleanupReconciler{
-		Client:            mgr.GetClient(),
-		Scheme:            mgr.GetScheme(),
-		OperatorNamespace: operatorNamespace,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "CleanupController")
 		os.Exit(1)
 	}
 
