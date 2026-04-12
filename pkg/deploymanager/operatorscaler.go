@@ -9,6 +9,7 @@ import (
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,6 +59,10 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 		//nolint:errcheck
 		defer d.ScaleDownCsvsDeploymentsReplicas(kindCsvRecord.CsvNames, kindCsvRecord.Namespace)
 		d.Log.Info("cleanup", "csvs", kindCsvRecord.CsvNames)
+		// Cleanup: Remove finalizers for the CR deletion
+		patch := []byte(`{"metadata":{"finalizers":[]}}`)
+		//nolint:errcheck
+		defer d.Client.Patch(d.Ctx, obj, client.RawPatch(types.MergePatchType, patch))
 		// Cleanup: Delete the CR
 		//nolint:errcheck
 		defer d.Client.Delete(d.Ctx, obj)
