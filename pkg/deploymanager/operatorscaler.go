@@ -44,13 +44,69 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 		}
 
 		if kindCsvRecord.Kind == "NooBaa" {
-			// Set the AllowNoobaaDeletion field
+			// Set the required field
 			if err := unstructured.SetNestedField(
 				obj.Object, true,
 				"spec", "cleanupPolicy", "allowNoobaaDeletion"); err != nil {
-				d.Log.Error(err, "failed to set noobaa cleanup policy")
+				d.Log.Error(err, "failed to set spec.cleanupPolicy.allowNoobaaDeletion")
 				return err
 			}
+		}
+
+		if kindCsvRecord.Kind == "StorageClient" {
+			// Set the required field
+			if err := unstructured.SetNestedField(
+				obj.Object, "dummy-onboardingTicket",
+				"spec", "onboardingTicket"); err != nil {
+				d.Log.Error(err, "failed to set spec.onboardingTicket")
+				return err
+			}
+			if err := unstructured.SetNestedField(
+				obj.Object, "dummy-storageProviderEndpoint",
+				"spec", "storageProviderEndpoint"); err != nil {
+				d.Log.Error(err, "failed to set spec.storageProviderEndpoint")
+				return err
+			}
+		}
+
+		if kindCsvRecord.Kind == "CSIAddonsNode" {
+			// Set the required field
+			if err := unstructured.SetNestedField(
+				obj.Object, "dummy-driverName",
+				"spec", "driver", "name"); err != nil {
+				d.Log.Error(err, "failed to set spec.driver.name")
+				return err
+			}
+			if err := unstructured.SetNestedField(
+				obj.Object, "dummy-driverEndpoint",
+				"spec", "driver", "endpoint"); err != nil {
+				d.Log.Error(err, "failed to set spec.driver.endpoint")
+				return err
+			}
+			if err := unstructured.SetNestedField(
+				obj.Object, "dummy-driverNodeID",
+				"spec", "driver", "nodeID"); err != nil {
+				d.Log.Error(err, "failed to set spec.driver.nodeID")
+				return err
+			}
+		}
+
+		if kindCsvRecord.Kind == "VolumeGroupSnapshotClass" {
+			// Set the required field
+			if err := unstructured.SetNestedField(
+				obj.Object, "Retain",
+				"deletionPolicy"); err != nil {
+				d.Log.Error(err, "failed to set deletionPolicy")
+				return err
+			}
+			if err := unstructured.SetNestedField(
+				obj.Object, "dummy-driver",
+				"driver"); err != nil {
+				d.Log.Error(err, "failed to set driver")
+				return err
+			}
+			// Remove the spec as it is not a field in this object
+			unstructured.RemoveNestedField(obj.Object, "spec")
 		}
 
 		if kindCsvRecord.Kind == "FlashSystemCluster" {
@@ -64,7 +120,7 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 			if err := unstructured.SetNestedField(
 				obj.Object, "dummy-secret",
 				"spec", "secret", "name"); err != nil {
-				d.Log.Error(err, "failed to set spec.secret")
+				d.Log.Error(err, "failed to set spec.secret.name")
 				return err
 			}
 		}
@@ -73,6 +129,7 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 			d.Log.Error(err, "failed to create object", "kind", kindCsvRecord.Kind)
 			return err
 		}
+		d.Log.Info("successfully created object", "kind", kindCsvRecord.Kind)
 
 		// Cleanup: Restore CSV replica to original state
 		//nolint:errcheck
