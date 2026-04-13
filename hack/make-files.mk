@@ -38,19 +38,19 @@ data:
     csv: $(CEPHCSI_SUBSCRIPTION_CSVNAME)
     pkg: $(CEPHCSI_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
+      - operatorconfigs.csi.ceph.io
   CSIADDONS: |
     channel: $(CSIADDONS_SUBSCRIPTION_CHANNEL)
     csv: $(CSIADDONS_SUBSCRIPTION_CSVNAME)
     pkg: $(CSIADDONS_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
+      - csiaddonsnodes.csiaddons.openshift.io
   SNAPSHOT_CONTROLLER: |
     channel: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CHANNEL)
     csv: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_CSVNAME)
     pkg: $(ODF_SNAPSHOT_CONTROLLER_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
+      - volumegroupsnapshotclasses.groupsnapshot.storage.openshift.io
   IBM_ODF: |
     channel: $(IBM_ODF_SUBSCRIPTION_CHANNEL)
     csv: $(IBM_ODF_SUBSCRIPTION_CSVNAME)
@@ -74,7 +74,7 @@ data:
     csv: $(OCS_CLIENT_SUBSCRIPTION_CSVNAME)
     pkg: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
+      - storageclients.ocs.openshift.io
   OCS: |
     channel: $(OCS_SUBSCRIPTION_CHANNEL)
     csv: $(OCS_SUBSCRIPTION_CSVNAME)

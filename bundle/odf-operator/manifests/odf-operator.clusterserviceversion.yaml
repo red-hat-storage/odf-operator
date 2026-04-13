@@ -224,6 +224,30 @@ spec:
           - list
           - update
         - apiGroups:
+          - csi.ceph.io
+          resources:
+          - operatorconfigs
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - csiaddons.openshift.io
+          resources:
+          - csiaddonsnodes
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - groupsnapshot.storage.openshift.io
+          resources:
+          - volumegroupsnapshotclasses
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - monitoring.coreos.com
           resources:
           - alertmanagers
@@ -243,6 +267,7 @@ spec:
         - apiGroups:
           - ocs.openshift.io
           resources:
+          - storageclients
           - storageclusters
           verbs:
           - get
