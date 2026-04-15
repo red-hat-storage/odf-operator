@@ -94,6 +94,10 @@ type OperatorScalerReconciler struct {
 //+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclusters,verbs=get;list;watch
 //+kubebuilder:rbac:groups=ceph.rook.io,resources=cephclusters,verbs=get;list;watch
 //+kubebuilder:rbac:groups=noobaa.io,resources=noobaas,verbs=get;list;watch
+//+kubebuilder:rbac:groups=ocs.openshift.io,resources=storageclients,verbs=get;list;watch
+//+kubebuilder:rbac:groups=csi.ceph.io,resources=operatorconfigs,verbs=get;list;watch
+//+kubebuilder:rbac:groups=csiaddons.openshift.io,resources=csiaddonsnodes,verbs=get;list;watch
+//+kubebuilder:rbac:groups=groupsnapshot.storage.openshift.io,resources=volumegroupsnapshotclasses,verbs=get;list;watch
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,verbs=get;list;watch
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=alertmanagers,verbs=get;list;watch
 //+kubebuilder:rbac:groups=odf.ibm.com,resources=flashsystemclusters,verbs=get;list;watch

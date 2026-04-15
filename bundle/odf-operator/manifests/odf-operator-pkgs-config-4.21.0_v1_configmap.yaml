@@ -5,7 +5,7 @@ data:
     csv: cephcsi-operator.v4.20.0
     pkg: cephcsi-operator
     scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
+      - operatorconfigs.csi.ceph.io
   CNSA: |
     channel: stable-v60.1
     csv: ibm-spectrum-scale-operator.v60.1.0
@@ -23,7 +23,7 @@ data:
     csv: csi-addons.v0.13.0
     pkg: csi-addons
     scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
+      - csiaddonsnodes.csiaddons.openshift.io
   IBM_CSI: |
     channel: stable-v1.12.4
     csv: ibm-block-csi-operator.v1.12.4
@@ -53,7 +53,7 @@ data:
     csv: ocs-client-operator.v4.20.0
     pkg: ocs-client-operator
     scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
+      - storageclients.ocs.openshift.io
   ODF_DEPS: |
     channel: alpha
     csv: odf-dependencies.v4.21.0
@@ -80,7 +80,7 @@ data:
     csv: odf-external-snapshotter-operator.v4.20.0
     pkg: odf-external-snapshotter-operator
     scaleUpOnInstanceOf:
-      - cephclusters.ceph.rook.io
+      - volumegroupsnapshotclasses.groupsnapshot.storage.openshift.io
 kind: ConfigMap
 metadata:
   name: odf-operator-pkgs-config-4.21.0

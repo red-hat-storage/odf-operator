@@ -9,6 +9,7 @@ import (
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,41 +44,25 @@ func (d *DeployManager) ValidateOperatorScaler() error {
 			},
 		}
 
-		if kindCsvRecord.Kind == "NooBaa" {
-			// Set the AllowNoobaaDeletion field
-			if err := unstructured.SetNestedField(
-				obj.Object, true,
-				"spec", "cleanupPolicy", "allowNoobaaDeletion"); err != nil {
-				d.Log.Error(err, "failed to set noobaa cleanup policy")
-				return err
-			}
-		}
-
-		if kindCsvRecord.Kind == "FlashSystemCluster" {
-			// Set the required field
-			if err := unstructured.SetNestedField(
-				obj.Object, "dummy-name",
-				"spec", "name"); err != nil {
-				d.Log.Error(err, "failed to set spec.name")
-				return err
-			}
-			if err := unstructured.SetNestedField(
-				obj.Object, "dummy-secret",
-				"spec", "secret", "name"); err != nil {
-				d.Log.Error(err, "failed to set spec.secret")
-				return err
-			}
+		if err := d.SetRequiredFields(obj, kindCsvRecord.Kind); err != nil {
+			d.Log.Error(err, "failed to set mandatory fields", "kind", kindCsvRecord.Kind)
+			return err
 		}
 
 		if err := d.Client.Create(d.Ctx, obj); err != nil {
 			d.Log.Error(err, "failed to create object", "kind", kindCsvRecord.Kind)
 			return err
 		}
+		d.Log.Info("successfully created object", "kind", kindCsvRecord.Kind)
 
 		// Cleanup: Restore CSV replica to original state
 		//nolint:errcheck
 		defer d.ScaleDownCsvsDeploymentsReplicas(kindCsvRecord.CsvNames, kindCsvRecord.Namespace)
 		d.Log.Info("cleanup", "csvs", kindCsvRecord.CsvNames)
+		// Cleanup: Remove finalizers for the CR deletion
+		patch := []byte(`{"metadata":{"finalizers":[]}}`)
+		//nolint:errcheck
+		defer d.Client.Patch(d.Ctx, obj, client.RawPatch(types.MergePatchType, patch))
 		// Cleanup: Delete the CR
 		//nolint:errcheck
 		defer d.Client.Delete(d.Ctx, obj)
@@ -199,6 +184,93 @@ func (d *DeployManager) ScaleDownCsvsDeploymentsReplicas(csvNames []string, name
 			d.Log.Info("successfully scaled down deployments replicas of csv", "csvName", csvName)
 			return nil
 		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (d *DeployManager) SetRequiredFields(obj *unstructured.Unstructured, kind string) error {
+
+	if kind == "NooBaa" {
+		// Set the required field
+		if err := unstructured.SetNestedField(
+			obj.Object, true,
+			"spec", "cleanupPolicy", "allowNoobaaDeletion"); err != nil {
+			d.Log.Error(err, "failed to set spec.cleanupPolicy.allowNoobaaDeletion")
+			return err
+		}
+	}
+
+	if kind == "StorageClient" {
+		// Set the required field
+		if err := unstructured.SetNestedField(
+			obj.Object, "dummy-onboardingTicket",
+			"spec", "onboardingTicket"); err != nil {
+			d.Log.Error(err, "failed to set spec.onboardingTicket")
+			return err
+		}
+		if err := unstructured.SetNestedField(
+			obj.Object, "dummy-storageProviderEndpoint",
+			"spec", "storageProviderEndpoint"); err != nil {
+			d.Log.Error(err, "failed to set spec.storageProviderEndpoint")
+			return err
+		}
+	}
+
+	if kind == "CSIAddonsNode" {
+		// Set the required field
+		if err := unstructured.SetNestedField(
+			obj.Object, "dummy-driverName",
+			"spec", "driver", "name"); err != nil {
+			d.Log.Error(err, "failed to set spec.driver.name")
+			return err
+		}
+		if err := unstructured.SetNestedField(
+			obj.Object, "dummy-driverEndpoint",
+			"spec", "driver", "endpoint"); err != nil {
+			d.Log.Error(err, "failed to set spec.driver.endpoint")
+			return err
+		}
+		if err := unstructured.SetNestedField(
+			obj.Object, "dummy-driverNodeID",
+			"spec", "driver", "nodeID"); err != nil {
+			d.Log.Error(err, "failed to set spec.driver.nodeID")
+			return err
+		}
+	}
+
+	if kind == "VolumeGroupSnapshotClass" {
+		// Set the required field
+		if err := unstructured.SetNestedField(
+			obj.Object, "Retain",
+			"deletionPolicy"); err != nil {
+			d.Log.Error(err, "failed to set deletionPolicy")
+			return err
+		}
+		if err := unstructured.SetNestedField(
+			obj.Object, "dummy-driver",
+			"driver"); err != nil {
+			d.Log.Error(err, "failed to set driver")
+			return err
+		}
+		// Remove the spec as it is not a field in this object
+		unstructured.RemoveNestedField(obj.Object, "spec")
+	}
+
+	if kind == "FlashSystemCluster" {
+		// Set the required field
+		if err := unstructured.SetNestedField(
+			obj.Object, "dummy-name",
+			"spec", "name"); err != nil {
+			d.Log.Error(err, "failed to set spec.name")
+			return err
+		}
+		if err := unstructured.SetNestedField(
+			obj.Object, "dummy-secret",
+			"spec", "secret", "name"); err != nil {
+			d.Log.Error(err, "failed to set spec.secret.name")
 			return err
 		}
 	}
