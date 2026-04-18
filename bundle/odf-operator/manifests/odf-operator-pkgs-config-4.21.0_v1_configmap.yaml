@@ -54,6 +54,9 @@ data:
     pkg: ocs-client-operator
     scaleUpOnInstanceOf:
       - storageclients.ocs.openshift.io
+      # In external mode, no storage client is present, but the client operator
+      # is still required to create the CSI-related CRs.
+      - cephclusters.ceph.rook.io
   ODF_DEPS: |
     channel: alpha
     csv: odf-dependencies.v4.21.0
