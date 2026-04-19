@@ -75,6 +75,9 @@ data:
     pkg: $(OCS_CLIENT_SUBSCRIPTION_PACKAGE)
     scaleUpOnInstanceOf:
       - storageclients.ocs.openshift.io
+      # In external mode, no storage client is present, but the client operator
+      # is still required to create the CSI-related CRs.
+      - cephclusters.ceph.rook.io
   OCS: |
     channel: $(OCS_SUBSCRIPTION_CHANNEL)
     csv: $(OCS_SUBSCRIPTION_CSVNAME)
