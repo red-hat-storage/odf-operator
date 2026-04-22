@@ -32,6 +32,16 @@ func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deplo
 			Labels:    labels,
 		},
 	}
+
+	storageToleration := corev1.Toleration{
+		Effect:   "NoSchedule",
+		Key:      "node.ocs.openshift.io/storage",
+		Operator: "Equal",
+		Value:    "true",
+	}
+
+	tolerations = append(tolerations, storageToleration)
+
 	deploymentSpec := &appsv1.DeploymentSpec{
 		Replicas: ptr.To(int32(1)),
 		Selector: &metav1.LabelSelector{
