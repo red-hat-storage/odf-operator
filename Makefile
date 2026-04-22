@@ -212,6 +212,7 @@ catalog: opm ## Generate catalog manifests and then validate generated files.
 	$(OPM) render --output=yaml $(BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf.yaml
 	$(OPM) render --output=yaml $(ODF_DEPS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/odf-dependencies.yaml
 	$(OPM) render --output=yaml $(CNSA_DEPS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/cnsa-dependencies.yaml
+	$(OPM) render --output=yaml $(OCS_TLS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs-tls.yaml
 	$(OPM) render --output=yaml $(OCS_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs.yaml
 	$(OPM) render --output=yaml $(OCS_CLIENT_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ocs-client.yaml
 	$(OPM) render --output=yaml $(IBM_ODF_BUNDLE_IMG) $(OPM_RENDER_OPTS) > catalog/ibm.yaml
