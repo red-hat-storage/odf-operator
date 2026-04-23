@@ -60,6 +60,13 @@ var (
 			return false
 		},
 	}
+
+	// deploymentsWithNonDefaultReplicas maps deployments to their expected replica count
+	// when it differs from the standard single-replica configuration.
+	// This map will be used to scale such deployments.
+	deploymentsWithNonDefaultReplicas = map[string]int32{
+		"odf-external-snapshotter-operator": 2,
+	}
 )
 
 type KindCsvsRecord struct {
@@ -303,9 +310,15 @@ func (r *OperatorScalerReconciler) updateCsvDeplymentsReplicas(ctx context.Conte
 
 	var updateRequired bool
 	for i := range csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs {
+		deploymentName := csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Name
 		deploymentSpec := &csv.Spec.InstallStrategy.StrategySpec.DeploymentSpecs[i].Spec
 		if deploymentSpec.Replicas == nil || *deploymentSpec.Replicas < 1 {
+			// set default replica count
 			deploymentSpec.Replicas = ptr.To(int32(1))
+			// override default replica count if required
+			if replicaCount, ok := deploymentsWithNonDefaultReplicas[deploymentName]; ok {
+				deploymentSpec.Replicas = ptr.To(replicaCount)
+			}
 			updateRequired = true
 		}
 	}
