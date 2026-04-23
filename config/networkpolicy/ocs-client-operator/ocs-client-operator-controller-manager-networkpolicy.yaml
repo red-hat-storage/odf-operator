@@ -1,12 +1,13 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: ceph-csi-cephfs-ctrlplugin
+  name: ocs-client-operator-controller-manager
   namespace: openshift-storage
 spec:
   podSelector:
     matchLabels:
-      app: openshift-storage.cephfs.csi.ceph.com-ctrlplugin
+      app: ocs-client-operator
+      control-plane: controller-manager
   policyTypes:
   - Ingress
   ingress:
@@ -17,15 +18,17 @@ spec:
     ports:
     - protocol: TCP
       port: 8080
-    - protocol: TCP
-      port: 8681
   - from:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: openshift-storage
-      podSelector:
-        matchLabels:
-          app: csi-addons-controller-manager
     ports:
     - protocol: TCP
-      port: 9080
+      port: 8080
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-kube-apiserver
+    ports:
+    - protocol: TCP
+      port: 7443

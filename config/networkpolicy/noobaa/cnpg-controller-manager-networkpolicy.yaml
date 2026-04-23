@@ -1,12 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: ceph-csi-operator-controller-manager
+  name: cnpg-controller-manager
   namespace: openshift-storage
 spec:
   podSelector:
     matchLabels:
-      control-plane: ceph-csi-op-controller-manager
+      app.kubernetes.io/name: cloudnative-pg
   policyTypes:
   - Ingress
   ingress:
@@ -16,4 +16,9 @@ spec:
           kubernetes.io/metadata.name: openshift-monitoring
     ports:
     - protocol: TCP
-      port: 8443
+      port: 8080
+  # Webhook port: API server calls this for admission webhooks.
+  # API server uses hostNetwork so it can't be matched by namespaceSelector.
+  - ports:
+    - protocol: TCP
+      port: 9443

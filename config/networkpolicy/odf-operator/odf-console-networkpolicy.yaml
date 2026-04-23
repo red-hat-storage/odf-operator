@@ -1,12 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: rook-ceph-tools
+  name: odf-console
   namespace: openshift-storage
 spec:
   podSelector:
     matchLabels:
-      app: rook-ceph-tools
+      app: odf-console
   policyTypes:
   - Ingress
   - Egress
@@ -20,25 +20,18 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  - to:
+  ingress:
+  - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: openshift-storage
-      podSelector:
-        matchLabels:
-          app: rook-ceph-mon
+          kubernetes.io/metadata.name: openshift-console
     ports:
     - protocol: TCP
-      port: 3300
-    - protocol: TCP
-      port: 6789
-  - to:
+      port: 9001
+  - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: openshift-storage
-      podSelector:
-        matchLabels:
-          app: rook-ceph-mgr
+          kubernetes.io/metadata.name: openshift-monitoring
     ports:
     - protocol: TCP
-      port: 9283
+      port: 9001

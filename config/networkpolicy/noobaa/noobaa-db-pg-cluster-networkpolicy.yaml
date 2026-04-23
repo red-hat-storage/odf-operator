@@ -1,31 +1,28 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: ceph-csi-cephfs-ctrlplugin
+  name: noobaa-db-pg-cluster
   namespace: openshift-storage
 spec:
   podSelector:
     matchLabels:
-      app: openshift-storage.cephfs.csi.ceph.com-ctrlplugin
+      cnpg.io/cluster: noobaa-db-pg-cluster
   policyTypes:
   - Ingress
   ingress:
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: openshift-monitoring
+          kubernetes.io/metadata.name: openshift-storage
     ports:
     - protocol: TCP
-      port: 8080
+      port: 5432
     - protocol: TCP
-      port: 8681
+      port: 8000
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: openshift-storage
-      podSelector:
-        matchLabels:
-          app: csi-addons-controller-manager
+          kubernetes.io/metadata.name: openshift-monitoring
     ports:
     - protocol: TCP
-      port: 9080
+      port: 9187

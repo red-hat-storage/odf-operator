@@ -1,12 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: rook-ceph-tools
+  name: odf-blackbox-exporter
   namespace: openshift-storage
 spec:
   podSelector:
     matchLabels:
-      app: rook-ceph-tools
+      app.kubernetes.io/name: odf-blackbox-exporter
   policyTypes:
   - Ingress
   - Egress
@@ -24,21 +24,16 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: openshift-storage
-      podSelector:
-        matchLabels:
-          app: rook-ceph-mon
     ports:
     - protocol: TCP
-      port: 3300
+      port: 443
     - protocol: TCP
-      port: 6789
-  - to:
+      port: 80
+  ingress:
+  - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: openshift-storage
-      podSelector:
-        matchLabels:
-          app: rook-ceph-mgr
+          kubernetes.io/metadata.name: openshift-monitoring
     ports:
     - protocol: TCP
-      port: 9283
+      port: 9115
