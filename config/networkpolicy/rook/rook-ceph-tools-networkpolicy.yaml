@@ -8,29 +8,9 @@ spec:
     matchLabels:
       app: rook-ceph-tools
   policyTypes:
+  - Ingress
   - Egress
   egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: openshift-kube-apiserver
-    ports:
-    - protocol: TCP
-      port: 443
-    - protocol: TCP
-      port: 6443
-  - to:
-    - ipBlock:
-        cidr: 172.30.0.1/32
-    ports:
-    - protocol: TCP
-      port: 443
-  - to:
-    - ipBlock:
-        cidr: 10.241.0.0/16
-    ports:
-    - protocol: TCP
-      port: 6443
   - to:
     - namespaceSelector:
         matchLabels:
