@@ -9,7 +9,6 @@ spec:
       app: openshift-storage.cephfs.csi.ceph.com-nodeplugin-csi-addons
   policyTypes:
   - Ingress
-  - Egress
   ingress:
   - from:
     - namespaceSelector:
@@ -21,46 +20,3 @@ spec:
     ports:
     - protocol: TCP
       port: 9071
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: openshift-kube-apiserver
-    ports:
-    - protocol: TCP
-      port: 443
-    - protocol: TCP
-      port: 6443
-  - to:
-    - ipBlock:
-        cidr: 172.30.0.1/32
-    ports:
-    - protocol: TCP
-      port: 443
-  - to:
-    - ipBlock:
-        cidr: 10.241.0.0/16
-    ports:
-    - protocol: TCP
-      port: 6443
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: openshift-dns
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: openshift-storage
-      podSelector:
-        matchLabels:
-          app: rook-ceph-mon
-    ports:
-    - protocol: TCP
-      port: 3300
-    - protocol: TCP
-      port: 6789

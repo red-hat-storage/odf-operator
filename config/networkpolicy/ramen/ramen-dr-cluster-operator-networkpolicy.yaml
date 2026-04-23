@@ -1,0 +1,31 @@
+# Ramen DR Cluster Operator - NetworkPolicy for Primary/Secondary managed clusters
+# Namespace: openshift-dr-system
+# Pod labels: app=ramen-dr-cluster, control-plane=controller-manager
+#
+# Ingress:
+#   - Prometheus metrics scraping from openshift-monitoring on port 9289
+# Egress:
+#   Not restricted. The operator needs access to:
+#   - Kubernetes API server (for CRD reconciliation)
+#   - S3 object stores (for VRG/PV/PVC backup via NooBaa routes, HTTPS/443)
+#   - DNS resolution
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ramen-dr-cluster-operator
+  namespace: openshift-dr-system
+spec:
+  podSelector:
+    matchLabels:
+      app: ramen-dr-cluster
+      control-plane: controller-manager
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-monitoring
+    ports:
+    - protocol: TCP
+      port: 9289

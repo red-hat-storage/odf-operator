@@ -1,0 +1,31 @@
+# Ramen Hub Operator - NetworkPolicy for ACM hub cluster
+# Namespace: openshift-operators
+# Pod labels: app=ramen-hub, control-plane=controller-manager
+#
+# Ingress:
+#   - Prometheus metrics scraping from openshift-monitoring on port 9289
+# Egress:
+#   Not restricted. The operator needs access to:
+#   - Kubernetes API server (for DRPolicy/DRCluster/DRPlacementControl reconciliation)
+#   - S3 object stores (for VRG status via NooBaa routes, HTTPS/443)
+#   - DNS resolution
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ramen-hub-operator
+  namespace: openshift-operators
+spec:
+  podSelector:
+    matchLabels:
+      app: ramen-hub
+      control-plane: controller-manager
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-monitoring
+    ports:
+    - protocol: TCP
+      port: 9289
