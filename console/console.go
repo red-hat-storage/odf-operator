@@ -131,6 +131,18 @@ func GetConsolePluginProxy(serviceNamespace string) []consolev1.ConsolePluginPro
 			},
 			Authorization: consolev1.None,
 		},
+		{
+			Alias: "s3Vector",
+			Endpoint: consolev1.ConsolePluginProxyEndpoint{
+				Type: consolev1.ProxyTypeService,
+				Service: &consolev1.ConsolePluginProxyServiceConfig{
+					Name:      "vectors",
+					Namespace: serviceNamespace,
+					Port:      443,
+				},
+			},
+			Authorization: consolev1.None,
+		},
 	}
 }
 
