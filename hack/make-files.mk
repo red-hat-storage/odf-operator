@@ -78,6 +78,10 @@ data:
       # In external mode, no storage client is present, but the client operator
       # is still required to create the CSI-related CRs.
       - cephclusters.ceph.rook.io
+  OCS_TLS: |
+    channel: $(OCS_TLS_SUBSCRIPTION_CHANNEL)
+    csv: $(OCS_TLS_SUBSCRIPTION_CSVNAME)
+    pkg: $(OCS_TLS_SUBSCRIPTION_PACKAGE)
   OCS: |
     channel: $(OCS_SUBSCRIPTION_CHANNEL)
     csv: $(OCS_SUBSCRIPTION_CSVNAME)
@@ -123,6 +127,10 @@ export CONFIGMAP_YAML
 
 define ODF_DEPENDENCIES_YAML
 dependencies:
+- type: olm.package
+  value:
+    packageName: $(OCS_TLS_SUBSCRIPTION_PACKAGE)
+    version: "$(subst v,,$(OCS_TLS_BUNDLE_VERSION))"
 - type: olm.package
   value:
     packageName: $(OCS_SUBSCRIPTION_PACKAGE)
@@ -227,6 +235,17 @@ package: $(OCS_SUBSCRIPTION_PACKAGE)
 name: $(OCS_SUBSCRIPTION_CHANNEL)
 entries:
   - name: $(OCS_SUBSCRIPTION_CSVNAME)
+
+---
+defaultChannel: $(OCS_TLS_SUBSCRIPTION_CHANNEL)
+name: $(OCS_TLS_SUBSCRIPTION_PACKAGE)
+schema: olm.package
+---
+schema: olm.channel
+package: $(OCS_TLS_SUBSCRIPTION_PACKAGE)
+name: $(OCS_TLS_SUBSCRIPTION_CHANNEL)
+entries:
+  - name: $(OCS_TLS_SUBSCRIPTION_CSVNAME)
 
 ---
 defaultChannel: $(OCS_CLIENT_SUBSCRIPTION_CHANNEL)

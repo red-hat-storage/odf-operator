@@ -3,7 +3,7 @@ kind: ClusterServiceVersion
 metadata:
   annotations:
     alm-examples: '[]'
-    createdAt: "2026-03-31T06:09:51Z"
+    createdAt: "2026-04-22T09:54:14Z"
     olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.23"}]'
     olm.skipRange: ""
     operatorframework.io/suggested-namespace: openshift-storage
