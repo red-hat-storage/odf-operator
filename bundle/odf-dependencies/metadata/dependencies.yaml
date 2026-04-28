@@ -1,6 +1,10 @@
 dependencies:
 - type: olm.package
   value:
+    packageName: ocs-tls-profiles
+    version: "4.22.0"
+- type: olm.package
+  value:
     packageName: ocs-operator
     version: "4.22.0"
 - type: olm.package
