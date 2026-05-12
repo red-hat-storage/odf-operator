@@ -101,7 +101,7 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if err := r.setOperatorCondition(ctx, logger, csvNamesMap); err != nil {
+	if err := r.setOperatorCondition(ctx, logger, csvNamesMap, olmPkgRecords); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -287,7 +287,7 @@ func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger
 	return combinedErr
 }
 
-func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logger logr.Logger, condMap map[string]struct{}) error {
+func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logger logr.Logger, condMap map[string]struct{}, olmPkgRecords []*OlmPkgRecord) error {
 	// Make operator not upgradeable if ODF minor version is ahead of OCP minor version(e.g. ODF 4.21.z, OCP 4.20.z)
 	if isODFAhead, err := r.isODFAheadOfOCP(ctx); err != nil {
 		return err
@@ -306,6 +306,35 @@ func (r *SubscriptionReconciler) setOperatorCondition(ctx context.Context, logge
 		return r.operatorCondition.Set(ctx, metav1.ConditionFalse,
 			conditions.WithReason("OCPUpgradeIncomplete"),
 			conditions.WithMessage("OCP upgrade is incomplete. ODF is not upgradeable to ensure cluster stability"))
+	}
+
+	for _, olmPkgRecord := range olmPkgRecords {
+
+		csvList := &opv1a1.ClusterServiceVersionList{}
+		labelKey := fmt.Sprintf("operators.coreos.com/%s.%s", olmPkgRecord.Pkg, olmPkgRecord.Namespace)
+		err := r.Client.List(ctx, csvList, client.InNamespace(olmPkgRecord.Namespace), client.HasLabels{labelKey})
+		if err != nil {
+			logger.Error(err, "failed to list ClusterServiceVersion")
+			return err
+		}
+
+		if len(csvList.Items) == 0 {
+			continue
+		} else if len(csvList.Items) == 1 {
+			if csvList.Items[0].Name != olmPkgRecord.Csv {
+				logger.Info("Desired csv version not found, marking the operator as not upgradeable",
+					"desiredCsv", olmPkgRecord.Csv, "actualCsv", csvList.Items[0].Name)
+				return r.operatorCondition.Set(ctx, metav1.ConditionFalse,
+					conditions.WithReason("DesiredCsvVersionNotFound"),
+					conditions.WithMessage(fmt.Sprintf("Expecting CSV version %s, But found %s", olmPkgRecord.Csv, csvList.Items[0].Name)))
+			}
+		} else if len(csvList.Items) > 1 {
+			logger.Info("More than one csvs found in the cluster, marking the operator as not upgradeable",
+				"pkgName", olmPkgRecord.Pkg)
+			return r.operatorCondition.Set(ctx, metav1.ConditionFalse,
+				conditions.WithReason("DesiredCsvVersionNotFound"),
+				conditions.WithMessage(fmt.Sprintf("The Csvs are being upgraded for pkg %s", olmPkgRecord.Pkg)))
+		}
 	}
 
 	ocdList := &opv2.OperatorConditionList{}
