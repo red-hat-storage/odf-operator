@@ -11,6 +11,7 @@ metadata:
       solutions on OpenShift Container Platform.
     features.operators.openshift.io/token-auth-aws: "true"
     features.operators.openshift.io/token-auth-azure: "true"
+    features.operators.openshift.io/token-auth-gcp: "true"
     operatorframework.io/initialization-link: /odf/overview?show-welcome-modal=true
     operatorframework.io/suggested-namespace: openshift-storage
     operators.openshift.io/infrastructure-features: '["disconnected"]'
