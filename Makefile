@@ -306,12 +306,16 @@ OPERATOR_SDK = $(shell which operator-sdk)
 endif
 endif
 
+checkout-bundle-timestamp: ## Ignore (git checkout) changes if there are only timestamp changes in the bundle
+	(git diff --quiet --ignore-matching-lines createdAt $(BUNDLE_DIR) && git checkout --quiet $(BUNDLE_DIR)) || true
+
 .PHONY: bundle
 bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	$(OPERATOR_SDK) bundle validate ./bundle
+	@$(MAKE) --no-print-directory checkout-bundle-timestamp BUNDLE_DIR=bundle
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
