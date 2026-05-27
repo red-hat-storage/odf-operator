@@ -19,6 +19,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -176,6 +177,13 @@ func main() {
 		})
 	}
 
+	operatorNamespace, found := os.LookupEnv("OPERATOR_NAMESPACE")
+	if !found {
+		err := fmt.Errorf("OPERATOR_NAMESPACE must be set")
+		setupLog.Error(err, "unable to get operator namespace")
+		os.Exit(1)
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
@@ -201,8 +209,9 @@ func main() {
 	}
 
 	if err := (&controller.DeployerReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		OperatorNamespace: operatorNamespace,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Deployer")
 		os.Exit(1)
