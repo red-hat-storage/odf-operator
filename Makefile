@@ -24,6 +24,9 @@ BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
+# OPM_RENDER_OPTS will be used while rendering bundle images
+OPM_RENDER_OPTS ?=
+
 # Image URL to use all building/pushing image targets
 IMAGE_REGISTRY ?= quay.io
 REGISTRY_NAMESPACE ?= ocs-dev
@@ -354,12 +357,15 @@ ifneq ($(origin CATALOG_BASE_IMG), undefined)
 FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMG)
 endif
 
-# Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
-# This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
-# https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
+.PHONY: catalog
+catalog: opm ## Generate catalog manifests and then validate generated files.
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(BUNDLE_IMG) > catalog/odf.yaml
+	$(OPM) validate catalog
+
+# Build a catalog image.
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
-	$(OPM) index add --container-tool $(CONTAINER_TOOL) --mode semver --tag $(CATALOG_IMG) --bundles $(BUNDLE_IMGS) $(FROM_INDEX_OPT)
+	$(CONTAINER_TOOL) build -f catalog.Dockerfile -t $(CATALOG_IMG) .
 
 # Push the catalog image.
 .PHONY: catalog-push

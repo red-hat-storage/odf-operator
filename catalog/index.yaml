@@ -1,0 +1,10 @@
+---
+defaultChannel: alpha
+name: odf-operator
+schema: olm.package
+---
+schema: olm.channel
+package: odf-operator
+name: alpha
+entries:
+  - name: odf-operator.v5.1.0
