@@ -1,3 +1,6 @@
+include hack/make/bundle-vars.mk
+include hack/make/gen-files.mk
+
 # VERSION defines the project version for the bundle.
 # Update this value when you upgrade the version of your project.
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
@@ -309,13 +312,18 @@ OPERATOR_SDK = $(shell which operator-sdk)
 endif
 endif
 
+update-mgr-config: ## Feed env variables to the manager configmap
+	@echo "$$DEPLOYMENT_ENV_PATCH" > config/manager/deployment-env-patch.yaml
+	@echo "$$PKGS_CONFIGMAP_YAML" > config/manager/pkgs-configmap.yaml
+
 checkout-bundle-timestamp: ## Ignore (git checkout) changes if there are only timestamp changes in the bundle
 	(git diff --quiet --ignore-matching-lines createdAt $(BUNDLE_DIR) && git checkout --quiet $(BUNDLE_DIR)) || true
 
 .PHONY: bundle
-bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+bundle: manifests update-mgr-config kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	rm -rf bundle
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
 	$(OPERATOR_SDK) bundle validate ./bundle
 	@$(MAKE) --no-print-directory checkout-bundle-timestamp BUNDLE_DIR=bundle
