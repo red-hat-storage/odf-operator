@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pkgs-config-5.1.0
+data:
+  OCS_OPERATOR: |
+    package: ocs-operator
+    version: 4.22.0
+
+  ROOK_CEPH: |
+    package: rook-ceph-operator
+    version: 4.22.0
+
+  NOOBAA: |
+    package: noobaa-operator
+    version: 5.22.0
+
+  OCS_CLIENT: |
+    package: ocs-client-operator
+    version: 4.22.0
+
+  CEPHCSI: |
+    package: cephcsi-operator
+    version: 4.22.0
+
+  CSIADDONS: |
+    package: csi-addons
+    version: 0.14.0
+
+  ODF_SNAPSHOT: |
+    package: odf-external-snapshotter-operator
+    version: 4.22.0
+
+  PROMETHEUS: |
+    package: odf-prometheus-operator
+    version: 4.22.0
+
+  OCS_TLS: |
+    package: ocs-tls-profiles
+    version: 4.22.0
+
+  RECIPE: |
+    package: recipe
+    version: 0.0.1
+
+  IBM_ODF: |
+    package: ibm-storage-odf-operator
+    version: 1.9.0
+
+  IBM_CSI: |
+    package: ibm-block-csi-operator
+    version: 1.13.2
+
+  CNSA: |
+    package: ibm-spectrum-scale-operator
+    version: 60.1.100
+    namespace: ibm-spectrum-scale
