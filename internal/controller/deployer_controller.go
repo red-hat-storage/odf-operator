@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	ocv1 "github.com/operator-framework/operator-controller/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -51,6 +52,8 @@ type OlmPkgRecord struct {
 }
 
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create
+// +kubebuilder:rbac:groups=olm.operatorframework.io,resources=clusterextensions,verbs=get;list;watch;create;update;patch;delete
 
 func (r *DeployerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -59,6 +62,22 @@ func (r *DeployerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	olmPkgRecords := []*OlmPkgRecord{}
 	if err := r.loadOdfPkgsConfigMapData(ctx, logger, &olmPkgRecords); err != nil {
 		logger.Error(err, "failed to load odf pkgs configmap")
+		return ctrl.Result{}, err
+	}
+
+	publisherName, err := getPublisherName(logger)
+	if err != nil {
+		logger.Error(err, "failed to get provider name")
+		return ctrl.Result{}, err
+	}
+
+	if err := ensureNamespaces(ctx, r.Client, logger, olmPkgRecords, r.OperatorNamespace, publisherName); err != nil {
+		logger.Error(err, "failed to ensure Namespaces")
+		return ctrl.Result{}, err
+	}
+
+	if err := ensureClusterExtensions(ctx, r.Client, logger, olmPkgRecords, publisherName); err != nil {
+		logger.Error(err, "failed to ensure ClusterExtensions")
 		return ctrl.Result{}, err
 	}
 
@@ -97,6 +116,12 @@ func (r *DeployerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return obj.GetName() == OdfOperatorPkgsConfigMapName && obj.GetNamespace() == r.OperatorNamespace
 	})
 
+	managedByOdfOperatorPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
+		labels := obj.GetLabels()
+		val, ok := labels[ManagedByKey]
+		return ok && val == ManagedByValOdfOperator
+	})
+
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("deployer").
 		Watches(
@@ -104,6 +129,14 @@ func (r *DeployerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(
 				odfPkgConfigmapPredicate,
+				predicate.GenerationChangedPredicate{},
+			),
+		).
+		Watches(
+			&ocv1.ClusterExtension{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(
+				managedByOdfOperatorPredicate,
 				predicate.GenerationChangedPredicate{},
 			),
 		).
