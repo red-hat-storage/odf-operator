@@ -22,6 +22,7 @@ endif
 # To re-generate a bundle for any other default channel without changing the default setup, you can:
 # - use the DEFAULT_CHANNEL as arg of the bundle target (e.g make bundle DEFAULT_CHANNEL=stable)
 # - use environment variables to overwrite this value (e.g export DEFAULT_CHANNEL="stable")
+DEFAULT_CHANNEL ?= alpha
 ifneq ($(origin DEFAULT_CHANNEL), undefined)
 BUNDLE_DEFAULT_CHANNEL := --default-channel=$(DEFAULT_CHANNEL)
 endif
@@ -367,7 +368,22 @@ endif
 
 .PHONY: catalog
 catalog: opm ## Generate catalog manifests and then validate generated files.
+	@echo "$$CATALOG_INDEX_YAML" > catalog/index.yaml
 	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(BUNDLE_IMG) > catalog/odf.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(OCS_OPERATOR_BUNDLE_IMG) > catalog/ocs-operator.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(ROOK_CEPH_BUNDLE_IMG) > catalog/rook-ceph.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(NOOBAA_BUNDLE_IMG) > catalog/noobaa.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(OCS_CLIENT_BUNDLE_IMG) > catalog/ocs-client.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(CEPHCSI_BUNDLE_IMG) > catalog/cephcsi.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(CSIADDONS_BUNDLE_IMG) > catalog/csiaddons.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(ODF_SNAPSHOT_BUNDLE_IMG) > catalog/odf-snapshot.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(PROMETHEUS_BUNDLE_IMG) > catalog/prometheus.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(OCS_TLS_BUNDLE_IMG) > catalog/ocs-tls.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(RECIPE_BUNDLE_IMG) > catalog/recipe.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(IBM_ODF_BUNDLE_IMG) > catalog/ibm-odf.yaml
+	$(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(IBM_CSI_BUNDLE_IMG) > catalog/ibm-csi.yaml
+	# This is a private image and cannot be pulled in GitHub Actions, as secrets are not available to pull requests.
+	[ -z "$$GITHUB_ACTIONS" ] && $(OPM) render --output=yaml $(OPM_RENDER_OPTS) $(CNSA_BUNDLE_IMG) > catalog/cnsa.yaml || true
 	$(OPM) validate catalog
 
 # Build a catalog image.
