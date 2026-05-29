@@ -8,3 +8,146 @@ package: odf-operator
 name: alpha
 entries:
   - name: odf-operator.v5.1.0
+
+---
+defaultChannel: alpha
+name: ocs-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ocs-operator
+name: alpha
+entries:
+  - name: ocs-operator.v4.22.0
+
+---
+defaultChannel: alpha
+name: rook-ceph-operator
+schema: olm.package
+---
+schema: olm.channel
+package: rook-ceph-operator
+name: alpha
+entries:
+  - name: rook-ceph-operator.v4.22.0
+
+---
+defaultChannel: alpha
+name: noobaa-operator
+schema: olm.package
+---
+schema: olm.channel
+package: noobaa-operator
+name: alpha
+entries:
+  - name: noobaa-operator.v5.22.0
+
+---
+defaultChannel: alpha
+name: ocs-client-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ocs-client-operator
+name: alpha
+entries:
+  - name: ocs-client-operator.v4.22.0
+
+---
+defaultChannel: alpha
+name: cephcsi-operator
+schema: olm.package
+---
+schema: olm.channel
+package: cephcsi-operator
+name: alpha
+entries:
+  - name: cephcsi-operator.v4.22.0
+
+---
+defaultChannel: alpha
+name: csi-addons
+schema: olm.package
+---
+schema: olm.channel
+package: csi-addons
+name: alpha
+entries:
+  - name: csi-addons.v0.14.0
+
+---
+defaultChannel: alpha
+name: odf-external-snapshotter-operator
+schema: olm.package
+---
+schema: olm.channel
+package: odf-external-snapshotter-operator
+name: alpha
+entries:
+  - name: odf-external-snapshotter-operator.v4.22.0
+
+---
+defaultChannel: beta
+name: odf-prometheus-operator
+schema: olm.package
+---
+schema: olm.channel
+package: odf-prometheus-operator
+name: beta
+entries:
+  - name: odf-prometheus-operator.v4.22.0
+
+---
+defaultChannel: alpha
+name: ocs-tls-profiles
+schema: olm.package
+---
+schema: olm.channel
+package: ocs-tls-profiles
+name: alpha
+entries:
+  - name: ocs-tls-profiles.v4.22.0
+
+---
+defaultChannel: alpha
+name: recipe
+schema: olm.package
+---
+schema: olm.channel
+package: recipe
+name: alpha
+entries:
+  - name: recipe.v0.0.1
+
+---
+defaultChannel: stable-v1.9
+name: ibm-storage-odf-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ibm-storage-odf-operator
+name: stable-v1.9
+entries:
+  - name: ibm-storage-odf-operator.v1.9.0
+
+---
+defaultChannel: stable-v1.13.2
+name: ibm-block-csi-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ibm-block-csi-operator
+name: stable-v1.13.2
+entries:
+  - name: ibm-block-csi-operator.v1.13.2
+
+---
+defaultChannel: stable-v60.1
+name: ibm-spectrum-scale-operator
+schema: olm.package
+---
+schema: olm.channel
+package: ibm-spectrum-scale-operator
+name: stable-v60.1
+entries:
+  - name: ibm-spectrum-scale-operator.v60.1.100
