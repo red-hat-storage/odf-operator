@@ -21,6 +21,29 @@ import (
 	"os"
 )
 
+const (
+	PublisherNameRedHat = "Red Hat"
+	PublisherNameIBM    = "IBM"
+)
+
+const (
+	ManagedByKey            = "odf.openshift.io/managed-by"
+	ManagedByValOdfOperator = "odf-operator"
+	ManagedByValUser        = "user"
+)
+
+const (
+	OdfOperatorPackageName = "odf-operator"
+)
+
+var (
+	ExtendedFdfPackages = []string{
+		"ibm-storage-odf-operator",
+		"ibm-block-csi-operator",
+		"ibm-spectrum-scale-operator",
+	}
+)
+
 var (
 	OdfOperatorPkgsConfigMapName string
 )
