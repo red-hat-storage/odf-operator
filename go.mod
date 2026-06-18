@@ -1,6 +1,6 @@
 module github.com/red-hat-storage/odf-operator
 
-go 1.25.7
+go 1.26.1
 
 require (
 	github.com/blang/semver/v4 v4.0.0
