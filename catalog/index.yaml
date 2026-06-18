@@ -109,23 +109,23 @@ entries:
   - name: recipe.v0.0.1
 
 ---
-defaultChannel: stable-v1.8
+defaultChannel: stable-v1.9
 name: ibm-storage-odf-operator
 schema: olm.package
 ---
 schema: olm.channel
 package: ibm-storage-odf-operator
-name: stable-v1.8
+name: stable-v1.9
 entries:
-  - name: ibm-storage-odf-operator.v1.8.0
+  - name: ibm-storage-odf-operator.v1.9.0
 
 ---
-defaultChannel: stable-v1.12.4
+defaultChannel: stable-v1.13.2
 name: ibm-block-csi-operator
 schema: olm.package
 ---
 schema: olm.channel
 package: ibm-block-csi-operator
-name: stable-v1.12.4
+name: stable-v1.13.2
 entries:
-  - name: ibm-block-csi-operator.v1.12.4
+  - name: ibm-block-csi-operator.v1.13.2

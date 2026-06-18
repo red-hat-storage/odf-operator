@@ -16,14 +16,14 @@ data:
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM_ODF: |
-    channel: stable-v1.8
-    csv: ibm-storage-odf-operator.v1.8.0
+    channel: stable-v1.9
+    csv: ibm-storage-odf-operator.v1.9.0
     pkg: ibm-storage-odf-operator
     scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
   IBM_CSI: |
-    channel: stable-v1.12.4
-    csv: ibm-block-csi-operator.v1.12.4
+    channel: stable-v1.13.2
+    csv: ibm-block-csi-operator.v1.13.2
     pkg: ibm-block-csi-operator
     scaleUpOnInstanceOf:
       - flashsystemclusters.odf.ibm.com
