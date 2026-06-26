@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"slices"
 
@@ -167,12 +168,14 @@ func getMergedEnvVars(envList1, envList2 []corev1.EnvVar) []corev1.EnvVar {
 		envMap[env.Name] = env.Value
 	}
 
+	keys := slices.Sorted(maps.Keys(envMap))
+
 	// Convert the map back to a slice
 	var updatedEnvVars []corev1.EnvVar
-	for key, value := range envMap {
+	for _, key := range keys {
 		updatedEnvVars = append(updatedEnvVars, corev1.EnvVar{
 			Name:  key,
-			Value: value,
+			Value: envMap[key],
 		})
 	}
 
