@@ -13,7 +13,7 @@ data:
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   IBM_CSI: |
-    channel: stable-v1.13.2
+    channel: stable-1.13.2
     csv: ibm-block-csi-operator.v1.13.2
     pkg: ibm-block-csi-operator
     scaleUpOnInstanceOf:
