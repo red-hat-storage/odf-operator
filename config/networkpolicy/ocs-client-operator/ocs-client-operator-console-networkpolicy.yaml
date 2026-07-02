@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ocs-client-operator-console
+  namespace: openshift-storage
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ocs-client-operator-console
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-console
+    ports:
+    - protocol: TCP
+      port: 9001
