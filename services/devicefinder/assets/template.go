@@ -30,6 +30,7 @@ func NewDeviceFinderDaemonSet(namespace string, containerImage string) *appsv1.D
 					},
 					Annotations: map[string]string{
 						"target.workload.openshift.io/management": `{"effect": "PreferredDuringScheduling"}`,
+						"openshift.io/required-scc":               "privileged",
 					},
 				},
 				Spec: corev1.PodSpec{
