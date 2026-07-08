@@ -12,6 +12,7 @@ import (
 	ocsv1 "github.com/red-hat-storage/ocs-operator/api/v4/v1"
 	"github.com/red-hat-storage/odf-operator/services/ux-backend/handlers/bucket"
 	"github.com/red-hat-storage/odf-operator/services/ux-backend/handlers/cnsa/devicefinder"
+	"github.com/red-hat-storage/odf-operator/services/ux-backend/handlers/cnsa/registrychecks"
 	"github.com/red-hat-storage/odf-operator/services/ux-backend/handlers/expandstorage"
 	"github.com/red-hat-storage/odf-operator/services/ux-backend/handlers/featureflags"
 	"github.com/red-hat-storage/odf-operator/services/ux-backend/handlers/onboarding/peertokens"
@@ -133,6 +134,13 @@ func main() {
 		klog.Exitf("failed to create cached kube client: %v", err)
 	}
 
+	client, err := client.New(clientConfig, client.Options{
+		Scheme: scheme,
+	})
+	if err != nil {
+		klog.Exitf("failed to create kube client: %v", err)
+	}
+
 	klog.Info("Starting cache for ux backend server")
 	go func() {
 		if err := cache.Start(ctx); err != nil {
@@ -172,6 +180,10 @@ func main() {
 	// CNSA endpoints
 	http.HandleFunc("/cnsa/devicefinder", func(w http.ResponseWriter, r *http.Request) {
 		devicefinder.HandleMessage(w, r, cl, namespace)
+	})
+
+	http.HandleFunc("/cnsa/registry-checks", func(w http.ResponseWriter, r *http.Request) {
+		registrychecks.HandleMessage(w, r, client)
 	})
 
 	klog.Info("ux backend server listening on port ", config.listenPort)
