@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 	"os"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -12,10 +15,17 @@ import (
 )
 
 const (
-	random30CharacterString = "KP7TThmSTZegSGmHuPKLnSaaAHSG3RSgqw6akBj0oVk"
-	uxBackendProxyName      = "ux-backend-proxy"
-	uxCertName              = "ux-cert-secret"
+	uxBackendProxyName = "ux-backend-proxy"
+	uxCertName         = "ux-cert-secret"
 )
+
+func generateSessionSecret() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random session secret: %w", err)
+	}
+	return hex.EncodeToString(bytes), nil
+}
 
 func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deployment {
 
@@ -199,16 +209,12 @@ func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deplo
 }
 
 func getUXBackendServerSecret() *corev1.Secret {
-	secret := &corev1.Secret{
+	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      uxBackendProxyName,
 			Namespace: OperatorNamespace,
 		},
 	}
-	secret.StringData = map[string]string{
-		"session_secret": random30CharacterString,
-	}
-	return secret
 }
 
 func getUXBackendServerService() *corev1.Service {

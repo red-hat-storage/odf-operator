@@ -41,6 +41,8 @@ import (
 	"github.com/red-hat-storage/odf-operator/pkg/util"
 )
 
+const rotatedVersionAnnotationKey = "odf.openshift.io/rotated-version"
+
 // ClusterVersionReconciler reconciles a ClusterVersion object
 type ClusterVersionReconciler struct {
 	client.Client
@@ -231,10 +233,23 @@ func (r *ClusterVersionReconciler) ensureUXBackendServer(ctx context.Context) er
 
 	logger.Info("Ensuring UX backend server secret")
 	uxBackendServerSecret := getUXBackendServerSecret()
-	secretData := uxBackendServerSecret.StringData
+	odfMajorMinorVersion := fmt.Sprintf("%d.%d", odfCsv.Spec.Version.Major, odfCsv.Spec.Version.Minor)
 	if _, err = controllerutil.CreateOrUpdate(ctx, r.Client, uxBackendServerSecret, func() error {
 		uxBackendServerSecret.SetOwnerReferences(nil)
-		uxBackendServerSecret.StringData = secretData
+		currentVersion := uxBackendServerSecret.Annotations[rotatedVersionAnnotationKey]
+		if currentVersion != odfMajorMinorVersion {
+			secret, err := generateSessionSecret()
+			if err != nil {
+				return fmt.Errorf("failed to generate session secret: %w", err)
+			}
+			uxBackendServerSecret.StringData = map[string]string{
+				"session_secret": secret,
+			}
+			if uxBackendServerSecret.Annotations == nil {
+				uxBackendServerSecret.Annotations = make(map[string]string)
+			}
+			uxBackendServerSecret.Annotations[rotatedVersionAnnotationKey] = odfMajorMinorVersion
+		}
 		return controllerutil.SetControllerReference(odfCsv, uxBackendServerSecret, r.Scheme)
 	}); err != nil {
 		return fmt.Errorf("failed to create or update UX backend server secret: %w", err)
