@@ -7,10 +7,6 @@ rules:
   - ""
   resources:
   - secrets
-  resourceNames:
-  - onboarding-private-key
-  - ux-cert-secret
-  - ux-backend-proxy
   verbs:
     - get
     - list
