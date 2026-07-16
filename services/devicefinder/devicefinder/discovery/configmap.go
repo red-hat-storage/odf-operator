@@ -51,23 +51,26 @@ func (discovery *DeviceDiscovery) updateConfigMap() error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
 			Namespace: namespace,
-			Labels: map[string]string{
-				"app":  "devicefinder",
-				"node": nodeName,
-			},
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion: "v1",
-					Kind:       "Pod",
-					Name:       podName,
-					UID:        apimachinerytypes.UID(podUID),
-				},
-			},
+		},
+	}
+
+	ownerReference := []metav1.OwnerReference{
+		{
+			APIVersion: "v1",
+			Kind:       "Pod",
+			Name:       podName,
+			UID:        apimachinerytypes.UID(podUID),
 		},
 	}
 
 	_, err = ctrl.CreateOrUpdate(context.TODO(), discovery.kubeClient, configMap, func() error {
 		configMap.Data = configMapData
+		if configMap.Labels == nil {
+			configMap.Labels = make(map[string]string)
+		}
+		configMap.Labels["app"] = "devicefinder"
+		configMap.Labels["node"] = nodeName
+		configMap.OwnerReferences = ownerReference
 		return nil
 	})
 	if err != nil {
