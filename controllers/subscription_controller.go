@@ -529,5 +529,6 @@ func (r *SubscriptionReconciler) isODFAheadOfOCP(ctx context.Context) (bool, err
 	}
 	odfVersion := csv.Spec.Version.Version
 
-	return odfVersion.Major != ocpVersion.Major || odfVersion.Minor > ocpVersion.Minor, nil
+	return odfVersion.Major > ocpVersion.Major ||
+		(odfVersion.Major == ocpVersion.Major && odfVersion.Minor > ocpVersion.Minor), nil
 }
