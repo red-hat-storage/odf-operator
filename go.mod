@@ -113,6 +113,8 @@ require (
 
 replace github.com/portworx/sched-ops => github.com/portworx/sched-ops v0.20.4-openstorage-rc3 // required by rook v1.7
 
+replace github.com/go-jose/go-jose/v4 => github.com/openshift-sustaining/go-jose/v4 v4.0.5-cve-2026-34986
+
 replace go.opencensus.io => github.com/census-instrumentation/opencensus-go v0.23.0
 
 exclude (
