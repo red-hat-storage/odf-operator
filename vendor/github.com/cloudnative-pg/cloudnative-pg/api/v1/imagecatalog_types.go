@@ -39,6 +39,11 @@ type CatalogImage struct {
 	// +kubebuilder:validation:Minimum=10
 	// The PostgreSQL major version of the image. Must be unique within the catalog.
 	Major int `json:"major"`
+	// The configuration of the extensions to be added
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	Extensions []ExtensionConfiguration `json:"extensions,omitempty"`
 }
 
 // +genclient
@@ -65,8 +70,4 @@ type ImageCatalogList struct {
 	metav1.ListMeta `json:"metadata"`
 	// List of ImageCatalogs
 	Items []ImageCatalog `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&ImageCatalog{}, &ImageCatalogList{})
 }

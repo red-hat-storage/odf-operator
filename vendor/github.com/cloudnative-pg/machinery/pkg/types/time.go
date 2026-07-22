@@ -30,7 +30,7 @@ import (
 // YYYY-MM-DDTHH24:MI:SSZ            (time.RFC3339)
 // YYYY-MM-DDTHH24:MI:SS±TZH:TZM     (time.RFC3339)
 // YYYY-MM-DDTHH24:MI:SSS±TZH:TZM	 (time.RFC3339Micro)
-// YYYY-MM-DDTHH24:MI:SS             (modified time.RFC3339)
+// YYYY-MM-DDTHH24:MI:SS             (modified time.RFC3339, interpreted as UTC)
 func ParseTargetTime(currentLocation *time.Location, targetTime string) (time.Time, error) {
 	const RFC3339Micro = "2006-01-02T15:04:05.000000Z07:00"
 

@@ -82,7 +82,7 @@ func (set *Data) ToList() (result []string) {
 	for key := range set.innerMap {
 		result = append(result, key)
 	}
-	return
+	return result
 }
 
 // ToSortedList returns the string container in this set
