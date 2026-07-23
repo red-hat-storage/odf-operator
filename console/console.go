@@ -146,6 +146,35 @@ func GetConsolePluginProxy(serviceNamespace string) []consolev1.ConsolePluginPro
 	}
 }
 
+// MergeConsolePluginProxy merges the desired proxy entries into the existing
+// list, preserving any entries added by other controllers (e.g. ocs-operator).
+// Entries owned by this operator (matched by alias) are updated in place;
+// unknown entries are kept as-is.
+func MergeConsolePluginProxy(existing []consolev1.ConsolePluginProxy, serviceNamespace string, removeAliases []string) []consolev1.ConsolePluginProxy {
+	aliasesToRemove := make(map[string]bool, len(removeAliases))
+	for _, alias := range removeAliases {
+		aliasesToRemove[alias] = true
+	}
+
+	desired := GetConsolePluginProxy(serviceNamespace)
+
+	desiredAliases := make(map[string]bool, len(desired))
+	for _, proxy := range desired {
+		desiredAliases[proxy.Alias] = true
+	}
+
+	merged := append([]consolev1.ConsolePluginProxy{}, desired...)
+
+	for _, proxy := range existing {
+		if aliasesToRemove[proxy.Alias] || desiredAliases[proxy.Alias] {
+			continue
+		}
+		merged = append(merged, proxy)
+	}
+
+	return merged
+}
+
 func GetConsolePluginCR(consolePort int32, serviceNamespace string) *consolev1.ConsolePlugin {
 	return &consolev1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
