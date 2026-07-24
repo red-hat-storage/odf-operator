@@ -1,0 +1,52 @@
+# Egress-only: CSI node plugins use hostNetwork, so their traffic arrives from
+# node IPs which cannot be matched by namespaceSelector/podSelector ingress rules.
+# Restricting ingress would require ipBlock CIDRs that are cluster-specific and
+# fragile, so we only enforce egress on Ceph daemon pods.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rook-ceph-mds
+  namespace: openshift-storage
+spec:
+  podSelector:
+    matchLabels:
+      app: rook-ceph-mds
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          app: rook-ceph-mon
+    ports:
+    - protocol: TCP
+      port: 3300
+    - protocol: TCP
+      port: 6789
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - rook-ceph-osd
+          - rook-ceph-mds
+    ports:
+    - protocol: TCP
+      port: 6800
+      endPort: 7300
