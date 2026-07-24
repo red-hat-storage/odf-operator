@@ -122,6 +122,65 @@ var _ = Describe("BlockDevice", func() {
 			Expect(err.Error()).To(ContainSubstring("disk has no persistent ID"))
 		})
 	})
+
+	// IsDASD tests
+	Context("IsDASD", func() {
+		It("returns true for a device whose name starts with 'dasd'", func() {
+			device := &BlockDevice{Name: "dasda"}
+			Expect(device.IsDASD()).To(BeTrue())
+		})
+
+		It("returns true for a multi-letter DASD name (dasdzz)", func() {
+			device := &BlockDevice{Name: "dasdzz"}
+			Expect(device.IsDASD()).To(BeTrue())
+		})
+
+		It("returns true when subsystems contains 'dasd' token", func() {
+			device := &BlockDevice{
+				Name:       "sda",
+				Subsystems: "block:dasd:ccw",
+			}
+			Expect(device.IsDASD()).To(BeTrue())
+		})
+
+		It("returns true when subsystems is exactly 'dasd'", func() {
+			device := &BlockDevice{
+				Name:       "sda",
+				Subsystems: "dasd",
+			}
+			Expect(device.IsDASD()).To(BeTrue())
+		})
+
+		It("returns false for a regular SCSI disk", func() {
+			device := &BlockDevice{
+				Name:       "sdb",
+				Subsystems: "block:scsi:ccw",
+			}
+			Expect(device.IsDASD()).To(BeFalse())
+		})
+
+		It("returns false for an NVMe disk", func() {
+			device := &BlockDevice{
+				Name:       "nvme0n1",
+				Subsystems: "block:nvme:pci",
+			}
+			Expect(device.IsDASD()).To(BeFalse())
+		})
+
+		It("returns false for a device named 'dasdinvalid-prefix' that happens to contain 'dasd' mid-name but subsystems are non-DASD", func() {
+			// 'sddasd' — name does not start with 'dasd', subsystems is SCSI
+			device := &BlockDevice{
+				Name:       "sddasd",
+				Subsystems: "block:scsi:pci",
+			}
+			Expect(device.IsDASD()).To(BeFalse())
+		})
+
+		It("returns false when subsystems field is empty and name is not dasd*", func() {
+			device := &BlockDevice{Name: "sdc", Subsystems: ""}
+			Expect(device.IsDASD()).To(BeFalse())
+		})
+	})
 })
 
 var _ = Describe("GetBlockDevices", func() {
