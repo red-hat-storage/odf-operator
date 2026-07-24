@@ -22,9 +22,9 @@ package v1
 import (
 	"context"
 	"fmt"
+	"maps"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -41,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/cloudnative-pg/cloudnative-pg/internal/configuration"
+	"github.com/cloudnative-pg/cloudnative-pg/pkg/configfile"
 	"github.com/cloudnative-pg/cloudnative-pg/pkg/system"
 	"github.com/cloudnative-pg/cloudnative-pg/pkg/utils"
 	contextutils "github.com/cloudnative-pg/cloudnative-pg/pkg/utils/context"
@@ -175,8 +176,8 @@ func (st *ServiceAccountTemplate) MergeMetadata(sa *corev1.ServiceAccount) {
 		sa.Annotations = map[string]string{}
 	}
 
-	utils.MergeMap(sa.Labels, st.Metadata.Labels)
-	utils.MergeMap(sa.Annotations, st.Metadata.Annotations)
+	maps.Copy(sa.Labels, st.Metadata.Labels)
+	maps.Copy(sa.Annotations, st.Metadata.Annotations)
 }
 
 // MatchesTopology checks if the two topologies have
@@ -668,7 +669,7 @@ func (cluster *Cluster) GetFixedInheritedAnnotations() map[string]string {
 		return meta.Annotations
 	}
 
-	utils.MergeMap(meta.Annotations, cluster.Spec.InheritedMetadata.Annotations)
+	maps.Copy(meta.Annotations, cluster.Spec.InheritedMetadata.Annotations)
 
 	return meta.Annotations
 }
@@ -1149,12 +1150,9 @@ func (cluster *Cluster) UsesSecret(secret string) bool {
 		return true
 	}
 
-	if cluster.Status.PoolerIntegrations != nil {
-		for _, pgBouncerSecretName := range cluster.Status.PoolerIntegrations.PgBouncerIntegration.Secrets {
-			if pgBouncerSecretName == secret {
-				return true
-			}
-		}
+	if cluster.Status.PoolerIntegrations != nil &&
+		slices.Contains(cluster.Status.PoolerIntegrations.PgBouncerIntegration.Secrets, secret) {
+		return true
 	}
 
 	// watch the secrets defined in external clusters
@@ -1187,6 +1185,19 @@ func (cluster *Cluster) IsMetricsTLSEnabled() bool {
 	return false
 }
 
+// GetMetricsQueriesTTL returns the Time To Live of the metrics computed from
+// queries. Once exceeded, a scrape of the metric will trigger a rerun of the queries.
+// Default value is 30 seconds
+func (cluster *Cluster) GetMetricsQueriesTTL() metav1.Duration {
+	if cluster.Spec.Monitoring != nil && cluster.Spec.Monitoring.MetricsQueriesTTL != nil {
+		return *cluster.Spec.Monitoring.MetricsQueriesTTL
+	}
+
+	return metav1.Duration{
+		Duration: 30 * time.Second,
+	}
+}
+
 // GetEnableSuperuserAccess returns if the superuser access is enabled or not
 func (cluster *Cluster) GetEnableSuperuserAccess() bool {
 	if cluster.Spec.EnableSuperuserAccess != nil {
@@ -1198,15 +1209,14 @@ func (cluster *Cluster) GetEnableSuperuserAccess() bool {
 
 // LogTimestampsWithMessage prints useful information about timestamps in stdout
 func (cluster *Cluster) LogTimestampsWithMessage(ctx context.Context, logMessage string) {
-	contextLogger := log.FromContext(ctx)
-
 	currentTimestamp := pgTime.GetCurrentTimestamp()
-	keysAndValues := []interface{}{
+
+	contextLogger := log.FromContext(ctx).WithValues(
 		"phase", cluster.Status.Phase,
 		"currentTimestamp", currentTimestamp,
 		"targetPrimaryTimestamp", cluster.Status.TargetPrimaryTimestamp,
 		"currentPrimaryTimestamp", cluster.Status.CurrentPrimaryTimestamp,
-	}
+	)
 
 	var errs []string
 
@@ -1215,11 +1225,7 @@ func (cluster *Cluster) LogTimestampsWithMessage(ctx context.Context, logMessage
 		currentTimestamp,
 		cluster.Status.TargetPrimaryTimestamp,
 	); err == nil {
-		keysAndValues = append(
-			keysAndValues,
-			"msPassedSinceTargetPrimaryTimestamp",
-			diff.Milliseconds(),
-		)
+		contextLogger = contextLogger.WithValues("msPassedSinceTargetPrimaryTimestamp", diff.Milliseconds())
 	} else {
 		errs = append(errs, err.Error())
 	}
@@ -1229,9 +1235,7 @@ func (cluster *Cluster) LogTimestampsWithMessage(ctx context.Context, logMessage
 		currentTimestamp,
 		cluster.Status.CurrentPrimaryTimestamp,
 	); err == nil {
-		keysAndValues = append(
-			keysAndValues,
-			"msPassedSinceCurrentPrimaryTimestamp",
+		contextLogger = contextLogger.WithValues("msPassedSinceCurrentPrimaryTimestamp",
 			currentPrimaryDifference.Milliseconds(),
 		)
 	} else {
@@ -1246,8 +1250,7 @@ func (cluster *Cluster) LogTimestampsWithMessage(ctx context.Context, logMessage
 		cluster.Status.CurrentPrimaryTimestamp,
 		cluster.Status.TargetPrimaryTimestamp,
 	); err == nil {
-		keysAndValues = append(
-			keysAndValues,
+		contextLogger = contextLogger.WithValues(
 			"msDifferenceBetweenCurrentAndTargetPrimary",
 			currentPrimaryTargetDifference.Milliseconds(),
 		)
@@ -1256,10 +1259,10 @@ func (cluster *Cluster) LogTimestampsWithMessage(ctx context.Context, logMessage
 	}
 
 	if len(errs) > 0 {
-		keysAndValues = append(keysAndValues, "timestampParsingErrors", errs)
+		contextLogger = contextLogger.WithValues("timestampParsingErrors", errs)
 	}
 
-	contextLogger.Info(logMessage, keysAndValues...)
+	contextLogger.Info(logMessage)
 }
 
 // SetInheritedDataAndOwnership sets the cluster as owner of the passed object and then
@@ -1470,47 +1473,36 @@ func (cluster *Cluster) EnsureGVKIsPresent() {
 // should be added to the PostgreSQL configuration to
 // recover given a certain target
 func (target *RecoveryTarget) BuildPostgresOptions() string {
-	result := ""
-
 	if target == nil {
-		return result
+		return ""
 	}
 
+	options := map[string]string{}
 	if target.TargetTLI != "" {
-		result += fmt.Sprintf(
-			"recovery_target_timeline = '%v'\n",
-			target.TargetTLI)
+		options["recovery_target_timeline"] = target.TargetTLI
 	}
 	if target.TargetXID != "" {
-		result += fmt.Sprintf(
-			"recovery_target_xid = '%v'\n",
-			target.TargetXID)
+		options["recovery_target_xid"] = target.TargetXID
 	}
 	if target.TargetName != "" {
-		result += fmt.Sprintf(
-			"recovery_target_name = '%v'\n",
-			target.TargetName)
+		options["recovery_target_name"] = target.TargetName
 	}
 	if target.TargetLSN != "" {
-		result += fmt.Sprintf(
-			"recovery_target_lsn = '%v'\n",
-			target.TargetLSN)
+		options["recovery_target_lsn"] = target.TargetLSN
 	}
 	if target.TargetTime != "" {
-		result += fmt.Sprintf(
-			"recovery_target_time = '%v'\n",
-			pgTime.ConvertToPostgresFormat(target.TargetTime))
+		options["recovery_target_time"] = pgTime.ConvertToPostgresFormat(target.TargetTime)
 	}
 	if target.TargetImmediate != nil && *target.TargetImmediate {
-		result += "recovery_target = immediate\n"
+		options["recovery_target"] = "immediate"
 	}
 	if target.Exclusive != nil && *target.Exclusive {
-		result += "recovery_target_inclusive = false\n"
+		options["recovery_target_inclusive"] = "false"
 	} else {
-		result += "recovery_target_inclusive = true\n"
+		options["recovery_target_inclusive"] = "true"
 	}
 
-	return result
+	return configfile.RenderPostgresConfiguration(options)
 }
 
 // ApplyInto applies the content of the probe configuration in a Kubernetes
@@ -1564,16 +1556,10 @@ func (cluster *Cluster) GetEnabledWALArchivePluginName() string {
 
 // IsFailoverQuorumActive check if we should enable the
 // quorum failover protection alpha-feature.
-func (cluster *Cluster) IsFailoverQuorumActive() (bool, error) {
-	failoverQuorumAnnotation, ok := cluster.GetAnnotations()[utils.FailoverQuorumAnnotationName]
-	if !ok || failoverQuorumAnnotation == "" {
-		return false, nil
+func (cluster *Cluster) IsFailoverQuorumActive() bool {
+	if cluster.Spec.PostgresConfiguration.Synchronous == nil {
+		return false
 	}
 
-	v, err := strconv.ParseBool(failoverQuorumAnnotation)
-	if err != nil {
-		return false, fmt.Errorf("failed to parse failover quorum annotation '%v': %v", failoverQuorumAnnotation, err)
-	}
-
-	return v, nil
+	return cluster.Spec.PostgresConfiguration.Synchronous.FailoverQuorum
 }
