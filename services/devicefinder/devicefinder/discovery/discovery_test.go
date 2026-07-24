@@ -20,6 +20,7 @@ var _ = Describe("Device Discovery", func() {
 		deviceList0Disk0MultiPath    diskutils.BlockDeviceList
 		deviceListSanDisk            diskutils.BlockDeviceList
 		deviceList0Disk0MultiPath0DM diskutils.BlockDeviceList
+		deviceListDasdDisk           diskutils.BlockDeviceList
 	)
 	Context("When scanning for disks", func() {
 
@@ -44,6 +45,9 @@ var _ = Describe("Device Discovery", func() {
 			LsblkOutSanDisk, err := os.ReadFile("../../test/data/e1-fast.json")
 			Expect(err).To(Not(HaveOccurred()))
 
+			LsblkOutDasdDisk, err := os.ReadFile("../../test/data/dasd-available-disk.json")
+			Expect(err).To(Not(HaveOccurred()))
+
 			err = json.Unmarshal(LsblkOut0Disk, &deviceList0Disk)
 			Expect(err).To(Not(HaveOccurred()))
 
@@ -57,6 +61,9 @@ var _ = Describe("Device Discovery", func() {
 			Expect(err).To(Not(HaveOccurred()))
 
 			err = json.Unmarshal(LsblkOutSanDisk, &deviceListSanDisk)
+			Expect(err).To(Not(HaveOccurred()))
+
+			err = json.Unmarshal(LsblkOutDasdDisk, &deviceListDasdDisk)
 			Expect(err).To(Not(HaveOccurred()))
 		})
 
@@ -185,5 +192,108 @@ var _ = Describe("Device Discovery", func() {
 
 		})
 
+		// IBM Z DASD device tests
+		Context("DASD devices on IBM Z (s390x)", func() {
+			// Fake UIDs returned by the injected readFileFunc for each DASD device.
+			// dasda uses a normal UID (4 tokens), dasdb uses an extended UID (5 tokens),
+			// and dasdc uses another normal UID.
+			const (
+				// Normal UID — 4 dot-separated tokens.
+				dasdaRawUID = "IBM.75000000092461.e900.10"
+				// Extended UID — 5 dot-separated tokens; the trailing hex token is stripped.
+				dasdbRawUID = "IBM.750000000FMZ21.db80.34.0000000000021f7400000000000000"
+				dasdcRawUID = "IBM.75000000092462.e900.11"
+
+				// Expected DeviceID values after normalisation (dots → dashes,
+				// extended trailing token removed).
+				dasdaUID = "ibm-75000000092461-e900-10"
+				dasdbUID = "ibm-750000000fmz21-db80-34"
+				dasdcUID = "ibm-75000000092462-e900-11"
+			)
+
+			BeforeEach(func() {
+				// Inject a fake readFileFunc so that getDASDUID does not touch
+				// the real /sys/block filesystem during tests.
+				readFileFunc = func(name string) ([]byte, error) {
+					uids := map[string]string{
+						"/sys/block/dasda/device/uid": dasdaRawUID,
+						"/sys/block/dasdb/device/uid": dasdbRawUID,
+						"/sys/block/dasdc/device/uid": dasdcRawUID,
+					}
+					if uid, ok := uids[name]; ok {
+						return []byte(uid + "\n"), nil
+					}
+					return nil, os.ErrNotExist
+				}
+			})
+
+			AfterEach(func() {
+				readFileFunc = os.ReadFile
+			})
+
+			It("should discover exactly 3 available DASD disks and skip sda (boot) and dasdx (has FS)", func() {
+				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
+				Expect(discoveredDisks).To(HaveLen(3))
+			})
+
+			It("should discover dasda (normal UID) with correct properties", func() {
+				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
+				Expect(discoveredDisks).To(ContainElement(
+					types.DiscoveredDevice{
+						DeviceID: dasdaUID,
+						Path:     "/dev/dasda",
+						Model:    "",
+						Type:     types.DiskType,
+						Vendor:   "IBM     ",
+						Size:     102574080000,
+						WWN:      "",
+					},
+				))
+			})
+
+			It("should discover dasdb (extended UID) with trailing token stripped", func() {
+				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
+				Expect(discoveredDisks).To(ContainElement(
+					types.DiscoveredDevice{
+						DeviceID: dasdbUID,
+						Path:     "/dev/dasdb",
+						Model:    "",
+						Type:     types.DiskType,
+						Vendor:   "IBM     ",
+						Size:     102574080000,
+						WWN:      "",
+					},
+				))
+			})
+
+			It("should discover dasdc (normal UID) with correct properties", func() {
+				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
+				Expect(discoveredDisks).To(ContainElement(
+					types.DiscoveredDevice{
+						DeviceID: dasdcUID,
+						Path:     "/dev/dasdc",
+						Model:    "",
+						Type:     types.DiskType,
+						Vendor:   "IBM     ",
+						Size:     102574080000,
+						WWN:      "",
+					},
+				))
+			})
+
+			It("should not discover sda (SCSI boot disk with boot partition label)", func() {
+				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
+				for _, d := range discoveredDisks {
+					Expect(d.Path).NotTo(Equal("/dev/sda"))
+				}
+			})
+
+			It("should not discover dasdx (DASD disk with existing filesystem)", func() {
+				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
+				for _, d := range discoveredDisks {
+					Expect(d.Path).NotTo(Equal("/dev/dasdx"))
+				}
+			})
+		})
 	})
 })
