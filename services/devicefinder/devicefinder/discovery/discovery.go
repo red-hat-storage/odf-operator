@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strings"
 	"syscall"
 	"time"
 
@@ -24,6 +25,41 @@ const (
 	udevEventPeriod = 5 * time.Second
 	probeInterval   = 5 * time.Minute
 )
+
+// readFileFunc is the function used to read a file. It is a package-level
+// variable so that tests can substitute a fake implementation without touching
+// the real filesystem.
+var readFileFunc = os.ReadFile
+
+// getDASDUID reads the DASD UID from /sys/block/<name>/device/uid and returns
+// a normalised identifier suitable for use as a Kubernetes object name.
+//
+// Two UID formats are produced by the IBM Z firmware:
+//   - Normal   (4 tokens): IBM.75000000092461.e900.10
+//   - Extended (5 tokens): IBM.750000000FMZ21.db80.34.0000000000021f7400000000000000
+//
+// For extended UIDs the trailing token (the 32-hex-character LUN extension) is
+// removed so that both forms collapse to the same 4-token base.
+// UID is converted to lowercase and dots are replaced with dashes
+// to comply with Kubernetes DNS-label naming rules.
+//
+// An error is returned when the sysfs file cannot be read (e.g. on non-IBM-Z
+// systems or when the device does not exist).
+func getDASDUID(name string) (string, error) {
+	path := fmt.Sprintf("/sys/block/%s/device/uid", name)
+	data, err := readFileFunc(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read DASD UID from %s: %w", path, err)
+	}
+	uid := strings.TrimSpace(strings.ToLower(string(data)))
+	tokens := strings.Split(uid, ".")
+	// Extended UIDs have an extra trailing token; strip it so both UID types
+	// share the same 4-token base representation.
+	if len(tokens) >= 5 {
+		tokens = tokens[:len(tokens)-1]
+	}
+	return strings.Join(tokens, "-"), nil
+}
 
 var supportedDeviceTypes = sets.NewString("mpath", "disk")
 
@@ -144,13 +180,29 @@ func getDiscoverdDevices(blockDevices []diskutils.BlockDevice) []types.Discovere
 		if ignoreDevices(&blockDevices[idx]) {
 			continue
 		}
-		deviceID, err := blockDevices[idx].GetPathByID()
-		if err != nil {
-			klog.Warningf(
-				"failed to get persistent ID for the device %q. Error %v",
-				blockDevices[idx].Name,
-				err,
-			)
+
+		var deviceID string
+		if blockDevices[idx].IsDASD() {
+			var err error
+			deviceID, err = getDASDUID(blockDevices[idx].Name)
+			if err != nil {
+				klog.Warningf(
+					"failed to get DASD UID for device %q. Error %v",
+					blockDevices[idx].Name,
+					err,
+				)
+				continue
+			}
+		} else {
+			var err error
+			deviceID, err = blockDevices[idx].GetPathByID()
+			if err != nil {
+				klog.Warningf(
+					"failed to get persistent ID for the device %q. Error %v",
+					blockDevices[idx].Name,
+					err,
+				)
+			}
 		}
 
 		path, err := blockDevices[idx].GetDevPath()
@@ -175,13 +227,25 @@ func getDiscoverdDevices(blockDevices []diskutils.BlockDevice) []types.Discovere
 	return uniqueDevices(discoveredDevices)
 }
 
-// uniqueDevices removes duplicate devices from the list using WWN as a key
+// uniqueDevices removes duplicate devices from the list.
+// For devices with a WWN the WWN is used as the deduplication key.
+// DASD devices have no WWN; they are deduplicated by DeviceID (the DASD UID)
+// when available, and fall back to Path when the UID could not be read.
 func uniqueDevices(sample []types.DiscoveredDevice) []types.DiscoveredDevice {
 	var unique []types.DiscoveredDevice
 	type key struct{ value string }
 	m := make(map[key]int)
 	for _, v := range sample {
-		k := key{v.WWN}
+		// Prefer WWN, then DeviceID (populated for DASD devices via the UID
+		// sysfs file), then fall back to Path.
+		deduplicationKey := v.WWN
+		if deduplicationKey == "" {
+			deduplicationKey = v.DeviceID
+		}
+		if deduplicationKey == "" {
+			deduplicationKey = v.Path
+		}
+		k := key{deduplicationKey}
 		if i, ok := m[k]; ok {
 			unique[i] = v
 		} else {
@@ -229,7 +293,9 @@ func ignoreDevices(dev *diskutils.BlockDevice) bool {
 		return true
 	}
 
-	if dev.WWN == "" {
+	// DASD devices on IBM Z never carry a WWN; accept them based on their
+	// device type rather than requiring a WWN.
+	if dev.WWN == "" && !dev.IsDASD() {
 		klog.Infof("ignoring device %q without WWN", dev.Name)
 		return true
 	}

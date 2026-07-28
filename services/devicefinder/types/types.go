@@ -29,6 +29,7 @@ type DiscoveredDevice struct {
 	// Size of the discovered device
 	Size int64 `json:"size"`
 	// WWN defines the WWN value of the device.
+	// Empty for DASD devices on IBM Z, which use channel-based addressing instead.
 	WWN string `json:"WWN"`
 }
 
@@ -42,7 +43,7 @@ type DiscoveryResult struct {
 	// - it should not be mounted anywhere
 	// - it should not be a boot device
 	// - it should not have child partitions
-	// - it should have a WWN value
+	// - it should have a WWN value, or be an IBM Z DASD device
 	// +optional
 	DiscoveredDevices []DiscoveredDevice `json:"discoveredDevices"`
 }
