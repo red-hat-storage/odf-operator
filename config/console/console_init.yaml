@@ -24,7 +24,7 @@ spec:
               memory: "512Mi"
             requests:
               cpu: "10m"
-              memory: "512Mi"
+              memory: "256Mi"
           livenessProbe:
             httpGet:
               path: /plugin-manifest.json
