@@ -526,6 +526,9 @@ spec:
                   limits:
                     cpu: 100m
                     memory: 512Mi
+                  requests:
+                    cpu: 10m
+                    memory: 512Mi
                 securityContext:
                   allowPrivilegeEscalation: false
                   capabilities:
