@@ -115,7 +115,7 @@ func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deplo
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								corev1.ResourceCPU:    resource.MustParse("50m"),
+								corev1.ResourceCPU:    resource.MustParse("10m"),
 								corev1.ResourceMemory: resource.MustParse("128Mi"),
 							},
 							Limits: corev1.ResourceList{
