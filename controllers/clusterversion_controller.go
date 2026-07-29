@@ -177,7 +177,9 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(ctx context.Context, clus
 				odfConsolePlugin.Spec.Backend.Service.BasePath = basePath
 			}
 		}
-		odfConsolePlugin.Spec.Proxy = console.GetConsolePluginProxy(OperatorNamespace)
+		// MergeConsolePluginProxy merges the desired proxy entries into the existing.
+		// To remove stale proxy entries, pass the aliases of the stale entries to the function (currently nil)
+		odfConsolePlugin.Spec.Proxy = console.MergeConsolePluginProxy(odfConsolePlugin.Spec.Proxy, OperatorNamespace, nil)
 		return nil
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {

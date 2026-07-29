@@ -23,6 +23,7 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
+        openshift.io/required-scc: restricted-v2
       labels:
         app.kubernetes.io/name: odf-operator
         control-plane: controller-manager
@@ -70,7 +71,7 @@ spec:
             cpu: 200m
             memory: 400Mi
           requests:
-            cpu: 200m
+            cpu: 10m
             memory: 400Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

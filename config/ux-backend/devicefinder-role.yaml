@@ -11,3 +11,4 @@ rules:
   - create
   - get
   - update
+  - delete
