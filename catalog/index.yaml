@@ -164,12 +164,12 @@ entries:
   - name: ibm-block-csi-operator.v1.13.2
 
 ---
-defaultChannel: stable-v60.1
+defaultChannel: stable-v60.2
 name: ibm-spectrum-scale-operator
 schema: olm.package
 ---
 schema: olm.channel
 package: ibm-spectrum-scale-operator
-name: stable-v60.1
+name: stable-v60.2
 entries:
-  - name: ibm-spectrum-scale-operator.v60.1.100
+  - name: ibm-spectrum-scale-operator.v60.2.0
