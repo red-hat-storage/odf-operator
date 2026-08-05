@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: console
+spec:
+  podSelector:
+    matchLabels:
+      app: odf-console
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-console
+    ports:
+    - protocol: TCP
+      port: 9001
+  # ConsolePlugin proxy traffic originates from openshift-console, not this pod.
+  egress: []
