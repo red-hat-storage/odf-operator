@@ -103,13 +103,13 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 docker-build: godeps-update test-setup go-test ## Build docker image with the manager.
-	docker build -t ${IMG} .
+	docker build --platform=$(TARGET_OS)/$(TARGET_ARCH) -t ${IMG} .
 
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 
 devicefinder-build: ## Build devicefinder binary.
-	docker build -f services/devicefinder/Dockerfile -t ${DEVICEFINDER_IMAGE} . --build-arg="LDFLAGS=${LDFLAGS}"
+	docker build --platform=$(TARGET_OS)/$(TARGET_ARCH) -f services/devicefinder/Dockerfile -t ${DEVICEFINDER_IMAGE} . --build-arg="LDFLAGS=${LDFLAGS}"
 
 devicefinder-push: ## Push devicefinder image.
 	docker push ${DEVICEFINDER_IMAGE}
@@ -193,9 +193,9 @@ bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metada
 
 .PHONY: bundle-build
 bundle-build: bundle ## Build the bundle image.
-	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
-	docker build -f bundle.odf.deps.Dockerfile -t $(ODF_DEPS_BUNDLE_IMG) .
-	docker build -f bundle.cnsa.deps.Dockerfile -t $(CNSA_DEPS_BUNDLE_IMG) .
+	docker build --platform=$(TARGET_OS)/$(TARGET_ARCH) -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	docker build --platform=$(TARGET_OS)/$(TARGET_ARCH) -f bundle.odf.deps.Dockerfile -t $(ODF_DEPS_BUNDLE_IMG) .
+	docker build --platform=$(TARGET_OS)/$(TARGET_ARCH) -f bundle.cnsa.deps.Dockerfile -t $(CNSA_DEPS_BUNDLE_IMG) .
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
@@ -230,7 +230,7 @@ catalog: opm ## Generate catalog manifests and then validate generated files.
 
 .PHONY: catalog-build
 catalog-build: catalog ## Build a catalog image.
-	docker build -f catalog.Dockerfile -t $(CATALOG_IMG) .
+	docker build --platform=$(TARGET_OS)/$(TARGET_ARCH) -f catalog.Dockerfile -t $(CATALOG_IMG) .
 
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
@@ -238,7 +238,7 @@ catalog-push: ## Push a catalog image.
 
 .PHONY: catalog-deps-build
 catalog-deps-build: catalog ## Build a catalog-deps image.
-	docker build -f catalog.deps.Dockerfile -t $(ODF_DEPS_CATALOG_IMG) .
+	docker build --platform=$(TARGET_OS)/$(TARGET_ARCH) -f catalog.deps.Dockerfile -t $(ODF_DEPS_CATALOG_IMG) .
 
 .PHONY: catalog-deps-push
 catalog-deps-push: ## Push a catalog-deps image.
