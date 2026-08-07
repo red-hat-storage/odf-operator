@@ -47,9 +47,6 @@ func GetNginxConfConfigMap(namespace string) *apiv1.ConfigMap {
 			Name:      "odf-console-nginx-conf",
 			Namespace: namespace,
 		},
-		Data: map[string]string{
-			"nginx.conf": NginxConf,
-		},
 	}
 }
 

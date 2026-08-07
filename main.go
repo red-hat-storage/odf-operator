@@ -196,7 +196,9 @@ func getCacheOptions() (cache.Options, error) {
 		"openshift-storage-extended": {},
 	}
 
-	relevantCRDNames := map[string]bool{}
+	relevantCRDNames := map[string]bool{
+		"tlsprofiles.ocs.openshift.io": true,
+	}
 
 	controllers.ParseOdfConfigMapRecords(setupLog, configmap, func(record *controllers.OdfOperatorConfigMapRecord, key, rawValue string) {
 
