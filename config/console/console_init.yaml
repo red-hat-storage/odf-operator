@@ -18,6 +18,35 @@ spec:
       containers:
         - name: odf-console
           image: odf-console:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              (
+                echo "Waiting for Nginx master process to start."
+                until nginx -s reload > /dev/null 2>&1; do
+                  sleep 1
+                done
+
+                LAST_HASH=$(md5sum /opt/app-root/etc/nginx.d/*.conf 2>/dev/null | sort | md5sum)
+                echo "Nginx is up. Monitoring config changes."
+
+                while true; do
+                  CURRENT_HASH=$(md5sum /opt/app-root/etc/nginx.d/*.conf 2>/dev/null | sort | md5sum)
+                  if [ "$CURRENT_HASH" != "$LAST_HASH" ]; then
+                    if nginx -t && nginx -s reload; then
+                      LAST_HASH="$CURRENT_HASH"
+                    fi
+                  fi
+                  sleep 45
+                done
+              ) &
+
+              if [ -x /usr/libexec/s2i/run ]; then
+                exec /usr/libexec/s2i/run
+              else
+                exec nginx -g "daemon off;"
+              fi
           resources:
             limits:
               cpu: "100m"
@@ -30,7 +59,7 @@ spec:
               path: /plugin-manifest.json
               port: 9001
               scheme: HTTPS
-            initialDelaySeconds: 1000
+            initialDelaySeconds: 180
             periodSeconds: 60
           ports:
             - containerPort: 9001
@@ -48,8 +77,8 @@ spec:
               mountPath: /var/serving-cert
               readOnly: true
             - name: odf-console-nginx-conf
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
+              mountPath: /opt/app-root/etc/nginx.d
+              readOnly: true
             - name: odf-console-nginx-log
               mountPath: /var/log/nginx
             - name: odf-console-nginx-tmp
