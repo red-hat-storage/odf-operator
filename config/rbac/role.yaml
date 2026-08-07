@@ -162,7 +162,7 @@ rules:
   - networkpolicies
   verbs:
   - create
-  - delete
+  - get
   - update
 - apiGroups:
   - noobaa.io

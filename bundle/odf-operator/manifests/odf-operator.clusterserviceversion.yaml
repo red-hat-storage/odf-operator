@@ -20,9 +20,9 @@ metadata:
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.openshift.io/valid-subscription: '["OpenShift Platform Plus","OpenShift
       Data Foundation Essentials","OpenShift Data Foundation Advanced"]'
-    operators.operatorframework.io/builder: operator-sdk-v1.40.0
+    operators.operatorframework.io/builder: operator-sdk-v1.31.0
     operators.operatorframework.io/operator-type: standalone
-    operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+    operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/red-hat-storage/odf-operator
     support: Red Hat
     vendors.odf.openshift.io/kind: '["storagecluster.ocs.openshift.io/v1", "flashsystemcluster.odf.ibm.com/v1alpha1"]'
@@ -264,7 +264,7 @@ spec:
           - networkpolicies
           verbs:
           - create
-          - delete
+          - get
           - update
         - apiGroups:
           - noobaa.io
