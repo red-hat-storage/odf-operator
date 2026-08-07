@@ -388,11 +388,16 @@ func (r *OperatorScalerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				predicate.GenerationChangedPredicate{},
 			),
 		).
-		// Watch only those CRDs whose names are listed in the ConfigMap, since the cache is limited to those CRDs in the main function.
+		// Watch CRDs so newly installed relevant CRDs can register dynamic CR watches.
 		Watches(
 			&extv1.CustomResourceDefinition{},
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(
+				// Cache Transform keeps non-relevant CRDs as name-only stubs in the main, ignore those here.
+				predicate.NewPredicateFuncs(func(obj client.Object) bool {
+					crd, ok := obj.(*extv1.CustomResourceDefinition)
+					return ok && crd.Spec.Group != ""
+				}),
 				// Trigger a reconcile only during the creation of a specific CRD to ensure it runs exactly once for that CRD.
 				// This is required to dynamically add a watch for the corresponding Custom Resource (CR) based on the CRD name.
 				// The reconcile will be triggered with the CRD name as `req.Name`, and the reconciler will set up a watch for the CR using the CRD name.
