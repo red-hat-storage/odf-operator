@@ -210,7 +210,23 @@ func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRec
 	sub := &opv1a1.Subscription{}
 	sub.ObjectMeta = desiredSubscription.ObjectMeta
 	_, err = controllerutil.CreateOrUpdate(ctx, cli, sub, func() error {
-		sub.Spec = desiredSubscription.Spec
+		if sub.Spec == nil {
+			sub.Spec = &opv1a1.SubscriptionSpec{}
+		}
+
+		sub.Spec.Channel = desiredSubscription.Spec.Channel
+		sub.Spec.StartingCSV = desiredSubscription.Spec.StartingCSV
+		sub.Spec.Package = desiredSubscription.Spec.Package
+		sub.Spec.CatalogSource = desiredSubscription.Spec.CatalogSource
+		sub.Spec.CatalogSourceNamespace = desiredSubscription.Spec.CatalogSourceNamespace
+
+		if sub.Spec.Config == nil {
+			sub.Spec.Config = &opv1a1.SubscriptionConfig{}
+		}
+		if desiredSubscription.Spec.Config != nil {
+			sub.Spec.Config.Tolerations = desiredSubscription.Spec.Config.Tolerations
+			sub.Spec.Config.Env = desiredSubscription.Spec.Config.Env
+		}
 
 		if desiredSubscription.Namespace == OperatorNamespace {
 			return SetOdfSubControllerReference(ctx, cli, sub)
