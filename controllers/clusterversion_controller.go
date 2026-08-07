@@ -60,8 +60,6 @@ type ClusterVersionReconciler struct {
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleclidownloads,verbs=get;create;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
-// OCP certification requires these permissions even though bundle manifests install the policies.
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=create;update;delete
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
