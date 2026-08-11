@@ -516,6 +516,9 @@ github.com/prometheus/procfs/internal/util
 # github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20260401081049-cbfbdf9e9fad
 ## explicit; go 1.25.7
 github.com/red-hat-storage/ocs-operator/api/v4/v1
+# github.com/red-hat-storage/ocs-tls-profiles/api v0.0.0-20260427105901-0c5f6d8fcd65
+## explicit; go 1.25.0
+github.com/red-hat-storage/ocs-tls-profiles/api/v1
 # github.com/rook/rook/pkg/apis v0.0.0-20260330211118-fb400b9d29fd
 ## explicit; go 1.25.0
 github.com/rook/rook/pkg/apis/ceph.rook.io
