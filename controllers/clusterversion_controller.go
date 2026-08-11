@@ -25,6 +25,7 @@ import (
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -60,8 +61,7 @@ type ClusterVersionReconciler struct {
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleclidownloads,verbs=get;create;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
-// OCP certification requires these permissions even though bundle manifests install the policies.
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=create;update;delete
+//+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
@@ -270,6 +270,17 @@ func (r *ClusterVersionReconciler) ensureUXBackendServer(ctx context.Context) er
 		return controllerutil.SetControllerReference(odfCsv, uxBackendServerService, r.Scheme)
 	}); err != nil {
 		return fmt.Errorf("failed to create or update UX backend server service: %w", err)
+	}
+
+	desiredUXBackendServerNetworkPolicy := getUXBackendServerNetworkPolicy()
+	uxBackendServerNetworkPolicy := &networkingv1.NetworkPolicy{}
+	uxBackendServerNetworkPolicy.Name = desiredUXBackendServerNetworkPolicy.Name
+	uxBackendServerNetworkPolicy.Namespace = desiredUXBackendServerNetworkPolicy.Namespace
+	if _, err = controllerutil.CreateOrUpdate(ctx, r.Client, uxBackendServerNetworkPolicy, func() error {
+		uxBackendServerNetworkPolicy.Spec = desiredUXBackendServerNetworkPolicy.Spec
+		return controllerutil.SetControllerReference(odfCsv, uxBackendServerNetworkPolicy, r.Scheme)
+	}); err != nil {
+		return fmt.Errorf("failed to create or update UX backend server network policy: %w", err)
 	}
 
 	// Get tolerations from ODF subscription for deployment
