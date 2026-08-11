@@ -179,6 +179,7 @@ rules:
   resources:
   - storageclients
   - storageclusters
+  - tlsprofiles
   verbs:
   - get
   - list

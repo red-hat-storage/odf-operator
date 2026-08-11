@@ -23,20 +23,25 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	opv1a1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	ocstlsv1 "github.com/red-hat-storage/ocs-tls-profiles/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/red-hat-storage/odf-operator/console"
 	"github.com/red-hat-storage/odf-operator/pkg/util"
@@ -47,8 +52,11 @@ const rotatedVersionAnnotationKey = "odf.openshift.io/rotated-version"
 // ClusterVersionReconciler reconciles a ClusterVersion object
 type ClusterVersionReconciler struct {
 	client.Client
-	Scheme      *runtime.Scheme
-	ConsolePort int32
+	Scheme          *runtime.Scheme
+	ConsolePort     int32
+	cache           cache.Cache
+	controller      controller.Controller
+	tlsWatchStarted bool
 }
 
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions,verbs=get;list;watch;create;update;patch;delete
@@ -62,11 +70,13 @@ type ClusterVersionReconciler struct {
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleclidownloads,verbs=get;create;update
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consolequickstarts,verbs=get;list;create;update;delete
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update
+//+kubebuilder:rbac:groups=ocs.openshift.io,resources=tlsprofiles,verbs=get;list;watch
 
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *ClusterVersionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	r.ensureTLSProfileWatch(ctx)
 	ocpVersion, err := util.GetOpenShiftVersion(ctx, r.Client)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -109,7 +119,7 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		})
 	}
 
-	return ctrl.NewControllerManagedBy(mgr).
+	controller, err := ctrl.NewControllerManagedBy(mgr).
 		For(&configv1.ClusterVersion{}).
 		Watches(
 			&appsv1.Deployment{},
@@ -126,14 +136,82 @@ func (r *ClusterVersionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(uxBackendResourcePredicate("ux-backend-proxy")),
 		).
-		Complete(r)
+		Watches(
+			&extv1.CustomResourceDefinition{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(
+				predicate.NewPredicateFuncs(func(obj client.Object) bool {
+					return obj.GetName() == "tlsprofiles.ocs.openshift.io"
+				}),
+			),
+		).
+		Build(r)
+
+	r.controller = controller
+	r.cache = mgr.GetCache()
+
+	return err
+}
+
+func (r *ClusterVersionReconciler) ensureTLSProfileWatch(ctx context.Context) {
+	if r.tlsWatchStarted {
+		return
+	}
+	logger := log.FromContext(ctx)
+
+	if err := ocstlsv1.AddToScheme(r.Scheme); err != nil {
+		return
+	}
+
+	crd := &extv1.CustomResourceDefinition{}
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: "tlsprofiles.ocs.openshift.io"}, crd); err != nil {
+		logger.Info("TLSProfile CRD not available yet, will retry on next reconcile")
+		return
+	}
+
+	if err := r.controller.Watch(
+		source.Kind(
+			r.cache,
+			&ocstlsv1.TLSProfile{},
+			&handler.TypedEnqueueRequestForObject[*ocstlsv1.TLSProfile]{},
+			predicate.And(
+				predicate.NewTypedPredicateFuncs(func(obj *ocstlsv1.TLSProfile) bool {
+					return obj.GetName() == TLSProfileName && obj.GetNamespace() == OperatorNamespace
+				}),
+				predicate.TypedGenerationChangedPredicate[*ocstlsv1.TLSProfile]{},
+			),
+		),
+	); err != nil {
+		logger.Error(err, "Failed to add TLSProfile watch")
+		return
+	}
+	r.tlsWatchStarted = true
+	logger.Info("Dynamic watch added for TLSProfile")
 }
 
 func (r *ClusterVersionReconciler) ensureConsolePlugin(ctx context.Context, clusterVersion string) error {
 	logger := log.FromContext(ctx)
 	// The base path to where the request are sent
 	basePath := console.GetBasePath(clusterVersion)
-	nginxConf := console.NginxConf
+
+	var ossl *ocstlsv1.OpenSSLConfig
+	if r.tlsWatchStarted {
+		tlsProfile := &ocstlsv1.TLSProfile{}
+		tlsProfile.Name = TLSProfileName
+		tlsProfile.Namespace = OperatorNamespace
+		if err := r.Client.Get(ctx, client.ObjectKeyFromObject(tlsProfile), tlsProfile); client.IgnoreNotFound(err) != nil {
+			return err
+		}
+		if cfg, found := ocstlsv1.GetConfigForServer(tlsProfile, "odf.openshift.io", "console"); found {
+			if err := ocstlsv1.ValidateTLSConfig(cfg); err != nil {
+				logger.Error(err, "Invalid TLSProfile config, using nginx defaults")
+			} else {
+				ossl = ocstlsv1.OpenSSLConfigFrom(ocstlsv1.GetGoTLSConfig(cfg))
+			}
+		}
+	}
+
+	nginxConf := console.GenerateNginxConf(ossl)
 
 	// Customer portal link (CLI Tool download)
 	portalLink := console.CUSTOMER_PORTAL_LINK
@@ -148,13 +226,15 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(ctx context.Context, clus
 		return err
 	}
 
-	// Create/Update ODF console ConfigMap (nginx configuration)
+	// Create/Update ODF console ConfigMap (nginx configuration).
+	// The ConfigMap is mounted as a directory volume in the console pod.
+	// A background watcher in the container detects changes and reloads nginx.
 	odfConsoleConfigMap := console.GetNginxConfConfigMap(OperatorNamespace)
 	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, odfConsoleConfigMap, func() error {
-		if odfConsoleConfigMapData := odfConsoleConfigMap.Data["nginx.conf"]; odfConsoleConfigMapData != nginxConf {
-			logger.Info(fmt.Sprintf("Set the ConfigMap odf-console-nginx-conf data as '%s'", nginxConf))
-			odfConsoleConfigMap.Data["nginx.conf"] = nginxConf
+		if odfConsoleConfigMap.Data == nil {
+			odfConsoleConfigMap.Data = make(map[string]string)
 		}
+		odfConsoleConfigMap.Data["nginx.conf"] = nginxConf
 		return controllerutil.SetControllerReference(odfConsoleDeployment, odfConsoleConfigMap, r.Scheme)
 	})
 	if err != nil && !errors.IsAlreadyExists(err) {

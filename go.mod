@@ -13,6 +13,7 @@ require (
 	github.com/operator-framework/api v0.32.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20260401081049-cbfbdf9e9fad
+	github.com/red-hat-storage/ocs-tls-profiles/api v0.0.0-20260427105901-0c5f6d8fcd65
 	github.com/rook/rook/pkg/apis v0.0.0-20260330211118-fb400b9d29fd
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/multierr v1.11.0
