@@ -13,11 +13,11 @@ jobs:
       github.repository == 'red-hat-storage/odf-operator' &&
       github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       with:
         fetch-depth: 0
 
-    - uses: unfor19/install-aws-cli-action@v1
+    - uses: unfor19/install-aws-cli-action@e8b481e524a99f37fbd39fdc1dcb3341ab091367 #v1.0.7
       with:
         version: 2
 
