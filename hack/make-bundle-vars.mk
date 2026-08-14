@@ -86,7 +86,7 @@ endif
 # manager env variables
 OPERATOR_NAMESPACE ?= openshift-storage
 
-ODF_CONSOLE_IMG ?= quay.io/ocs-dev/odf-console:latest
+ODF_CONSOLE_IMG ?= quay.io/ocs-dev/odf-console:426364da
 UX_BACKEND_SERVER_IMAGE ?= $(IMG)
 UX_BACKEND_OAUTH_IMAGE ?= quay.io/openshift/origin-oauth-proxy:4.20.0
 
