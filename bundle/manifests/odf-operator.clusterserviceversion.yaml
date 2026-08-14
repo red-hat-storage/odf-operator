@@ -493,7 +493,7 @@ spec:
                 app: odf-console
             spec:
               containers:
-              - image: quay.io/ocs-dev/odf-console:latest
+              - image: quay.io/ocs-dev/odf-console:426364da
                 livenessProbe:
                   httpGet:
                     path: /plugin-manifest.json
