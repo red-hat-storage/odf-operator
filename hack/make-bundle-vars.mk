@@ -77,7 +77,7 @@ endif
 # manager env variables
 OPERATOR_NAMESPACE ?= openshift-storage
 
-ODF_CONSOLE_IMG ?= quay.io/ocs-dev/odf-console:latest
+ODF_CONSOLE_IMG ?= quay.io/ocs-dev/odf-console:426364da
 
 ODF_DEPS_SUBSCRIPTION_PACKAGE ?= $(ODF_DEPS_BUNDLE_NAME)
 ODF_DEPS_SUBSCRIPTION_CHANNEL ?= $(DEFAULT_CHANNEL)
