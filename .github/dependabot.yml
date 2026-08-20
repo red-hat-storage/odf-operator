@@ -6,6 +6,9 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "Asia/Kolkata"
     commit-message:
       prefix: "godeps"
     pull-request-branch-name:
@@ -62,6 +65,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+      time: "09:00"
+      timezone: "Asia/Kolkata"
     commit-message:
       prefix: "action"
     pull-request-branch-name:
