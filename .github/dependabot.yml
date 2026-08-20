@@ -2,12 +2,14 @@ version: 2
 updates:
 
   # Go module dependencies
-  - package-ecosystem: "gomod"
+  - package-ecosystem: "go-modules"
     directory: "/"
     schedule:
       interval: weekly
     commit-message:
       prefix: "godeps"
+    pull-request-branch-name:
+      template: "{prefix}-{dependency}-{version}"
     open-pull-requests-limit: 5
 
     # Wait 7 days before bumping the version, to ensure the released version is stable.
@@ -62,6 +64,8 @@ updates:
       day: monday
     commit-message:
       prefix: "action"
+    pull-request-branch-name:
+      template: "{prefix}-{dependency}-{version}"
     open-pull-requests-limit: 1
 
     # Wait 7 days before bumping the version, to ensure the released version is stable.
