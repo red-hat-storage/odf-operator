@@ -2,7 +2,7 @@ version: 2
 updates:
 
   # Go module dependencies
-  - package-ecosystem: "go-modules"
+  - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: weekly
