@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
 	github.com/noobaa/noobaa-operator/v5 v5.0.0-20251118072940-a392e524a776
-	github.com/onsi/ginkgo/v2 v2.32.0
+	github.com/onsi/ginkgo/v2 v2.32.1
 	github.com/onsi/gomega v1.42.1
 	github.com/openshift/api v0.0.0-20251120040117-916c7003ed78
 	github.com/operator-framework/api v0.45.0
@@ -17,7 +17,7 @@ require (
 	github.com/red-hat-storage/ocs-operator/api/v4 v4.0.0-20260401081049-cbfbdf9e9fad
 	github.com/red-hat-storage/ocs-tls-profiles/api v0.0.0-20260427105901-0c5f6d8fcd65
 	github.com/rook/rook/pkg/apis v0.0.0-20260330211118-fb400b9d29fd
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0
 	k8s.io/api v0.36.3
