@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 )
@@ -78,6 +79,9 @@ var (
 
 	// ErrorBadWALSegmentName is raised when parsing an invalid segment name
 	ErrorBadWALSegmentName = errors.New("invalid WAL segment name")
+
+	// ErrorBadTimelineHistoryName is raised when parsing an invalid timeline history filename
+	ErrorBadTimelineHistoryName = errors.New("invalid timeline history filename")
 )
 
 // Segment contains the information inside a WAL segment name
@@ -97,6 +101,25 @@ type Segment struct {
 func IsWALFile(name string) bool {
 	baseName := path.Base(name)
 	return WALSegmentRe.MatchString(baseName)
+}
+
+// ParseTimelineFromHistoryFilename extracts the timeline ID from a timeline history filename.
+// For example, "00000021.history" returns 33 (0x21 in hex).
+func ParseTimelineFromHistoryFilename(name string) (int, error) {
+	baseName := path.Base(name)
+
+	// Timeline history files are exactly 16 characters: 8 hex digits + ".history" (8 chars)
+	if len(baseName) < 16 || baseName[8:] != ".history" {
+		return 0, ErrorBadTimelineHistoryName
+	}
+
+	timelineHex := baseName[0:8]
+	timeline, err := strconv.ParseInt(timelineHex, 16, 32)
+	if err != nil {
+		return 0, fmt.Errorf("%w: %v", ErrorBadTimelineHistoryName, err)
+	}
+
+	return int(timeline), nil
 }
 
 // SegmentFromName retrieves the timeline, log ID and segment ID
@@ -192,4 +215,15 @@ func (segment Segment) NextSegments(size int, postgresVersion *int, segmentSize 
 	}
 
 	return result
+}
+
+// BuildWALPath constructs the full destination path for WAL operations.
+// If walPath is already absolute, it returns it as-is.
+// If walPath is relative, it joins it with pgData.
+// This prevents path duplication when PostgreSQL or pg_rewind passes absolute paths.
+func BuildWALPath(pgData, walPath string) string {
+	if !filepath.IsAbs(walPath) {
+		return filepath.Join(pgData, walPath)
+	}
+	return walPath
 }

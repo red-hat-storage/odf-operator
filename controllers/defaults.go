@@ -25,6 +25,7 @@ const (
 	OdfSubscriptionPackage      = "odf-operator"
 	OdfDepsSubscriptionPackage  = "odf-dependencies"
 	CnsaDepsSubscriptionPackage = "cnsa-dependencies"
+	TLSProfileName              = "ocs-tls-profile"
 )
 
 var (

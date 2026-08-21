@@ -13,17 +13,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ["1.25", "1.26"]
+        go: ["1.26"]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
 
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e #v7.0.0
       with:
         go-version: ${{ matrix.go }}
 
-    - uses: golangci/golangci-lint-action@v8
+    - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a #v9.3.0
       with:
         version: v2.11.4
         args: --config=./.github/workflows/conf/golangci-lint.yaml --timeout=6m

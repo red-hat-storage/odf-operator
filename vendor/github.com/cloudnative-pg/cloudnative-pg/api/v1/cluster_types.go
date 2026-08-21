@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0
 package v1
 
 import (
+	machineryapi "github.com/cloudnative-pg/machinery/pkg/api"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -109,6 +110,12 @@ const (
 	// PGBouncerPoolerUserName is the name of the role to be used for
 	PGBouncerPoolerUserName = "cnpg_pooler_pgbouncer"
 
+	// MetricsExporterUserName is the name of the dedicated role used by the
+	// metrics exporter to connect to PostgreSQL. This role has pg_monitor
+	// granted and is never a superuser, so session_user never escalates via
+	// RESET ROLE.
+	MetricsExporterUserName = "cnpg_metrics_exporter"
+
 	// MissingWALDiskSpaceExitCode is the exit code the instance manager
 	// will use to signal that there's no more WAL disk space
 	MissingWALDiskSpaceExitCode = 4
@@ -125,8 +132,8 @@ type SnapshotOwnerReference string
 
 // Constants to represent the allowed types for SnapshotOwnerReference.
 const (
-	// ShapshotOwnerReferenceNone indicates that the snapshot does not have any owner reference.
-	ShapshotOwnerReferenceNone SnapshotOwnerReference = "none"
+	// SnapshotOwnerReferenceNone indicates that the snapshot does not have any owner reference.
+	SnapshotOwnerReferenceNone SnapshotOwnerReference = "none"
 	// SnapshotOwnerReferenceBackup indicates that the snapshot is owned by the backup resource.
 	SnapshotOwnerReferenceBackup SnapshotOwnerReference = "backup"
 	// SnapshotOwnerReferenceCluster indicates that the snapshot is owned by the cluster resource.
@@ -205,7 +212,8 @@ type ImageCatalogRef struct {
 
 // +kubebuilder:validation:XValidation:rule="!(has(self.imageCatalogRef) && has(self.imageName))",message="imageName and imageCatalogRef are mutually exclusive"
 
-// ClusterSpec defines the desired state of Cluster
+// ClusterSpec defines the desired state of a PostgreSQL cluster managed by
+// CloudNativePG.
 type ClusterSpec struct {
 	// Description of this PostgreSQL cluster
 	// +optional
@@ -343,7 +351,7 @@ type ClusterSpec struct {
 
 	// The time in seconds that controls the window of time reserved for the smart shutdown of Postgres to complete.
 	// Make sure you reserve enough time for the operator to request a fast shutdown of Postgres
-	// (that is: `stopDelay` - `smartShutdownTimeout`).
+	// (that is: `stopDelay` - `smartShutdownTimeout`). Default is 180 seconds.
 	// +kubebuilder:default:=180
 	// +optional
 	SmartShutdownTimeout *int32 `json:"smartShutdownTimeout,omitempty"`
@@ -407,7 +415,10 @@ type ClusterSpec struct {
 
 	// Method to follow to upgrade the primary server during a rolling
 	// update procedure, after all replicas have been successfully updated:
-	// it can be with a switchover (`switchover`) or in-place (`restart` - default)
+	// it can be with a switchover (`switchover`) or in-place (`restart` - default).
+	// Note: when using `switchover`, the operator will reject updates that change both
+	// the image name and PostgreSQL configuration parameters simultaneously to avoid
+	// configuration mismatches during the switchover process.
 	// +kubebuilder:default:=restart
 	// +kubebuilder:validation:Enum:=switchover;restart
 	// +optional
@@ -460,6 +471,19 @@ type ClusterSpec struct {
 	// Defaults to: `RuntimeDefault`
 	// +optional
 	SeccompProfile *corev1.SeccompProfile `json:"seccompProfile,omitempty"`
+
+	// Override the PodSecurityContext applied to every Pod of the cluster.
+	// When set, this overrides the operator's default PodSecurityContext for the cluster.
+	// If omitted, the operator defaults are used.
+	// This field doesn't have any effect if SecurityContextConstraints are present.
+	// +optional
+	PodSecurityContext *corev1.PodSecurityContext `json:"podSecurityContext,omitempty"`
+
+	// Override the SecurityContext applied to every Container in the Pod of the cluster.
+	// When set, this overrides the operator's default Container SecurityContext.
+	// If omitted, the operator defaults are used.
+	// +optional
+	SecurityContext *corev1.SecurityContext `json:"securityContext,omitempty"`
 
 	// The tablespaces configuration
 	// +optional
@@ -797,7 +821,8 @@ type AvailableArchitecture struct {
 	Hash string `json:"hash"`
 }
 
-// ClusterStatus defines the observed state of Cluster
+// ClusterStatus defines the observed state of a PostgreSQL cluster managed by
+// CloudNativePG.
 type ClusterStatus struct {
 	// The total number of PVC Groups detected in the cluster. It may differ from the number of existing instance pods.
 	// +optional
@@ -1279,8 +1304,9 @@ type NodeMaintenanceWindow struct {
 // the primary server of the cluster as part of rolling updates
 type PrimaryUpdateStrategy string
 
-// PrimaryUpdateMethod contains the method to use when upgrading
-// the primary server of the cluster as part of rolling updates
+// PrimaryUpdateMethod defines the method to use when upgrading
+// the primary instance of the cluster as part of rolling updates.
+// The default method is "restart"
 type PrimaryUpdateMethod string
 
 const (
@@ -1295,7 +1321,10 @@ const (
 	PrimaryUpdateStrategyUnsupervised PrimaryUpdateStrategy = "unsupervised"
 
 	// PrimaryUpdateMethodSwitchover means that the operator will switchover to another updated
-	// replica when it needs to upgrade the primary instance
+	// replica when it needs to upgrade the primary instance.
+	// Note: when using this method, the operator will reject updates that change both
+	// the image name and PostgreSQL configuration parameters simultaneously to avoid
+	// configuration mismatches during the switchover process.
 	PrimaryUpdateMethodSwitchover PrimaryUpdateMethod = "switchover"
 
 	// PrimaryUpdateMethodRestart means that the operator will restart the primary instance in-place
@@ -1387,6 +1416,12 @@ type SynchronousReplicaConfiguration struct {
 	// +kubebuilder:validation:Enum=required;preferred
 	// +optional
 	DataDurability DataDurabilityLevel `json:"dataDurability,omitempty"`
+
+	// FailoverQuorum enables a quorum-based check before failover, improving
+	// data durability and safety during failover events in CloudNativePG-managed
+	// PostgreSQL clusters.
+	// +optional
+	FailoverQuorum bool `json:"failoverQuorum"`
 }
 
 // PostgresConfiguration defines the PostgreSQL configuration
@@ -1445,11 +1480,11 @@ type PostgresConfiguration struct {
 type ExtensionConfiguration struct {
 	// The name of the extension, required
 	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9_]*[a-z0-9])?$`
 	Name string `json:"name"`
 
-	// The image containing the extension, required
-	// +kubebuilder:validation:XValidation:rule="has(self.reference)",message="An image reference is required"
+	// The image containing the extension.
+	// +optional
 	ImageVolumeSource corev1.ImageVolumeSource `json:"image"`
 
 	// The list of directories inside the image which should be added to extension_control_path.
@@ -1465,6 +1500,43 @@ type ExtensionConfiguration struct {
 	// The list of directories inside the image which should be added to ld_library_path.
 	// +optional
 	LdLibraryPath []string `json:"ld_library_path,omitempty"`
+
+	// A list of directories within the image to be appended to the
+	// PostgreSQL process's `PATH` environment variable.
+	// +optional
+	BinPath []string `json:"bin_path,omitempty"`
+
+	// Env is a list of custom environment variables to be set in the
+	// PostgreSQL process for this extension. It is the responsibility of the
+	// cluster administrator to ensure the variables are correct for the
+	// specific extension. Note that changes to these variables require
+	// a manual cluster restart to take effect.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	Env []ExtensionEnvVar `json:"env,omitempty"`
+}
+
+// ExtensionEnvVar defines an environment variable for a specific extension
+// image volume.
+type ExtensionEnvVar struct {
+	// Name of the environment variable to be injected into the
+	// PostgreSQL process.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z_][a-zA-Z0-9_]*$`
+	Name string `json:"name"`
+
+	// Value of the environment variable. CloudNativePG performs a direct
+	// replacement of this value, with support for placeholder expansion.
+	// The ${`image_root`} placeholder resolves to the absolute mount path
+	// of the extension's volume (e.g., `/extensions/my-extension`). This
+	// is particularly useful for allowing applications or libraries to
+	// locate specific directories within the mounted image.
+	// Unrecognized placeholders are rejected. To include a literal ${...}
+	// in the value, escape it as $${...}.
+	//
+	// +kubebuilder:validation:MinLength=1
+	Value string `json:"value"`
 }
 
 // BootstrapConfiguration contains information about how to create the PostgreSQL
@@ -1633,6 +1705,7 @@ type BootstrapInitDB struct {
 	Secret *LocalObjectReference `json:"secret,omitempty"`
 
 	// The list of options that must be passed to initdb when creating the cluster.
+	//
 	// Deprecated: This could lead to inconsistent configurations,
 	// please use the explicit provided parameters instead.
 	// If defined, explicit values will be ignored.
@@ -1782,19 +1855,58 @@ type Import struct {
 	// +optional
 	SchemaOnly bool `json:"schemaOnly,omitempty"`
 
-	// List of custom options to pass to the `pg_dump` command. IMPORTANT:
-	// Use these options with caution and at your own risk, as the operator
-	// does not validate their content. Be aware that certain options may
-	// conflict with the operator's intended functionality or design.
+	// List of custom options to pass to the `pg_dump` command.
+	//
+	// IMPORTANT: Use with caution. The operator does not validate these options,
+	// and certain flags may interfere with its intended functionality or design.
+	// You are responsible for ensuring that the provided options are compatible
+	// with your environment and desired behavior.
+	//
 	// +optional
 	PgDumpExtraOptions []string `json:"pgDumpExtraOptions,omitempty"`
 
-	// List of custom options to pass to the `pg_restore` command. IMPORTANT:
-	// Use these options with caution and at your own risk, as the operator
-	// does not validate their content. Be aware that certain options may
-	// conflict with the operator's intended functionality or design.
+	// List of custom options to pass to the `pg_restore` command.
+	//
+	// IMPORTANT: Use with caution. The operator does not validate these options,
+	// and certain flags may interfere with its intended functionality or design.
+	// You are responsible for ensuring that the provided options are compatible
+	// with your environment and desired behavior.
+	//
 	// +optional
 	PgRestoreExtraOptions []string `json:"pgRestoreExtraOptions,omitempty"`
+
+	// Custom options to pass to the `pg_restore` command during the `pre-data`
+	// section. This setting overrides the generic `pgRestoreExtraOptions` value.
+	//
+	// IMPORTANT: Use with caution. The operator does not validate these options,
+	// and certain flags may interfere with its intended functionality or design.
+	// You are responsible for ensuring that the provided options are compatible
+	// with your environment and desired behavior.
+	//
+	// +optional
+	PgRestorePredataOptions []string `json:"pgRestorePredataOptions,omitempty"`
+
+	// Custom options to pass to the `pg_restore` command during the `data`
+	// section. This setting overrides the generic `pgRestoreExtraOptions` value.
+	//
+	// IMPORTANT: Use with caution. The operator does not validate these options,
+	// and certain flags may interfere with its intended functionality or design.
+	// You are responsible for ensuring that the provided options are compatible
+	// with your environment and desired behavior.
+	//
+	// +optional
+	PgRestoreDataOptions []string `json:"pgRestoreDataOptions,omitempty"`
+
+	// Custom options to pass to the `pg_restore` command during the `post-data`
+	// section. This setting overrides the generic `pgRestoreExtraOptions` value.
+	//
+	// IMPORTANT: Use with caution. The operator does not validate these options,
+	// and certain flags may interfere with its intended functionality or design.
+	// You are responsible for ensuring that the provided options are compatible
+	// with your environment and desired behavior.
+	//
+	// +optional
+	PgRestorePostdataOptions []string `json:"pgRestorePostdataOptions,omitempty"`
 }
 
 // ImportSource describes the source for the logical snapshot
@@ -1895,7 +2007,7 @@ type DataSource struct {
 // BackupSource contains the backup we need to restore from, plus some
 // information that could be needed to correctly restore it.
 type BackupSource struct {
-	LocalObjectReference `json:",inline"`
+	machineryapi.LocalObjectReference `json:",inline"`
 	// EndpointCA store the CA bundle of the barman endpoint.
 	// Useful when using self-signed certificates to avoid
 	// errors with certificate issuer and barman-cloud-wal-archive.
@@ -1953,7 +2065,8 @@ type RecoveryTarget struct {
 	// +optional
 	TargetLSN string `json:"targetLSN,omitempty"`
 
-	// The target time as a timestamp in the RFC3339 standard
+	// The target time as a timestamp in RFC3339 format or PostgreSQL timestamp format.
+	// Timestamps without an explicit timezone are interpreted as UTC.
 	// +optional
 	TargetTime string `json:"targetTime,omitempty"`
 
@@ -2151,6 +2264,9 @@ type MonitoringConfiguration struct {
 
 	// Enable or disable the `PodMonitor`
 	// +kubebuilder:default:=false
+	//
+	// Deprecated: This feature will be removed in an upcoming release. If
+	// you need this functionality, you can create a PodMonitor manually.
 	// +optional
 	EnablePodMonitor bool `json:"enablePodMonitor,omitempty"`
 
@@ -2160,12 +2276,26 @@ type MonitoringConfiguration struct {
 	TLSConfig *ClusterMonitoringTLSConfiguration `json:"tls,omitempty"`
 
 	// The list of metric relabelings for the `PodMonitor`. Applied to samples before ingestion.
+	//
+	// Deprecated: This feature will be removed in an upcoming release. If
+	// you need this functionality, you can create a PodMonitor manually.
 	// +optional
 	PodMonitorMetricRelabelConfigs []monitoringv1.RelabelConfig `json:"podMonitorMetricRelabelings,omitempty"`
 
 	// The list of relabelings for the `PodMonitor`. Applied to samples before scraping.
+	//
+	// Deprecated: This feature will be removed in an upcoming release. If
+	// you need this functionality, you can create a PodMonitor manually.
 	// +optional
 	PodMonitorRelabelConfigs []monitoringv1.RelabelConfig `json:"podMonitorRelabelings,omitempty"`
+
+	// The interval during which metrics computed from queries are considered current.
+	// Once it is exceeded, a new scrape will trigger a rerun
+	// of the queries.
+	// If not set, defaults to 30 seconds, in line with Prometheus scraping defaults.
+	// Setting this to zero disables the caching mechanism and can cause heavy load on the PostgreSQL server.
+	// +optional
+	MetricsQueriesTTL *metav1.Duration `json:"metricsQueriesTTL,omitempty"`
 }
 
 // ClusterMonitoringTLSConfiguration is the type containing the TLS configuration
@@ -2307,8 +2437,9 @@ type PluginConfiguration struct {
 	// +optional
 	Enabled *bool `json:"enabled,omitempty"`
 
-	// Only one plugin can be declared as WALArchiver.
-	// Cannot be active if ".spec.backup.barmanObjectStore" configuration is present.
+	// Marks the plugin as the WAL archiver. At most one plugin can be
+	// designated as a WAL archiver. This cannot be enabled if the
+	// `.spec.backup.barmanObjectStore` configuration is present.
 	// +kubebuilder:default:=false
 	// +optional
 	IsWALArchiver *bool `json:"isWALArchiver,omitempty"`
@@ -2460,7 +2591,8 @@ type RoleConfiguration struct {
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="Cluster current status"
 // +kubebuilder:printcolumn:name="Primary",type="string",JSONPath=".status.currentPrimary",description="Primary pod"
 
-// Cluster is the Schema for the PostgreSQL API
+// Cluster defines the API schema for a highly available PostgreSQL database cluster
+// managed by CloudNativePG.
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
@@ -2544,8 +2676,4 @@ type ConfigMapResourceVersion struct {
 	// Map keys are the config map names, map values are the versions
 	// +optional
 	Metrics map[string]string `json:"metrics,omitempty"`
-}
-
-func init() {
-	SchemeBuilder.Register(&Cluster{}, &ClusterList{})
 }

@@ -16,15 +16,21 @@ limitations under the License.
 
 package console
 
-// Update it with correct configuration
-var NginxConf = `
-# Do not comment/un-comment without any reference.
+import (
+	"fmt"
+	"strings"
 
+	ocstlsv1 "github.com/red-hat-storage/ocs-tls-profiles/api/v1"
+)
+
+// nginxConfTemplate is the full nginx.conf. The console image symlinks
+// /etc/nginx/nginx.conf -> /opt/app-root/etc/nginx.d/nginx.conf so
+// this ConfigMap content becomes the main nginx configuration.
+const nginxConfTemplate = `
 worker_processes auto;
 error_log /var/log/nginx/error.log;
 pid /var/lib/nginx/tmp/nginx.pid;
 
-# Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
 include /usr/share/nginx/modules/*.conf;
 
 events {
@@ -32,7 +38,6 @@ events {
 }
 
 http {
-    # Use directories writable by unprivileged users.
     client_body_temp_path /var/lib/nginx/tmp/client_temp;
     proxy_temp_path       /var/lib/nginx/tmp/proxy_temp_path;
     fastcgi_temp_path     /var/lib/nginx/tmp/fastcgi_temp;
@@ -54,16 +59,12 @@ http {
     include             /etc/nginx/mime.types;
     default_type        application/octet-stream;
 
-    # Load modular configuration files from the /etc/nginx/conf.d directory.
-    # See http://nginx.org/en/docs/ngx_core_module.html#include
-    # for more information.
-    include /opt/app-root/etc/nginx.d/*.conf;
-
     server {
         listen       9001 ssl;
         listen       [::]:9001 ssl;
         ssl_certificate /var/serving-cert/tls.crt;
         ssl_certificate_key /var/serving-cert/tls.key;
+        %s
         location / {
             root   /opt/app-root/src;
         }
@@ -81,6 +82,29 @@ http {
         expires off;
         etag off;
     }
-
 }
 `
+
+func GenerateNginxConf(ossl *ocstlsv1.OpenSSLConfig) string {
+	return fmt.Sprintf(nginxConfTemplate, buildTLSDirectives(ossl))
+}
+
+func buildTLSDirectives(ossl *ocstlsv1.OpenSSLConfig) string {
+	if ossl == nil {
+		return ""
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "        ssl_protocols %s;\n", ossl.Protocol)
+	if len(ossl.Ciphers) > 0 {
+		ciphers := strings.Join(ossl.Ciphers, ":")
+		if ossl.Protocol == "TLSv1.3" {
+			fmt.Fprintf(&b, "        ssl_conf_command Ciphersuites %s;\n", ciphers)
+		} else {
+			fmt.Fprintf(&b, "        ssl_ciphers %s;\n", ciphers)
+		}
+	}
+	if len(ossl.Groups) > 0 {
+		fmt.Fprintf(&b, "        ssl_conf_command Groups %s;\n", strings.Join(ossl.Groups, ":"))
+	}
+	return b.String()
+}
