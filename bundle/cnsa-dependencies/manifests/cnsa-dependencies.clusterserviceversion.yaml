@@ -4,7 +4,7 @@ metadata:
   annotations:
     alm-examples: '[]'
     createdAt: "2026-03-31T06:09:51Z"
-    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "4.23"}]'
+    olm.properties: '[{"type": "olm.maxOpenShiftVersion", "value": "5.1"}]'
     olm.skipRange: ""
     operators.operatorframework.io/builder: operator-sdk-v1.31.0
     operators.operatorframework.io/operator-type: non-standalone
@@ -13,7 +13,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: cnsa-dependencies.v4.22.0
+  name: cnsa-dependencies.v5.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -47,4 +47,4 @@ spec:
   minKubeVersion: 1.16.0
   provider:
     name: Red Hat
-  version: 4.22.0
+  version: 5.0.0

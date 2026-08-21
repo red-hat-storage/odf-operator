@@ -2,23 +2,23 @@ dependencies:
 - type: olm.package
   value:
     packageName: ocs-tls-profiles
-    version: "4.22.0"
+    version: "5.0.0"
 - type: olm.package
   value:
     packageName: ocs-operator
-    version: "4.22.0"
+    version: "5.0.0"
 - type: olm.package
   value:
     packageName: rook-ceph-operator
-    version: "4.22.0"
+    version: "5.0.0"
 - type: olm.package
   value:
     packageName: ocs-client-operator
-    version: "4.22.0"
+    version: "5.0.0"
 - type: olm.package
   value:
     packageName: noobaa-operator
-    version: "5.22.0"
+    version: "5.23.0"
 - type: olm.package
   value:
     packageName: csi-addons
@@ -26,15 +26,15 @@ dependencies:
 - type: olm.package
   value:
     packageName: odf-external-snapshotter-operator
-    version: "4.22.0"
+    version: "5.0.0"
 - type: olm.package
   value:
     packageName: cephcsi-operator
-    version: "4.22.0"
+    version: "5.0.0"
 - type: olm.package
   value:
     packageName: odf-prometheus-operator
-    version: "4.22.0"
+    version: "5.0.0"
 - type: olm.package
   value:
     packageName: recipe
