@@ -2,7 +2,7 @@ apiVersion: v1
 data:
   CEPHCSI: |
     channel: alpha
-    csv: cephcsi-operator.v4.22.0
+    csv: cephcsi-operator.v5.0.0
     pkg: cephcsi-operator
     scaleUpOnInstanceOf:
       - operatorconfigs.csi.ceph.io
@@ -15,7 +15,7 @@ data:
       - clusters.scale.spectrum.ibm.com
   CNSA_DEPS: |
     channel: alpha
-    csv: cnsa-dependencies.v4.22.0
+    csv: cnsa-dependencies.v5.0.0
     pkg: cnsa-dependencies
     namespace: ibm-spectrum-scale
   CSIADDONS: |
@@ -38,19 +38,19 @@ data:
       - flashsystemclusters.odf.ibm.com
   NOOBAA: |
     channel: alpha
-    csv: noobaa-operator.v5.22.0
+    csv: noobaa-operator.v5.23.0
     pkg: noobaa-operator
     scaleUpOnInstanceOf:
       - noobaas.noobaa.io
   OCS: |
     channel: alpha
-    csv: ocs-operator.v4.22.0
+    csv: ocs-operator.v5.0.0
     pkg: ocs-operator
     scaleUpOnInstanceOf:
       - storageclusters.ocs.openshift.io
   OCS_CLIENT: |
     channel: alpha
-    csv: ocs-client-operator.v4.22.0
+    csv: ocs-client-operator.v5.0.0
     pkg: ocs-client-operator
     scaleUpOnInstanceOf:
       - storageclients.ocs.openshift.io
@@ -59,15 +59,15 @@ data:
       - cephclusters.ceph.rook.io
   OCS_TLS: |
     channel: alpha
-    csv: ocs-tls-profiles.v4.22.0
+    csv: ocs-tls-profiles.v5.0.0
     pkg: ocs-tls-profiles
   ODF_DEPS: |
     channel: alpha
-    csv: odf-dependencies.v4.22.0
+    csv: odf-dependencies.v5.0.0
     pkg: odf-dependencies
   PROMETHEUS: |
     channel: beta
-    csv: odf-prometheus-operator.v4.22.0
+    csv: odf-prometheus-operator.v5.0.0
     pkg: odf-prometheus-operator
     scaleUpOnInstanceOf:
       - alertmanagers.monitoring.coreos.com
@@ -78,16 +78,16 @@ data:
     pkg: recipe
   ROOK: |
     channel: alpha
-    csv: rook-ceph-operator.v4.22.0
+    csv: rook-ceph-operator.v5.0.0
     pkg: rook-ceph-operator
     scaleUpOnInstanceOf:
       - cephclusters.ceph.rook.io
   SNAPSHOT_CONTROLLER: |
     channel: alpha
-    csv: odf-external-snapshotter-operator.v4.22.0
+    csv: odf-external-snapshotter-operator.v5.0.0
     pkg: odf-external-snapshotter-operator
     scaleUpOnInstanceOf:
       - volumegroupsnapshotclasses.groupsnapshot.storage.openshift.io
 kind: ConfigMap
 metadata:
-  name: odf-operator-pkgs-config-4.22.0
+  name: odf-operator-pkgs-config-5.0.0
