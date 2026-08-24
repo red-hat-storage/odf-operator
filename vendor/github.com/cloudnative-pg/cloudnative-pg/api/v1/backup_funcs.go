@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	volumesnapshot "github.com/kubernetes-csi/external-snapshotter/client/v8/apis/volumesnapshot/v1"
+	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v8/apis/volumesnapshot/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -63,17 +63,18 @@ func (backupStatus *BackupStatus) SetAsCompleted() {
 }
 
 // SetAsStarted marks a certain backup as started
-func (backupStatus *BackupStatus) SetAsStarted(podName, containerID string, method BackupMethod) {
+func (backupStatus *BackupStatus) SetAsStarted(podName, containerID, sessionID string, method BackupMethod) {
 	backupStatus.Phase = BackupPhaseStarted
 	backupStatus.InstanceID = &InstanceID{
 		PodName:     podName,
 		ContainerID: containerID,
+		SessionID:   sessionID,
 	}
 	backupStatus.Method = method
 }
 
 // SetSnapshotElements sets the Snapshots field from a list of VolumeSnapshot
-func (snapshotStatus *BackupSnapshotStatus) SetSnapshotElements(snapshots []volumesnapshot.VolumeSnapshot) {
+func (snapshotStatus *BackupSnapshotStatus) SetSnapshotElements(snapshots []volumesnapshotv1.VolumeSnapshot) {
 	snapshotNames := make([]BackupSnapshotElementStatus, len(snapshots))
 	for idx, volumeSnapshot := range snapshots {
 		snapshotNames[idx] = BackupSnapshotElementStatus{
@@ -291,4 +292,14 @@ func (backup *Backup) EnsureGVKIsPresent() {
 // IsEmpty checks if the plugin configuration is empty or not
 func (configuration *BackupPluginConfiguration) IsEmpty() bool {
 	return configuration == nil || len(configuration.Name) == 0
+}
+
+// IsManagedByInstance returns true if the backup is managed by the instance manager
+func (b BackupMethod) IsManagedByInstance() bool {
+	return b == BackupMethodPlugin || b == BackupMethodBarmanObjectStore
+}
+
+// IsManagedByOperator returns true if the backup is managed by the operator
+func (b BackupMethod) IsManagedByOperator() bool {
+	return b == BackupMethodVolumeSnapshot
 }

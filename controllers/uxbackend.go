@@ -8,6 +8,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -115,7 +116,7 @@ func getUXBackendServerDeployment(tolerations []corev1.Toleration) *appsv1.Deplo
 						},
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								corev1.ResourceCPU:    resource.MustParse("50m"),
+								corev1.ResourceCPU:    resource.MustParse("10m"),
 								corev1.ResourceMemory: resource.MustParse("128Mi"),
 							},
 							Limits: corev1.ResourceList{
@@ -244,4 +245,33 @@ func getUXBackendServerService() *corev1.Service {
 		Type:            "ClusterIP",
 	}
 	return service
+}
+
+func getUXBackendServerNetworkPolicy() *networkingv1.NetworkPolicy {
+	protocol := corev1.ProtocolTCP
+	return &networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      uxBackendProxyName,
+			Namespace: OperatorNamespace,
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PodSelector: metav1.LabelSelector{MatchLabels: map[string]string{"app": "ux-backend-server"}},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
+			Ingress: []networkingv1.NetworkPolicyIngressRule{{
+				From: []networkingv1.NetworkPolicyPeer{{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"kubernetes.io/metadata.name": "openshift-console",
+					}},
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"app":       "console",
+						"component": "ui",
+					}},
+				}},
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: &protocol,
+					Port:     &intstr.IntOrString{IntVal: 8888},
+				}},
+			}},
+		},
+	}
 }

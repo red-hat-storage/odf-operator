@@ -1,0 +1,84 @@
+version: 2
+updates:
+
+  # Go module dependencies
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "Asia/Kolkata"
+    commit-message:
+      prefix: "godeps"
+    pull-request-branch-name:
+      template: "{prefix}-{dependency}-{version}"
+    open-pull-requests-limit: 5
+
+    # Wait 7 days before bumping the version, to ensure the released version is stable.
+    cooldown:
+      semver-minor-days: 7
+      semver-patch-days: 7
+
+    # Allow only direct go dependency updates.
+    allow:
+      - dependency-type: direct
+
+    # Group related dependency updates into a single PR. This reduces the
+    # number of PRs and keeps dependencies that are typically upgraded
+    # together in sync.
+    groups:
+      k8s-dependencies:
+        patterns:
+          - "k8s.io*"
+          - "sigs.k8s.io*"
+      olm-dependencies:
+        patterns:
+          - "github.com/operator-framework*"
+      test-dependencies:
+        patterns:
+          - "github.com/onsi/ginkgo*"
+          - "github.com/onsi/gomega*"
+          - "github.com/stretchr/testify"
+      other-dependencies:
+        patterns:
+          - "*"
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+    # Do not update these dependencies automatically. They are pinned
+    # to specific commits rather than release tags, so Dependabot
+    # cannot safely determine an appropriate version to upgrade to.
+    ignore:
+      - dependency-name: "github.com/noobaa/noobaa-operator/v5"
+      - dependency-name: "github.com/openshift/api"
+      - dependency-name: "github.com/red-hat-storage/ocs-operator/api/v4"
+      - dependency-name: "github.com/red-hat-storage/ocs-tls-profiles/api"
+      - dependency-name: "github.com/rook/rook/pkg/apis"
+      - dependency-name: "k8s.io/utils"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: "Asia/Kolkata"
+    commit-message:
+      prefix: "action"
+    pull-request-branch-name:
+      template: "{prefix}-{dependency}-{version}"
+    open-pull-requests-limit: 1
+
+    # Wait 7 days before bumping the version, to ensure the released version is stable.
+    cooldown:
+      default-days: 7
+
+    # Combine all GitHub Actions version updates into one weekly PR.
+    groups:
+      github-actions:
+        patterns:
+          - "*"

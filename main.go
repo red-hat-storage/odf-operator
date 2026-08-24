@@ -32,6 +32,7 @@ import (
 	opv2 "github.com/operator-framework/api/pkg/operators/v2"
 	admrv1 "k8s.io/api/admissionregistration/v1"
 	extv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
@@ -196,7 +197,9 @@ func getCacheOptions() (cache.Options, error) {
 		"openshift-storage-extended": {},
 	}
 
-	relevantCRDNames := map[string]bool{}
+	relevantCRDNames := map[string]bool{
+		"tlsprofiles.ocs.openshift.io": true,
+	}
 
 	controllers.ParseOdfConfigMapRecords(setupLog, configmap, func(record *controllers.OdfOperatorConfigMapRecord, key, rawValue string) {
 
@@ -209,16 +212,26 @@ func getCacheOptions() (cache.Options, error) {
 
 	cacheOptions := cache.Options{
 		DefaultNamespaces: defaultNamespaces,
-		// Set cache for relevant CRDs only
+		// Cache full objects for relevant CRDs only.
+		// Keep non-relevant CRDs as name-only stubs.
 		ByObject: map[client.Object]cache.ByObject{
 			&extv1.CustomResourceDefinition{}: {
 				Transform: func(obj any) (any, error) {
-					if crd, ok := obj.(*extv1.CustomResourceDefinition); ok {
-						if ok := relevantCRDNames[crd.Name]; ok {
-							return crd, nil // keep in cache
-						}
+					crd, ok := obj.(*extv1.CustomResourceDefinition)
+					if !ok {
+						return obj, nil
 					}
-					return nil, nil // drop from cache
+					if relevantCRDNames[crd.Name] {
+						return crd, nil
+					}
+					// Mutate in place: keep only the name for non-relevant CRDs.
+					name := crd.Name
+					*crd = extv1.CustomResourceDefinition{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: name,
+						},
+					}
+					return crd, nil
 				},
 			},
 		},
