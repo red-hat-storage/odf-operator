@@ -258,15 +258,25 @@ func getUXBackendServerNetworkPolicy() *networkingv1.NetworkPolicy {
 			PodSelector: metav1.LabelSelector{MatchLabels: map[string]string{"app": "ux-backend-server"}},
 			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
 			Ingress: []networkingv1.NetworkPolicyIngressRule{{
-				From: []networkingv1.NetworkPolicyPeer{{
-					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						"kubernetes.io/metadata.name": "openshift-console",
-					}},
-					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						"app":       "console",
-						"component": "ui",
-					}},
-				}},
+				From: []networkingv1.NetworkPolicyPeer{
+					{
+						NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+							"kubernetes.io/metadata.name": "openshift-console",
+						}},
+						PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+							"app":       "console",
+							"component": "ui",
+						}},
+					},
+					{
+						// Allow the multicluster orchestrator addon agent (runs in
+						// openshift-storage) to reach /onboarding/peer-tokens for
+						// MirrorPeer peering.
+						NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+							"kubernetes.io/metadata.name": OperatorNamespace,
+						}},
+					},
+				},
 				Ports: []networkingv1.NetworkPolicyPort{{
 					Protocol: &protocol,
 					Port:     &intstr.IntOrString{IntVal: 8888},
