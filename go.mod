@@ -1,6 +1,6 @@
 module github.com/red-hat-storage/odf-operator
 
-go 1.23.1
+go 1.23.10
 
 require (
 	github.com/go-logr/logr v1.4.3
