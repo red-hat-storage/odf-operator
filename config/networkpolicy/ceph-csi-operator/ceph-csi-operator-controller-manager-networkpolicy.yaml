@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ceph-csi-operator-controller-manager
+  namespace: openshift-storage
+spec:
+  podSelector:
+    matchLabels:
+      control-plane: ceph-csi-op-controller-manager
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-monitoring
+    ports:
+    - protocol: TCP
+      port: 8443
