@@ -17,6 +17,7 @@ limitations under the License.
 package console
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -109,7 +110,7 @@ func TestGenerateNginxConf_PreservesBaseConfig(t *testing.T) {
 
 	conf := GenerateNginxConf(ossl)
 	for _, expected := range []string{
-		"worker_processes auto;",
+		"worker_processes 8;",
 		"ssl_certificate /var/serving-cert/tls.crt;",
 		"ssl_certificate_key /var/serving-cert/tls.key;",
 		"location /compatibility/",
@@ -118,5 +119,48 @@ func TestGenerateNginxConf_PreservesBaseConfig(t *testing.T) {
 		if !strings.Contains(conf, expected) {
 			t.Errorf("expected base config to contain %q", expected)
 		}
+	}
+}
+
+func TestGetNginxWorkerProcesses(t *testing.T) {
+	tests := []struct {
+		name     string
+		envValue string
+		setEnv   bool
+		want     string
+	}{
+		{name: "default when unset", setEnv: false, want: DefaultNginxWorkerProcesses},
+		{name: "default when empty", setEnv: true, envValue: "", want: DefaultNginxWorkerProcesses},
+		{name: "positive integer", setEnv: true, envValue: "4", want: "4"},
+		{name: "auto", setEnv: true, envValue: "auto", want: "auto"},
+		{name: "AUTO case insensitive", setEnv: true, envValue: "AUTO", want: "auto"},
+		{name: "invalid falls back", setEnv: true, envValue: "not-a-number", want: DefaultNginxWorkerProcesses},
+		{name: "zero falls back", setEnv: true, envValue: "0", want: DefaultNginxWorkerProcesses},
+		{name: "negative falls back", setEnv: true, envValue: "-1", want: DefaultNginxWorkerProcesses},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setEnv {
+				t.Setenv(NginxWorkerProcessesEnvVar, tt.envValue)
+			} else {
+				t.Setenv(NginxWorkerProcessesEnvVar, "")
+				_ = os.Unsetenv(NginxWorkerProcessesEnvVar)
+			}
+			if got := GetNginxWorkerProcesses(); got != tt.want {
+				t.Errorf("GetNginxWorkerProcesses() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateNginxConf_WorkerProcessesFromEnv(t *testing.T) {
+	t.Setenv(NginxWorkerProcessesEnvVar, "2")
+	conf := GenerateNginxConf(nil)
+	if !strings.Contains(conf, "worker_processes 2;") {
+		t.Error("expected worker_processes to use CONSOLE_NGINX_WORKER_PROCESSES env value")
+	}
+	if strings.Contains(conf, "worker_processes auto;") {
+		t.Error("expected worker_processes auto to be replaced")
 	}
 }
