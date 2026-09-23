@@ -18,16 +18,30 @@ package console
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	ocstlsv1 "github.com/red-hat-storage/ocs-tls-profiles/api/v1"
+)
+
+const (
+	// DefaultNginxWorkerProcesses is used when CONSOLE_NGINX_WORKER_PROCESSES
+	// is unset or invalid. A fixed value avoids OOM/FD exhaustion on high-CPU
+	// nodes where "auto" would spawn one worker per CPU.
+	DefaultNginxWorkerProcesses = "8"
+
+	// NginxWorkerProcessesEnvVar overrides DefaultNginxWorkerProcesses when set
+	// on the operator pod via Subscription spec.config.env. Accepted values are
+	// a positive integer or "auto".
+	NginxWorkerProcessesEnvVar = "CONSOLE_NGINX_WORKER_PROCESSES"
 )
 
 // nginxConfTemplate is the full nginx.conf. The console image symlinks
 // /etc/nginx/nginx.conf -> /opt/app-root/etc/nginx.d/nginx.conf so
 // this ConfigMap content becomes the main nginx configuration.
 const nginxConfTemplate = `
-worker_processes auto;
+worker_processes %s;
 error_log /var/log/nginx/error.log;
 pid /var/lib/nginx/tmp/nginx.pid;
 
@@ -85,8 +99,26 @@ http {
 }
 `
 
+// GetNginxWorkerProcesses returns the nginx worker_processes value.
+// Prefer CONSOLE_NGINX_WORKER_PROCESSES when it is a positive integer or "auto";
+// otherwise fall back to DefaultNginxWorkerProcesses.
+func GetNginxWorkerProcesses() string {
+	value := strings.TrimSpace(os.Getenv(NginxWorkerProcessesEnvVar))
+	if value == "" {
+		return DefaultNginxWorkerProcesses
+	}
+	if strings.EqualFold(value, "auto") {
+		return "auto"
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil || n < 1 {
+		return DefaultNginxWorkerProcesses
+	}
+	return strconv.Itoa(n)
+}
+
 func GenerateNginxConf(ossl *ocstlsv1.OpenSSLConfig) string {
-	return fmt.Sprintf(nginxConfTemplate, buildTLSDirectives(ossl))
+	return fmt.Sprintf(nginxConfTemplate, GetNginxWorkerProcesses(), buildTLSDirectives(ossl))
 }
 
 func buildTLSDirectives(ossl *ocstlsv1.OpenSSLConfig) string {
