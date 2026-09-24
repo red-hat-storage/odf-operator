@@ -20,7 +20,7 @@ func parseDockerRegistrySecret(secret *corev1.Secret) (*types.DockerAuthConfig, 
 	}
 	var config *types.DockerAuthConfig
 	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal docker config: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal docker config: %w", err)
 	}
 	return config, nil
 }
@@ -29,44 +29,43 @@ func getRegistryCredentials(ctx context.Context, secretName string, secretNamesp
 	secret := &corev1.Secret{}
 	if err := client.Get(ctx, k8stypes.NamespacedName{Name: secretName, Namespace: secretNamespace}, secret); err != nil {
 		klog.Errorf("failed to get secret: %v", err)
-		return nil, fmt.Errorf("failed to get secret: %v", err)
+		return nil, fmt.Errorf("failed to get secret: %w", err)
 	}
 	config, err := parseDockerRegistrySecret(secret)
 	if err != nil {
 		klog.Errorf("failed to parse docker registry secret: %v", err)
-		return nil, fmt.Errorf("failed to parse docker registry secret: %v", err)
+		return nil, fmt.Errorf("failed to parse docker registry secret: %w", err)
 	}
 	return config, nil
 }
 
 func TestRegistryConnection(ctx context.Context, registryURL string, registryRepositoryName string, secretKey string, secretNamespace string, client client.Client) error {
-	ref, err := docker.ParseReference(fmt.Sprintf("//%s/%s", registryURL, registryRepositoryName))
-	if err != nil {
-		klog.Errorf("failed to parse reference: %v", err)
-		return fmt.Errorf("registry URL, repository name or tag is invalid: %v", err)
-	}
 	credentials, err := getRegistryCredentials(ctx, secretKey, secretNamespace, client)
 	if err != nil {
 		klog.Errorf("failed to get registry credentials: %v", err)
-		return fmt.Errorf("failed to get registry credentials: %v", err)
+		return fmt.Errorf("failed to get registry credentials: %w", err)
 	}
+
+	// Validate registry authentication.
+	if err := docker.CheckAuth(ctx, &types.SystemContext{}, credentials.Username, credentials.Password, registryURL); err != nil {
+		klog.Errorf("failed to authenticate to registry %s: %v", registryURL, err)
+		return fmt.Errorf("failed to authenticate to registry: %w", err)
+	}
+
+	// Validate repository access. An empty tag list is considered success.
+	ref, err := docker.ParseReference(fmt.Sprintf("//%s/%s", registryURL, registryRepositoryName))
+	if err != nil {
+		klog.Errorf("failed to parse repository reference %s/%s: %v", registryURL, registryRepositoryName, err)
+		return fmt.Errorf("invalid registry URL or repository name: %w", err)
+	}
+
 	sys := &types.SystemContext{
 		DockerAuthConfig: credentials,
 	}
-	image, err := ref.NewImageSource(ctx, sys)
-	if err != nil {
-		klog.Errorf("failed to get image: %v", err)
-		return fmt.Errorf("failed to get image: %v", err)
+	if _, err := docker.GetRepositoryTags(ctx, sys, ref); err != nil {
+		klog.Errorf("failed to access repository %s/%s: %v", registryURL, registryRepositoryName, err)
+		return fmt.Errorf("failed to access repository: %w", err)
 	}
-	defer func() {
-		if err := image.Close(); err != nil {
-			klog.Errorf("failed to close image source: %v", err)
-		}
-	}()
-	_, _, err = image.GetManifest(ctx, nil)
-	if err != nil {
-		klog.Errorf("failed to get manifest: %v", err)
-		return fmt.Errorf("failed to get manifest: %v", err)
-	}
+
 	return nil
 }
