@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/red-hat-storage/odf-operator/services/devicefinder"
+	devicefindertypes "github.com/red-hat-storage/odf-operator/services/devicefinder/types"
 	"github.com/red-hat-storage/odf-operator/services/ux-backend/handlers"
 
 	corev1 "k8s.io/api/core/v1"
@@ -23,20 +24,7 @@ type DiscoveryRequest struct {
 }
 
 type DiscoveryResponse struct {
-	Devices map[string]DiscoveryResult `json:"devices,omitempty"`
-}
-
-// DiscoveryResult represents the result of device discovery for a node
-type DiscoveryResult struct {
-	DiscoveredDevices []DiscoveredDevice `json:"discoveredDevices"`
-}
-
-// DiscoveredDevice shows the list of discovered devices with their properties
-type DiscoveredDevice struct {
-	Path string `json:"path"`
-	Type string `json:"type"`
-	Size int64  `json:"size"`
-	WWN  string `json:"WWN"`
+	Devices map[string]devicefindertypes.DiscoveryResult `json:"devices,omitempty"`
 }
 
 func HandleMessage(w http.ResponseWriter, r *http.Request, cl client.Client, namespace string) {
@@ -118,7 +106,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, cl client.Client) {
 	}
 
 	// Parse configmaps and extract device information
-	devices := make(map[string]DiscoveryResult)
+	devices := make(map[string]devicefindertypes.DiscoveryResult)
 	for _, configMap := range configMapList.Items {
 		// Extract node name from configmap name (format: devicefinder-result-<node-name>)
 		if !strings.HasPrefix(configMap.Name, "devicefinder-result-") {
@@ -129,7 +117,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, cl client.Client) {
 		nodeName := configMap.Name[len("devicefinder-result-"):]
 
 		// Parse discovered devices from configmap data
-		var discoveredDevices []DiscoveredDevice
+		var discoveredDevices []devicefindertypes.DiscoveredDevice
 		if devicesJSON, exists := configMap.Data["discovered-devices"]; exists {
 			if err := json.Unmarshal([]byte(devicesJSON), &discoveredDevices); err != nil {
 				klog.Errorf("failed to unmarshal discovered devices for node %s: %v", nodeName, err)
@@ -138,7 +126,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, cl client.Client) {
 			}
 		}
 
-		devices[nodeName] = DiscoveryResult{
+		devices[nodeName] = devicefindertypes.DiscoveryResult{
 			DiscoveredDevices: discoveredDevices,
 		}
 	}
