@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: noobaa-core
+  namespace: openshift-storage
+spec:
+  podSelector:
+    matchLabels:
+      noobaa-core: noobaa
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8443
+    - protocol: TCP
+      port: 8444
+    - protocol: TCP
+      port: 8445
+    - protocol: TCP
+      port: 8446
+    - protocol: TCP
+      port: 60100
+    - protocol: UDP
+      port: 5140
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-monitoring
+    ports:
+    - protocol: TCP
+      port: 8443

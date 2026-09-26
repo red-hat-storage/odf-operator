@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ceph-csi-rbd-ctrlplugin
+  namespace: openshift-storage
+spec:
+  podSelector:
+    matchLabels:
+      app: openshift-storage.rbd.csi.ceph.com-ctrlplugin
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 8680
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: openshift-storage
+      podSelector:
+        matchLabels:
+          app: csi-addons-controller-manager
+    ports:
+    - protocol: TCP
+      port: 9070
