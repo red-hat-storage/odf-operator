@@ -1,6 +1,6 @@
 module github.com/red-hat-storage/odf-operator
 
-go 1.21.9
+go 1.21.13
 
 require (
 	github.com/IBM/ibm-storage-odf-operator v1.5.1
@@ -85,7 +85,7 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
