@@ -129,7 +129,7 @@ func (r *ClusterVersionReconciler) ensureConsolePlugin(ctx context.Context, clus
 	logger := log.FromContext(ctx)
 	// The base path to where the request are sent
 	basePath := console.GetBasePath(clusterVersion)
-	nginxConf := console.NginxConf
+	nginxConf := console.GenerateNginxConf()
 
 	// Customer portal link (CLI Tool download)
 	portalLink := console.CUSTOMER_PORTAL_LINK
