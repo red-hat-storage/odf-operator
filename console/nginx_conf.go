@@ -16,11 +16,31 @@ limitations under the License.
 
 package console
 
-// Update it with correct configuration
-var NginxConf = `
+import (
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+)
+
+const (
+	// DefaultNginxWorkerProcesses is used when CONSOLE_NGINX_WORKER_PROCESSES
+	// is unset or invalid. A fixed value avoids OOM/FD exhaustion on high-CPU
+	// nodes where "auto" would spawn one worker per CPU.
+	DefaultNginxWorkerProcesses = "8"
+
+	// NginxWorkerProcessesEnvVar overrides DefaultNginxWorkerProcesses when set
+	// on the operator pod via Subscription spec.config.env. Accepted values are
+	// a positive integer or "auto".
+	NginxWorkerProcessesEnvVar = "CONSOLE_NGINX_WORKER_PROCESSES"
+)
+
+// nginxConfTemplate is the full nginx.conf. The console image mounts this
+// ConfigMap content as the main nginx configuration.
+const nginxConfTemplate = `
 # Do not comment/un-comment without any reference.
 
-worker_processes auto;
+worker_processes %s;
 error_log /var/log/nginx/error.log;
 pid /var/lib/nginx/tmp/nginx.pid;
 
@@ -84,3 +104,27 @@ http {
 
 }
 `
+
+// GetNginxWorkerProcesses returns the nginx worker_processes value.
+// Prefer CONSOLE_NGINX_WORKER_PROCESSES when it is a positive integer or "auto";
+// otherwise fall back to DefaultNginxWorkerProcesses.
+func GetNginxWorkerProcesses() string {
+	value := strings.TrimSpace(os.Getenv(NginxWorkerProcessesEnvVar))
+	if value == "" {
+		return DefaultNginxWorkerProcesses
+	}
+	if strings.EqualFold(value, "auto") {
+		return "auto"
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil || n < 1 {
+		return DefaultNginxWorkerProcesses
+	}
+	return strconv.Itoa(n)
+}
+
+// GenerateNginxConf returns the nginx.conf content with worker_processes set
+// from GetNginxWorkerProcesses().
+func GenerateNginxConf() string {
+	return fmt.Sprintf(nginxConfTemplate, GetNginxWorkerProcesses())
+}
