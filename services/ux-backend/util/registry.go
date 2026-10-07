@@ -2,8 +2,10 @@ package util
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/types"
@@ -13,16 +15,58 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// dockerConfigJSON mirrors the structure the containers/image library
+// uses internally (pkg/docker/config.dockerConfigFile) but is unexported there.
+type dockerConfigJSON struct {
+	Auths map[string]dockerConfigEntry `json:"auths"`
+}
+
+// dockerConfigEntry mirrors pkg/docker/config.dockerAuthConfig.
+type dockerConfigEntry struct {
+	Auth string `json:"auth,omitempty"`
+}
+
+// decodeDockerConfigAuth decodes a base64-encoded "user:password" auth string,
+// mirroring the logic in pkg/docker/config.decodeDockerAuth.
+func decodeDockerConfigAuth(encoded string) (string, string, error) {
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode auth field: %w", err)
+	}
+	user, password, ok := strings.Cut(string(decoded), ":")
+	if !ok {
+		return "", "", fmt.Errorf("invalid auth field: missing ':' separator")
+	}
+	return user, strings.Trim(password, "\x00"), nil
+}
+
 func parseDockerRegistrySecret(secret *corev1.Secret) (*types.DockerAuthConfig, error) {
 	data, ok := secret.Data[corev1.DockerConfigJsonKey]
 	if !ok {
 		return nil, fmt.Errorf("docker config json key not found in secret")
 	}
-	var config *types.DockerAuthConfig
+	var config dockerConfigJSON
 	if err := json.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal docker config: %w", err)
 	}
-	return config, nil
+	if len(config.Auths) == 0 {
+		return nil, fmt.Errorf("no auth entries found in docker config")
+	}
+	// Use the first (and typically only) auth entry.
+	for registry, entry := range config.Auths {
+		if entry.Auth == "" {
+			return nil, fmt.Errorf("empty auth field for registry %s", registry)
+		}
+		username, password, err := decodeDockerConfigAuth(entry.Auth)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode credentials for registry %s: %w", registry, err)
+		}
+		return &types.DockerAuthConfig{
+			Username: username,
+			Password: password,
+		}, nil
+	}
+	return nil, fmt.Errorf("no valid auth entries found in docker config")
 }
 
 func getRegistryCredentials(ctx context.Context, secretName string, secretNamespace string, client client.Client) (*types.DockerAuthConfig, error) {
