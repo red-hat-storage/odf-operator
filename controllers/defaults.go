@@ -25,6 +25,8 @@ const (
 	OdfSubscriptionPackage      = "odf-operator"
 	OdfDepsSubscriptionPackage  = "odf-dependencies"
 	CnsaDepsSubscriptionPackage = "cnsa-dependencies"
+
+	OdfOperatorUserConfigMapName = "odf-operator-user-config"
 )
 
 var (
