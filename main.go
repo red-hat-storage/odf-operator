@@ -128,6 +128,7 @@ func main() {
 
 	if err = (&controllers.SubscriptionReconciler{
 		Client:            mgr.GetClient(),
+		Reader:            mgr.GetAPIReader(),
 		Scheme:            mgr.GetScheme(),
 		OperatorNamespace: operatorNamespace,
 	}).SetupWithManager(mgr); err != nil {
