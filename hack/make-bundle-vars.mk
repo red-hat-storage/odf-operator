@@ -85,7 +85,7 @@ NOOBAA_BUNDLE_IMG ?= $(NOOBAA_BUNDLE_IMG_LOCATION)/$(NOOBAA_BUNDLE_IMG_NAME):$(N
 
 CSIADDONS_BUNDLE_NAME ?= csi-addons
 CSIADDONS_BUNDLE_IMG_NAME ?= k8s-bundle
-CSIADDONS_BUNDLE_IMG_TAG ?= v0.7.0
+CSIADDONS_BUNDLE_IMG_TAG ?= v0.9.1
 CSIADDONS_BUNDLE_IMG_LOCATION ?= quay.io/csiaddons
 CSIADDONS_BUNDLE_IMG ?= $(CSIADDONS_BUNDLE_IMG_LOCATION)/$(CSIADDONS_BUNDLE_IMG_NAME):$(CSIADDONS_BUNDLE_IMG_TAG)
 
@@ -146,7 +146,7 @@ STARTING_CSVS ?= "$(IMAGE_NAME).v$(VERSION) $(OCS_SUBSCRIPTION_STARTINGCSV) $(NO
 
 # kube rbac proxy image variables
 CLUSTER_ENV ?= openshift
-KUBE_RBAC_PROXY_IMG ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+KUBE_RBAC_PROXY_IMG ?= docker.io/kubebuilder/kube-rbac-proxy:v0.13.1
 OSE_KUBE_RBAC_PROXY_IMG ?= registry.redhat.io/openshift4/ose-kube-rbac-proxy:v4.11.0
 
 ifeq ($(CLUSTER_ENV), openshift)
