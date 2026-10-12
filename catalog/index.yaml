@@ -40,7 +40,7 @@ schema: olm.channel
 package: csi-addons
 name: alpha
 entries:
-  - name: csi-addons.v0.7.0
+  - name: csi-addons.v0.9.1
 
 ---
 defaultChannel: stable-v1.5

@@ -12,4 +12,4 @@ kind: Kustomization
 images:
 - name: odf-console
   newName: quay.io/ocs-dev/odf-console
-  newTag: latest
+  newTag: 426364da
