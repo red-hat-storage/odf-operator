@@ -88,3 +88,18 @@ func ParseOdfConfigMapRecords(logger logr.Logger, configmap corev1.ConfigMap, fn
 		fn(&record, key, value)
 	}
 }
+
+func GetOdfOperatorInternalConfigMap(ctx context.Context, cli client.Client, logger logr.Logger) (corev1.ConfigMap, error) {
+
+	cm := corev1.ConfigMap{}
+	cm.Name = OdfOperatorInternalConfigMapName
+	cm.Namespace = OperatorNamespace
+
+	if err := cli.Get(ctx, client.ObjectKeyFromObject(&cm), &cm); err != nil {
+		logger.Error(err, "failed to get configmap", "configmap", cm.Name)
+		return corev1.ConfigMap{}, err
+	}
+
+	logger.Info("found configmap successfully", "configmap", cm.Name)
+	return cm, nil
+}

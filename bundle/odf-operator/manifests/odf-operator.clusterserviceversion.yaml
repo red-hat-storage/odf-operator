@@ -112,8 +112,10 @@ spec:
           resources:
           - configmaps
           verbs:
+          - create
           - get
           - list
+          - update
           - watch
         - apiGroups:
           - ""

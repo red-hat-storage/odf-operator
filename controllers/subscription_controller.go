@@ -18,9 +18,11 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
+	"time"
 
 	"github.com/go-logr/logr"
 	configv1 "github.com/openshift/api/config/v1"
@@ -36,6 +38,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -87,7 +90,7 @@ type SubscriptionReconciler struct {
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=installplans,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorconditions,verbs=get;list;watch
 //+kubebuilder:rbac:groups=operators.coreos.com,resources=operatorgroups,verbs=get;list;watch;create
-//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update
 //+kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;watch;create
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update
 
@@ -102,6 +105,14 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 	}
 
 	if err := r.setOperatorCondition(ctx, logger, csvNamesMap); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.enforceBuildDatePolicy(ctx, logger); err != nil {
+		// dont requeue if upgrade is blocked
+		if err.Error() == dependenciesUpgradeBlockedErrMsg {
+			return ctrl.Result{}, nil
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -257,6 +268,95 @@ func (r *SubscriptionReconciler) reconcileOperatorGroups(ctx context.Context, lo
 	}
 
 	return nil
+}
+
+// enforceBuildDatePolicy checks the current ODF CSV's build date against the last accepted build, before allowing dependencies channel updates.
+// It records the accepted CSV or the reason the update is blocked in the internal ConfigMap.
+func (r *SubscriptionReconciler) enforceBuildDatePolicy(ctx context.Context, logger logr.Logger) error {
+
+	configmap, err := GetOdfOperatorInternalConfigMap(ctx, r.Client, logger)
+	if client.IgnoreNotFound(err) != nil {
+		return err
+	}
+
+	// Configmap csv is same as current csv no need to check anything
+	if configmap.Data[lastAcceptedCSVKey] == r.operatorConditionName {
+		return nil
+	}
+
+	csv := &opv1a1.ClusterServiceVersion{}
+	csv.Name = r.operatorConditionName
+	csv.Namespace = r.OperatorNamespace
+	if err := r.Client.Get(ctx, client.ObjectKeyFromObject(csv), csv); err != nil {
+		return err
+	}
+
+	configmap.Name, configmap.Namespace = OdfOperatorInternalConfigMapName, r.OperatorNamespace
+
+	var blockedErr error
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &configmap, func() error {
+		if configmap.Data == nil {
+			configmap.Data = make(map[string]string)
+		}
+
+		blocked, err := isDependenciesUpgradeBlocked(logger, &configmap, csv)
+		if err != nil {
+			return err
+		}
+		if blocked {
+			// Persist the blocked state before returning the error outside CreateOrUpdate.
+			blockedErr = errors.New(dependenciesUpgradeBlockedErrMsg)
+			configmap.Data[dependenciesUpgradeBlockedKey] = "true"
+			configmap.Data[dependenciesUpgradeMessageKey] = blockedErr.Error()
+			return nil
+		}
+
+		// Record the accepted build as the baseline for future checks and clear any prior block.
+		configmap.Data[lastAcceptedCSVKey] = r.operatorConditionName
+		configmap.Data[lastAcceptedCSVBuildDateKey] = csv.Annotations[csvBuildDateAnnotation]
+		configmap.Data[dependenciesUpgradeBlockedKey] = "false"
+		configmap.Data[dependenciesUpgradeMessageKey] = ""
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if blockedErr != nil {
+		logger.Info("dependencies upgrade blocked",
+			"runningCSV", r.operatorConditionName,
+			"lastAcceptedCSV", configmap.Data[lastAcceptedCSVKey],
+			"reason", blockedErr.Error())
+		return blockedErr
+	}
+	return nil
+}
+
+func isDependenciesUpgradeBlocked(logger logr.Logger, configmap *corev1.ConfigMap, csv *opv1a1.ClusterServiceVersion) (bool, error) {
+
+	if configmap.Annotations[skipBuildDateCheckAnnotation] == "true" {
+		logger.Info("build-date check overridden by annotation", "annotation", skipBuildDateCheckAnnotation)
+		return false, nil
+	}
+
+	// No baseline to compare against: first run or fresh install.
+	if configmap.Data[lastAcceptedCSVKey] == "" {
+		return false, nil
+	}
+
+	prevDate, err := time.Parse(time.RFC3339, configmap.Data[lastAcceptedCSVBuildDateKey])
+	if err != nil {
+		return false, err
+	}
+
+	currDate, err := time.Parse(time.RFC3339, csv.Annotations[csvBuildDateAnnotation])
+	if err != nil {
+		return false, err
+	}
+
+	// Builds more than seven days older than the last accepted build may lack fixes already in use.
+	oldestAllowedDate := prevDate.Add(-allowedThreshold)
+	return currDate.Before(oldestAllowedDate), nil
 }
 
 func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger logr.Logger, olmPkgRecords []*OlmPkgRecord, providerName providerType) error {
@@ -483,9 +583,11 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&handler.EnqueueRequestForObject{},
 			builder.WithPredicates(
 				predicate.NewPredicateFuncs(func(obj client.Object) bool {
-					return obj.GetName() == odfOperatorConfigMapName && obj.GetNamespace() == r.OperatorNamespace
+					return obj.GetNamespace() == r.OperatorNamespace &&
+						(obj.GetName() == odfOperatorConfigMapName ||
+							obj.GetName() == OdfOperatorInternalConfigMapName)
 				}),
-				predicate.GenerationChangedPredicate{},
+				predicate.ResourceVersionChangedPredicate{},
 			),
 		).
 		Complete(r)
