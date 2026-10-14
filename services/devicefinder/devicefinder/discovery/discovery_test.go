@@ -231,17 +231,17 @@ var _ = Describe("Device Discovery", func() {
 				readFileFunc = os.ReadFile
 			})
 
-			It("should discover exactly 3 available DASD disks and skip sda (boot) and dasdx (has FS)", func() {
+			It("should discover exactly 3 DASD partitions and skip sda (boot), dasdx (has FS), dasdd (0 partitions), and dasde (2 partitions)", func() {
 				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
 				Expect(discoveredDisks).To(HaveLen(3))
 			})
 
-			It("should discover dasda (normal UID) with correct properties", func() {
+			It("should discover dasda1 (normal UID) with correct properties", func() {
 				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
 				Expect(discoveredDisks).To(ContainElement(
 					types.DiscoveredDevice{
 						DeviceID: dasdaUID,
-						Path:     "/dev/dasda",
+						Path:     "/dev/dasda1",
 						Model:    "",
 						Type:     types.DiskType,
 						Vendor:   "IBM     ",
@@ -251,12 +251,12 @@ var _ = Describe("Device Discovery", func() {
 				))
 			})
 
-			It("should discover dasdb (extended UID) with trailing token stripped", func() {
+			It("should discover dasdb1 (extended UID) with trailing token stripped", func() {
 				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
 				Expect(discoveredDisks).To(ContainElement(
 					types.DiscoveredDevice{
 						DeviceID: dasdbUID,
-						Path:     "/dev/dasdb",
+						Path:     "/dev/dasdb1",
 						Model:    "",
 						Type:     types.DiskType,
 						Vendor:   "IBM     ",
@@ -266,12 +266,12 @@ var _ = Describe("Device Discovery", func() {
 				))
 			})
 
-			It("should discover dasdc (normal UID) with correct properties", func() {
+			It("should discover dasdc1 (normal UID) with correct properties", func() {
 				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
 				Expect(discoveredDisks).To(ContainElement(
 					types.DiscoveredDevice{
 						DeviceID: dasdcUID,
-						Path:     "/dev/dasdc",
+						Path:     "/dev/dasdc1",
 						Model:    "",
 						Type:     types.DiskType,
 						Vendor:   "IBM     ",
@@ -291,7 +291,21 @@ var _ = Describe("Device Discovery", func() {
 			It("should not discover dasdx (DASD disk with existing filesystem)", func() {
 				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
 				for _, d := range discoveredDisks {
-					Expect(d.Path).NotTo(Equal("/dev/dasdx"))
+					Expect(d.Path).NotTo(HavePrefix("/dev/dasdx"))
+				}
+			})
+
+			It("should not discover dasdd (DASD disk with 0 partitions)", func() {
+				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
+				for _, d := range discoveredDisks {
+					Expect(d.Path).NotTo(HavePrefix("/dev/dasdd"))
+				}
+			})
+
+			It("should not discover dasde (DASD disk with 2 partitions)", func() {
+				discoveredDisks := getDiscoverdDevices(deviceListDasdDisk.BlockDevices)
+				for _, d := range discoveredDisks {
+					Expect(d.Path).NotTo(HavePrefix("/dev/dasde"))
 				}
 			})
 		})

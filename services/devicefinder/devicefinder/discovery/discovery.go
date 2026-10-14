@@ -181,10 +181,27 @@ func getDiscoverdDevices(blockDevices []diskutils.BlockDevice) []types.Discovere
 			continue
 		}
 
-		var deviceID string
 		if blockDevices[idx].IsDASD() {
-			var err error
-			deviceID, err = getDASDUID(blockDevices[idx].Name)
+			// For DASD disks, discover the single partition rather than the
+			// whole disk. DASD volumes with exactly one partition are
+			// supported (e.g. dasda1); disks with any other partition count
+			// are skipped.
+			var parts []diskutils.BlockDevice
+			for _, child := range blockDevices[idx].Children {
+				if child.Type == "part" {
+					parts = append(parts, child)
+				}
+			}
+			if len(parts) != 1 {
+				klog.Infof(
+					"ignoring DASD device %q: expected exactly 1 partition, found %d",
+					blockDevices[idx].Name,
+					len(parts),
+				)
+				continue
+			}
+
+			deviceID, err := getDASDUID(blockDevices[idx].Name)
 			if err != nil {
 				klog.Warningf(
 					"failed to get DASD UID for device %q. Error %v",
@@ -193,16 +210,27 @@ func getDiscoverdDevices(blockDevices []diskutils.BlockDevice) []types.Discovere
 				)
 				continue
 			}
-		} else {
-			var err error
-			deviceID, err = blockDevices[idx].GetPathByID()
-			if err != nil {
-				klog.Warningf(
-					"failed to get persistent ID for the device %q. Error %v",
-					blockDevices[idx].Name,
-					err,
-				)
+
+			discoveredDevice := types.DiscoveredDevice{
+				Path:     parts[0].Path,
+				Model:    blockDevices[idx].Model,
+				Vendor:   blockDevices[idx].Vendor,
+				Type:     parseDeviceType(blockDevices[idx].Type),
+				DeviceID: deviceID,
+				Size:     blockDevices[idx].Size,
+				WWN:      blockDevices[idx].WWN,
 			}
+			discoveredDevices = append(discoveredDevices, discoveredDevice)
+			continue
+		}
+
+		deviceID, err := blockDevices[idx].GetPathByID()
+		if err != nil {
+			klog.Warningf(
+				"failed to get persistent ID for the device %q. Error %v",
+				blockDevices[idx].Name,
+				err,
+			)
 		}
 
 		path, err := blockDevices[idx].GetDevPath()
@@ -304,10 +332,12 @@ func ignoreDevices(dev *diskutils.BlockDevice) bool {
 		klog.Infof("ignoring device %q with FS", dev.FSType)
 		return true
 	}
-	// Ignore children which has partition/fs on them
+	// Ignore children which has partition/fs on them.
+	// DASD disks are exempt from the partition check — their single partition
+	// is the intended discovery target and is validated in getDiscoverdDevices.
 	if dev.Children != nil {
 		for idx := range dev.Children {
-			if dev.Children[idx].Type == "part" {
+			if !dev.IsDASD() && dev.Children[idx].Type == "part" {
 				klog.Infof("ignoring device %q with partitions", dev.Children[idx].Name)
 				return true
 			}
