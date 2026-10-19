@@ -1,0 +1,16 @@
+[
+  {
+    "name": "[sig-odf] ODF StorageCluster CRD is installed",
+    "entrypoint": "/bin/bash",
+    "args": ["-c", "${INTEROP_SCRIPTS_DIR}/check-odf-storagecluster-crd.sh"],
+    "tags": ["SMOKE", "odf"],
+    "timeout": "5m"
+  },
+  {
+    "name": "[sig-odf] ODF operator is installed",
+    "entrypoint": "/bin/bash",
+    "args": ["-c", "${INTEROP_SCRIPTS_DIR}/check-odf-operator.sh"],
+    "tags": ["SMOKE", "odf"],
+    "timeout": "5m"
+  }
+]
