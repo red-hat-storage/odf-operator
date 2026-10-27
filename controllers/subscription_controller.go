@@ -33,6 +33,7 @@ import (
 	"go.uber.org/multierr"
 	admrv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -75,6 +76,7 @@ type OlmPkgRecord struct {
 
 type SubscriptionReconciler struct {
 	client.Client
+	client.Reader
 
 	Scheme            *runtime.Scheme
 	OperatorNamespace string
@@ -127,7 +129,14 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	if providerName == providerNameIBM {
+	// Use the uncached client to read the ConfigMap to avoid relying on a potentially
+	// stale cache and ensure we always get the latest configuration.
+	userConfig, err := GetOdfOperatorUserConfigMap(ctx, r.Reader, logger)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return ctrl.Result{}, err
+	}
+
+	if providerName == providerNameIBM && userConfig.Data["SKIP_CNSA"] != "true" {
 		if err := r.reconcileNamespaces(ctx, logger, targetNamespaces); err != nil {
 			return ctrl.Result{}, err
 		}
@@ -137,7 +146,7 @@ func (r *SubscriptionReconciler) Reconcile(ctx context.Context, _ ctrl.Request) 
 		}
 	}
 
-	if err := r.ensureSubscriptions(ctx, logger, olmPkgRecords, providerName); err != nil {
+	if err := r.ensureSubscriptions(ctx, logger, olmPkgRecords, userConfig, providerName); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -359,12 +368,13 @@ func isDependenciesUpgradeBlocked(logger logr.Logger, configmap *corev1.ConfigMa
 	return currDate.Before(oldestAllowedDate), nil
 }
 
-func (r *SubscriptionReconciler) ensureSubscriptions(ctx context.Context, logger logr.Logger, olmPkgRecords []*OlmPkgRecord, providerName providerType) error {
+func (r *SubscriptionReconciler) ensureSubscriptions(
+	ctx context.Context, logger logr.Logger, olmPkgRecords []*OlmPkgRecord, userConfig corev1.ConfigMap, providerName providerType) error {
 
 	var combinedErr error
 
 	for _, olmPkgRecord := range olmPkgRecords {
-		if err := EnsureDesiredSubscription(ctx, r.Client, olmPkgRecord, providerName); err != nil {
+		if err := EnsureDesiredSubscription(ctx, r.Client, olmPkgRecord, userConfig, providerName); err != nil {
 			logger.Error(err, "failed to ensure subscription", "package", olmPkgRecord.Pkg)
 			multierr.AppendInto(&combinedErr, err)
 		}
@@ -585,7 +595,8 @@ func (r *SubscriptionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				predicate.NewPredicateFuncs(func(obj client.Object) bool {
 					return obj.GetNamespace() == r.OperatorNamespace &&
 						(obj.GetName() == odfOperatorConfigMapName ||
-							obj.GetName() == OdfOperatorInternalConfigMapName)
+							obj.GetName() == OdfOperatorInternalConfigMapName ||
+							obj.GetName() == OdfOperatorUserConfigMapName)
 				}),
 				predicate.ResourceVersionChangedPredicate{},
 			),
