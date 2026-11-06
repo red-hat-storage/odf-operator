@@ -179,7 +179,8 @@ func getMergedEnvVars(envList1, envList2 []corev1.EnvVar) []corev1.EnvVar {
 	return updatedEnvVars
 }
 
-func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord, providerName providerType) error {
+func EnsureDesiredSubscription(
+	ctx context.Context, cli client.Client, olmPkgRecord *OlmPkgRecord, userConfig corev1.ConfigMap, providerName providerType) error {
 
 	var err error
 
@@ -200,6 +201,10 @@ func EnsureDesiredSubscription(ctx context.Context, cli client.Client, olmPkgRec
 	// Skip creating (only update) subscriptions other than "dependencies"
 	// It will allow OLM to manage their creation via dependency resolution
 	if !isDependenciesPkg && desiredSubscription.CreationTimestamp.IsZero() {
+		return nil
+	}
+
+	if olmPkgRecord.Pkg == CnsaDepsSubscriptionPackage && userConfig.Data["SKIP_CNSA"] == "true" {
 		return nil
 	}
 
