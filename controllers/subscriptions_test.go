@@ -115,7 +115,9 @@ func TestEnsureDesiredSubscription_ResourcesPreserved(t *testing.T) {
 		Namespace: targetNs,
 	}
 
-	if err := EnsureDesiredSubscription(context.Background(), cli, record, providerNameIBM); err != nil {
+	userConfig := corev1.ConfigMap{}
+
+	if err := EnsureDesiredSubscription(context.Background(), cli, record, userConfig, providerNameIBM); err != nil {
 		t.Fatalf("EnsureDesiredSubscription() error: %v", err)
 	}
 
@@ -247,7 +249,9 @@ func TestEnsureDesiredSubscription_CacheRaceWipesResources(t *testing.T) {
 		Namespace: targetNs,
 	}
 
-	if err := EnsureDesiredSubscription(context.Background(), interceptedCli, record, providerNameIBM); err != nil {
+	userConfig := corev1.ConfigMap{}
+
+	if err := EnsureDesiredSubscription(context.Background(), interceptedCli, record, userConfig, providerNameIBM); err != nil {
 		t.Fatalf("EnsureDesiredSubscription() error: %v", err)
 	}
 
