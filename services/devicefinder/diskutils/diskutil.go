@@ -19,6 +19,9 @@ func init() {
 const (
 	// StateSuspended is a possible value of BlockDevice.State
 	StateSuspended = "suspended"
+
+	// dasdSubsystem is the Linux subsystem name reported by lsblk for DASD devices on IBM Z.
+	dasdSubsystem = "dasd"
 )
 
 type CommandExecutor interface {
@@ -59,8 +62,27 @@ type BlockDevice struct {
 	PartLabel  string        `json:"partlabel,omitempty"`
 	Path       string        `json:"path,omitempty"`
 	WWN        string        `json:"wwn,omitempty"`
+	Subsystems string        `json:"subsystems,omitempty"`
 	Children   []BlockDevice `json:"children,omitempty"`
 	Mountpoint string        `json:"mountpoint,omitempty"`
+}
+
+// IsDASD returns true when the block device is an IBM Z DASD (Direct
+// Access Storage Device).  DASD disks are identified by their name prefix
+// ("dasd") or, more robustly, by the "dasd" token present in the
+// colon-separated subsystems field reported by lsblk (e.g.
+// "block:dasd:ccw").  They never carry a WWN, so the standard WWN-based
+// acceptance path must be bypassed for them.
+func (b *BlockDevice) IsDASD() bool {
+	if strings.HasPrefix(b.Name, "dasd") {
+		return true
+	}
+	for _, sub := range strings.Split(b.Subsystems, ":") {
+		if sub == dasdSubsystem {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *BlockDevice) BiosPartition() bool {
