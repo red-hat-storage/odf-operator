@@ -27,6 +27,8 @@ const (
 	OdfDepsSubscriptionPackage  = "odf-dependencies"
 	CnsaDepsSubscriptionPackage = "cnsa-dependencies"
 	TLSProfileName              = "ocs-tls-profile"
+
+	OdfOperatorUserConfigMapName = "odf-operator-user-config"
 )
 
 const (
