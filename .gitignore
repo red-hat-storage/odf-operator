@@ -26,3 +26,5 @@ testbin/*
 
 # catalog manifests
 catalog/odf.yaml
+
+openshift-tests-ext/odf-tests-ext
